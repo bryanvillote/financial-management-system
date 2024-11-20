@@ -14,12 +14,12 @@ router.get('/', async (req, res) => {
 
 // POST a new transaction
 router.post('/', async (req, res) => {
-    const { amount, description, category } = req.body;
+    const { monthlyDue, carSticker, expenses } = req.body;
 
     const newTransaction = new Transaction({
-        amount,
-        description,
-        category,
+        monthlyDue,
+        carSticker,
+        expenses,
     });
 
     try {
@@ -48,12 +48,12 @@ router.delete('/:id', async (req, res) => {
 // UPDATE a transaction by ID
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { amount, description, category } = req.body;
+    const { monthlyDue, carSticker, expenses } = req.body;
 
     try {
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             id,
-            { amount, description, category },
+            { monthlyDue, carSticker, expenses },
             { new: true, runValidators: true } // Return updated document and validate input
         );
 
