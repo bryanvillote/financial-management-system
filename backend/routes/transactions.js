@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
+const auth = require('../middleware/auth')
 
 // GET all transactions
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
-        const transactions = await Transaction.find();
+        const transactions = await Transaction.find({ userId: req.user.id });
         res.json(transactions);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -13,10 +14,11 @@ router.get('/', async (req, res) => {
 });
 
 // POST a new transaction
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     const { monthlyDue, carSticker, expenses } = req.body;
 
     const newTransaction = new Transaction({
+        userId: req.user.id,
         monthlyDue,
         carSticker,
         expenses,
@@ -30,39 +32,41 @@ router.post('/', async (req, res) => {
     }
 });
 
-// DELETE a transaction by ID
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
-
+// DELETE a transaction
+router.delete('/:id', auth, async (req, res) => {
     try {
-        const deletedTransaction = await Transaction.findByIdAndDelete(id);
-        if (!deletedTransaction) {
-            return res.status(404).json({ message: 'Transaction not found' });
+        const transaction = await Transaction.findById(req.params.id);
+
+        if (!transaction || transaction.userId.toString() !== req.user.id) {
+            return res.status(404).json({ message: 'Transaction not found or not authorized' });
         }
-        res.json({ message: 'Transaction deleted successfully' });
+
+        await transaction.remove();
+        res.json({ message: 'Transaction deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-// UPDATE a transaction by ID
-router.put('/:id', async (req, res) => {
-    const { id } = req.params;
-    const { monthlyDue, carSticker, expenses } = req.body;
+// UPDATE a transaction
+router.put('/:id', auth, async (req, res) => {
+    const { amount, description, category } = req.body;
 
     try {
-        const updatedTransaction = await Transaction.findByIdAndUpdate(
-            id,
-            { monthlyDue, carSticker, expenses },
-            { new: true, runValidators: true } // Return updated document and validate input
-        );
+        const transaction = await Transaction.findById(req.params.id);
 
-        if (!updatedTransaction) {
-            return res.status(404).json({ message: 'Transaction not found' });
+        if (!transaction || transaction.userId.toString() !== req.user.id) {
+            return res.status(404).json({ message: 'Transaction not found or not authorized' });
         }
+
+        transaction.amount = amount || transaction.amount;
+        transaction.description = description || transaction.description;
+        transaction.category = category || transaction.category;
+
+        const updatedTransaction = await transaction.save();
         res.json(updatedTransaction);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 

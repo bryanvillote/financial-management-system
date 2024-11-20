@@ -1,33 +1,24 @@
-// Import required modules
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-require('dotenv').config();  // To load environment variables from .env file
+const authRoutes = require('./routes/auth');
+const transactionRoutes = require('./routes/transactions');
 
 const app = express();
 
 // Middleware
-app.use(express.json()); // Parse JSON requests
-
-// MongoDB connection using Mongoose
-mongoose.connect(process.env.DATABASE_URI)
-    .then(() => {
-        console.log('MongoDB connected successfully');
-    })
-    .catch((err) => {
-        console.error('MongoDB connection error:', err.message);
-    });
-
-// Basic route
-app.get('/', (req, res) => {
-    res.send('Hello, MongoDB with Express!');
-});
+app.use(express.json());
 
 // Routes
-const transactionRoutes = require('./routes/transactions');
-app.use('/api/transactions', transactionRoutes);
+app.use('/auth', authRoutes);
+app.use('/transactions', transactionRoutes);
 
-// Start server
+// Connect to MongoDB
+mongoose
+    .connect(process.env.DATABASE_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch((err) => console.error(err));
+
+// Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
