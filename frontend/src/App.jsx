@@ -1,10 +1,12 @@
-import Dashboard from "./dashboard/Dashboard"
+{/*import Dashboard from "./dashboard/Dashboard"*/}
+import Welcome from "./welcome/Welcome"
 
 function App() {
 
   return (
     <>
-      <Dashboard />
+      <Welcome/>
+      {/*<Dashboard />*/}
     </>
   )
 }
