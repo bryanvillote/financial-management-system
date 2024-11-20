@@ -1,1 +1,30 @@
-**/.env
+# Node.js dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Build files
+build/
+dist/
+
+# IDE-specific files (add your IDE if it's different)
+.vscode/
+.idea/
+
+# NPM package lock file
+package-lock.json
+
+# Optional: Coverage reports (if using testing)
+coverage/
+
+# Miscellaneous
+npm-debug.log
+yarn-error.log
