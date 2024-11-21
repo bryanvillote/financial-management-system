@@ -12,8 +12,9 @@ export default function BasicButtons() {
         alignItems: 'flex-end', // Align items to the bottom
         height: '100vh', // Full viewport height
         width: '100vw', // Full viewport width
-        backgroundColor: '#f5f5f5', // Optional background color
         padding: 2, // Adds padding around the edges
+        backgroundImage: `url('/SUBD.svg')`, // SVG background
+        backgroundSize: 'cover', // or 'contain' depending on your needs
       }}
     >
       <Stack spacing={2} direction="row">
@@ -26,7 +27,6 @@ export default function BasicButtons() {
             padding: '1rem 2rem', // Larger button padding
             '&:hover': {
               backgroundColor: '#9bd867', // Slightly darker pastel green on hover
-              
             },
           }}
         >
