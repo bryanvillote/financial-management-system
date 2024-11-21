@@ -21,6 +21,7 @@ export default function BasicButtons() {
         <Button
           variant="contained"
           sx={{
+            borderRadius: '16px',
             backgroundColor: '#b0e57c', // Pastel green
             color: '#fff', // Text color
             fontSize: '1.5rem', // Larger text
