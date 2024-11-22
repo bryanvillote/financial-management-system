@@ -5,18 +5,14 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import InputBase from '@mui/material/InputBase';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-import DirectionsIcon from '@mui/icons-material/Directions';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Stack from '@mui/material/Stack';
 
 const Card = styled(Paper)(({ theme }) => ({
   display: 'flex',
@@ -24,6 +20,7 @@ const Card = styled(Paper)(({ theme }) => ({
   width: '100%',
   padding: theme.spacing(4),
   gap: theme.spacing(2),
+  position: 'relative',
   boxShadow:
     'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
   ...theme.applyStyles?.('dark', {
@@ -78,18 +75,10 @@ export default function App() {
             </TableBody>
           </Table>
         </TableContainer>
-        <Stack spacing={2} direction="row" justifyContent="flex-end" mt={2}>
-          <Button variant="contained" color="primary">
-            Save
-          </Button>
-          <Button variant="outlined" color="secondary">
-            Edit
-          </Button>
-        </Stack>
       </Card>
 
       {/* Right Card Container */}
-      <Card sx={{ flex: 1, position: 'relative' }}>
+      <Card sx={{ flex: 1 }}>
         <Box
           component="form"
           sx={{
@@ -101,6 +90,8 @@ export default function App() {
           <TextField id="outlined-basic" label="First Input" variant="outlined" />
           <TextField id="outlined-basic-2" label="Second Input" variant="outlined" />
         </Box>
+
+        {/* Search Field */}
         <Box
           sx={{
             position: 'absolute',
@@ -121,6 +112,16 @@ export default function App() {
               <SearchIcon />
             </IconButton>
           </Paper>
+        </Box>
+
+        {/* Buttons at Bottom-Right */}
+        <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button variant="contained" color="primary">
+            Save
+          </Button>
+          <Button variant="outlined" color="secondary">
+            Edit
+          </Button>
         </Box>
       </Card>
     </Box>
