@@ -1,22 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
-
-export default function BasicTextFields() {
-  return (
-    <Box
-      component="form"
-      sx={{ '& > :not(style)': { m: 1, width: '25ch' } }}
-      noValidate
-      autoComplete="off"
-    >
-      <TextField id="outlined-basic" label="Outlined" variant="Expense Name" />
-      <TextField id="outlined-basic" label="Outlined" variant="Expense Amount" />
-    </Box>
-  );
-}
-
-import * as React from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -26,7 +10,35 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { TableVirtuoso } from 'react-virtuoso';
 import Chance from 'chance';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
+// BasicTextFields Component (Modified)
+export function BasicTextFields() {
+  return (
+    <Card sx={{ backgroundColor: 'white', margin: '20px 50px' }}> {/* Added margin */}
+      <CardContent>
+        <Box
+          component="form"
+          sx={{
+            '& > :not(style)': { m: 1, width: '25ch' },
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+          }}
+          noValidate
+          autoComplete="off"
+        >
+          <TextField id="outlined-basic" label="Expense Name" variant="outlined" />
+          <TextField id="outlined-basic" label="Expense Amount" variant="outlined" />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ReactVirtualizedTable Component
 const chance = new Chance(42);
 
 function createData(id) {
@@ -116,27 +128,45 @@ function rowContent(_index, row) {
   );
 }
 
-export default function ReactVirtualizedTable() {
+export function ReactVirtualizedTable() {
   return (
-    <Paper style={{ height: 400, width: '100%' }}>
-      <TableVirtuoso
-        data={rows}
-        components={VirtuosoTableComponents}
-        fixedHeaderContent={fixedHeaderContent}
-        itemContent={rowContent}
-      />
-    </Paper>
+    <Card sx={{ height: '80vh', width: '100%', backgroundColor: 'white' }}> 
+      <CardContent>
+        <Paper style={{ height: 400, width: '100%' }}>
+          <TableVirtuoso
+            data={rows}
+            components={VirtuosoTableComponents}
+            fixedHeaderContent={fixedHeaderContent}
+            itemContent={rowContent}
+          />
+        </Paper>
+      </CardContent>
+    </Card>
   );
 }
 
-import * as React from 'react';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-
-export default function BasicButtons() {
+// BasicButtons Component
+export function BasicButtons() {
   return (
     <Stack spacing={2} direction="row">
       <Button variant="contained">Contained</Button>
     </Stack>
+  );
+}
+
+// Expenses Component (Default Export - Modified)
+export default function Expenses() {
+  return (
+    <div style={{ 
+      backgroundColor: 'black', 
+      minHeight: '100vh', 
+      display: 'flex',
+      flexDirection: 'column', 
+      padding: '20px'  // Removed alignItems: 'center'
+    }}> 
+      <BasicTextFields />
+      <ReactVirtualizedTable />
+      <BasicButtons />
+    </div>
   );
 }
