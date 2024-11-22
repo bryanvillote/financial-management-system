@@ -1,12 +1,13 @@
+import SignIn from "./auth/SignIn"
 
 function App() {
 
   return (
     <>
-      {/* <SignIn /> */}
-      {/*<Dashboard/>*/}
-      {/*<Welcome/>*/}
-      {/*<LogIn/>*/}
+      <SignIn />
+      {/* <Dashboard/> */}
+      {/* <Welcome/> */}
+      {/* <Login/> */}
     </>
   )
 }
