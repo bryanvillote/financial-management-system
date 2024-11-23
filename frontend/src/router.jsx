@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import Welcome from './welcome/Welcome.jsx';
-import HomeownersRegistration from './registration/HomeownersRegistration.jsx';
+import HomeownersRegistration from './registration/HomeownerRegistration.jsx';
 import Receipt from './receipt/Receipt.jsx';
 import PersonalRecord from './personal-record/PersonalRecord.jsx'
 import Expenses from './expenses/Expenses.jsx'
@@ -8,6 +8,8 @@ import Dashboard from './dashboard/Dashboard.jsx'
 import AdminRegister from './auth/AdminRegister.jsx'
 import ForgotPassword from './auth/ForgotPassword.jsx'
 import LogIn from './auth/LogIn.jsx'
+import App from "./App.jsx"
+
 
 const router = createBrowserRouter([
     {

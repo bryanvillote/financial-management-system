@@ -1,14 +1,15 @@
-import SignIn from "./auth/SignIn"
+import Login from "./auth/Login"
 import { Outlet } from "react-router-dom"
+
 function App() {
 
   return (
     <>
-      <SignIn />
+      <Login/>
       <Outlet/>
     </>
   )
 }
 
-export default App
+export default App;
 
