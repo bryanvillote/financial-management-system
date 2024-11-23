@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import AppTheme from '../share-theme/AppTheme';
 import ColorModeSelect from '../share-theme/ColorModeSelect';
+import SitemarkIcon from './CustomIcons';
 import ForgotPassword from './ForgotPassword';
 
 const Card = styled(MuiCard)(({ theme }) => ({

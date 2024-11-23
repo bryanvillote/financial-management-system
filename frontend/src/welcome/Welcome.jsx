@@ -15,6 +15,7 @@ export default function BasicButtons() {
         padding: 2, // Adds padding around the edges
         backgroundImage: `url('/SUBD.svg')`, // SVG background
         backgroundSize: 'cover', // or 'contain' depending on your needs
+        overflow: 'hidden'
       }}
     >
       <Stack spacing={2} direction="row">

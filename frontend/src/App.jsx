@@ -1,18 +1,15 @@
-{/*import Dashboard from "./dashboard/Dashboard"
-import Welcome from "./welcome/Welcome"*/}
-import LogIn from "./auth/LogIn"
-
+import SignIn from "./auth/SignIn"
 
 function App() {
 
   return (
     <>
-      {/*<Welcome/>
-      {/*<Dashboard />*/}
-      <LogIn/>
+      <SignIn />
+      {/* <Dashboard/> */}
+      {/* <Welcome/> */}
+      {/* <Login/> */}
     </>
   )
 }
 
 export default App
-
