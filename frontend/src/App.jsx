@@ -1,15 +1,13 @@
-import Login from "./auth/Login"
-import { Outlet } from "react-router-dom"
+import { Outlet } from "react-router-dom";
 
 function App() {
-
   return (
-    <>
-      <Login/>
-      <Outlet/>
-    </>
-  )
+    <div>
+      <main>
+        <Outlet /> {/* Renders the child routes under /app */}
+      </main>
+    </div>
+  );
 }
 
 export default App;
-

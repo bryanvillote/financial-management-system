@@ -21,6 +21,7 @@ export default function BasicButtons() {
       <Stack spacing={2} direction="row">
         <Button
           variant="contained"
+  onClick={() => (window.location.href = '/app/login')} // Temporary redirect
           sx={{
             borderRadius: '16px',
             backgroundColor: '#b0e57c', // Pastel green

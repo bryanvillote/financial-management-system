@@ -36,7 +36,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
   }),
 }));
 
-const LoginContainer = styled(Stack)(({ theme }) => ({
+const SignInContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
@@ -59,7 +59,7 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function Login(props) {
+export default function SignIn(props) {
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
@@ -74,17 +74,30 @@ export default function Login(props) {
     setOpen(false);
   };
 
-  const handleSubmit = (event) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const email = data.get('email');
+  const password = data.get('password');
+
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
-  };
+
+    if (response.ok) {
+      alert('Registration successful. Please log in.');
+    } else {
+      const error = await response.json();
+      alert(error.message || 'Registration failed.');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred.');
+  }
+};
 
   const validateInputs = () => {
     const email = document.getElementById('email');
@@ -116,16 +129,15 @@ export default function Login(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <LoginContainer direction="column" justifyContent="space-between">
+      <SignInContainer direction="column" justifyContent="space-between">
         <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
         <Card variant="outlined">
-
           <Typography
             component="h1"
             variant="h4"
             sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
           >
-            Log in
+            Register
           </Typography>
           <Box
             component="form"
@@ -183,33 +195,25 @@ export default function Login(props) {
               variant="contained"
               onClick={validateInputs}
             >
-              Log in
+              Sign Up
             </Button>
-            <Link
-              component="button"
-              type="button"
-              onClick={handleClickOpen}
-              variant="body2"
-              sx={{ alignSelf: 'center' }}
-            >
-              Forgot your password?
-            </Link>
           </Box>
           <Divider>or</Divider>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
             <Typography sx={{ textAlign: 'center' }}>
-              Don&apos;t have an account?{' '}
+              Already have an account?{' '}
               <Link
-                href="/material-ui/getting-started/templates/log-in/"
+                href="/"
                 variant="body2"
                 sx={{ alignSelf: 'center' }}
               >
-                Sign up
+                Login
               </Link>
             </Typography>
           </Box>
         </Card>
-      </LoginContainer>
+      </SignInContainer>
     </AppTheme>
   );
 }
