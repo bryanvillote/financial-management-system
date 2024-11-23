@@ -161,7 +161,7 @@ export default function LayoutWithPadding() {
             <Button variant="contained" color="error" onClick={handleCloseModal}>
               Yes
             </Button>
-            <Button variant="outlined" onClick={handleCloseModal}>
+            <Button variant="text" onClick={handleCloseModal}>
               No
             </Button>
           </Stack>
