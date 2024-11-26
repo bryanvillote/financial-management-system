@@ -50,9 +50,9 @@ const router = createBrowserRouter([
             {
                 path: '/app/expenses',
                 element: (
-                    <ProtectedRoute>
+                    
                         <Expenses />
-                    </ProtectedRoute>
+                    
                 ),
             },
             {

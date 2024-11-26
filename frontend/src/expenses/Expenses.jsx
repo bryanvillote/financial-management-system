@@ -160,13 +160,17 @@ export default function Expenses() {
     <div style={{ 
       backgroundColor: 'black', 
       minHeight: '100vh', 
+      width: "100vw", 
       display: 'flex',
-      flexDirection: 'column', 
+      flexDirection: 'row', 
       padding: '20px'  // Removed alignItems: 'center'
     }}> 
-      <BasicTextFields />
       <ReactVirtualizedTable />
+
+      <div>
+      <BasicTextFields />
       <BasicButtons />
+      </div>
     </div>
   );
 }
