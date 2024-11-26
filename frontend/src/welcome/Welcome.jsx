@@ -13,9 +13,10 @@ export default function BasicButtons() {
         height: '100vh', // Full viewport height
         width: '100vw', // Full viewport width
         padding: 2, // Adds padding around the edges
-        backgroundImage: `url('/SUBD.svg')`, // SVG background
-        backgroundSize: 'cover', // or 'contain' depending on your needs
-        overflow: 'hidden'
+        backgroundImage: `url('/SUBD.svg')`, // Path to the SVG background
+        backgroundSize: 'cover', // Make the image cover the entire area
+        backgroundRepeat: 'no-repeat', // Prevents the image from repeating
+        backgroundPosition: 'center', // Center the background image
       }}
     >
       <Stack spacing={2} direction="row">
