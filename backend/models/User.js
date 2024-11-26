@@ -16,16 +16,15 @@ const userSchema = new mongoose.Schema({
     },
 })
 
-// pre-save middleware to hash the password before saving
-userSchema.pre('save', async (next) => {
-    if (!this.isModified('password')) return next()
-    this.password = await bcrypt.hash(this.password, 10)
-    next()
-})
-
 // method to compare passwords
-userSchema.methods.comparePassword = function (password) {
-    return bcrypt.compare(password, this.password)
+userSchema.methods.comparePassword = async function (password) {
+    try {
+        const match = await bcrypt.compare(password, this.password)
+        return match
+    } catch (error) {
+        console.error('Error comparing passwords.', error)
+        return false
+    }
 }
 
 module.exports = mongoose.model('User', userSchema)
