@@ -1,7 +1,6 @@
-import * as React from 'react';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 export default function BasicButtons() {
   return (
@@ -22,7 +21,7 @@ export default function BasicButtons() {
       <Stack spacing={2} direction="row">
         <Button
           variant="contained"
-  onClick={() => (window.location.href = '/app/login')} // Temporary redirect
+          onClick={() => (window.location.href = '/login')} // Temporary redirect
           sx={{
             borderRadius: '16px',
             backgroundColor: '#b0e57c', // Pastel green

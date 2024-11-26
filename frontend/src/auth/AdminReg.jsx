@@ -1,23 +1,23 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import MuiCard from '@mui/material/Card';
+import Card from '@mui/material/Card';
 import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import * as React from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router';
 import AppTheme from '../share-theme/AppTheme';
 import ColorModeSelect from '../share-theme/ColorModeSelect';
 import ForgotPassword from './ForgotPassword';
 
-const Card = styled(MuiCard)(({ theme }) => ({
+const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignSelf: 'center',
@@ -25,119 +25,94 @@ const Card = styled(MuiCard)(({ theme }) => ({
   padding: theme.spacing(4),
   gap: theme.spacing(2),
   margin: 'auto',
-  [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
-  },
+  maxWidth: '450px',
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-  ...theme.applyStyles('dark', {
-    boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
-  }),
+    '0px 5px 15px rgba(0,0,0,0.1), 0px 15px 35px rgba(0,0,0,0.05)',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
 }));
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
-  height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-  minHeight: '100%',
+  height: '100vh',
   padding: theme.spacing(2),
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(4),
   },
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-    }),
-  },
 }));
 
-export default function SignIn(props) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+export default function AdminReg(props) {
+  const [emailError, setEmailError] = React.useState('');
+  const [passwordError, setPasswordError] = React.useState('');
   const [open, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  const data = new FormData(event.currentTarget);
-  const email = data.get('email');
-  const password = data.get('password');
-
-  try {
-    const response = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (response.ok) {
-      alert('Registration successful. Please log in.');
-    } else {
-      const error = await response.json();
-      alert(error.message || 'Registration failed.');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('An error occurred.');
+  const navigate = useNavigate()
+  const handleRedirect = () => {
+    navigate('/login')
   }
-};
 
-  const validateInputs = () => {
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
+  const handleClose = () => setOpen(false);
 
+  const validateInputs = (data) => {
+    const { email, password } = data;
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address.');
       isValid = false;
     } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+      setEmailError('');
     }
 
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+    if (!password || password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
       isValid = false;
     } else {
-      setPasswordError(false);
-      setPasswordErrorMessage('');
+      setPasswordError('');
     }
 
     return isValid;
   };
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const email = data.get('email');
+    const password = data.get('password');
+
+    if (!validateInputs({ email, password })) return;
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        alert('Registration successful. Please log in.');
+      } else {
+        const error = await response.json();
+        alert(error.errors[0]?.msg || 'Registration failed.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred.');
+    }
+  };
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
+      <SignInContainer direction="column" justifyContent="center">
         <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
-        <Card variant="outlined">
+        <StyledCard>
           <Typography
             component="h1"
             variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+            sx={{ fontSize: 'clamp(2rem, 5vw, 2.15rem)' }}
           >
-            Register
+            Admin Registration
           </Typography>
           <Box
             component="form"
@@ -146,73 +121,58 @@ const handleSubmit = async (event) => {
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              width: '100%',
               gap: 2,
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
                 id="email"
-                type="email"
                 name="email"
+                type="email"
                 placeholder="your@email.com"
-                autoComplete="email"
-                autoFocus
-                required
                 fullWidth
                 variant="outlined"
-                color={emailError ? 'error' : 'primary'}
+                error={!!emailError}
+                helperText={emailError}
+                required
               />
             </FormControl>
             <FormControl>
-              <FormLabel htmlFor="password">Password</FormLabel>
+              <FormLabel>Password</FormLabel>
               <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="••••••"
-                type="password"
                 id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
+                name="password"
+                type="password"
+                placeholder="••••••••"
                 fullWidth
                 variant="outlined"
-                color={passwordError ? 'error' : 'primary'}
+                error={!!passwordError}
+                helperText={passwordError}
+                required
               />
             </FormControl>
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
+              control={<Checkbox color="primary" />}
               label="Remember me"
             />
             <ForgotPassword open={open} handleClose={handleClose} />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              onClick={validateInputs}
-            >
+            <Button type="submit" fullWidth variant="contained">
               Sign Up
             </Button>
           </Box>
           <Divider>or</Divider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-
-            <Typography sx={{ textAlign: 'center' }}>
-              Already have an account?{' '}
-              <Link
-                href="/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
-              >
-                Login
-              </Link>
-            </Typography>
-          </Box>
-        </Card>
+          <Typography align="center">
+            Already have an account?{' '}
+            <Button
+              component="button"
+              variant="text"
+              onClick={handleRedirect}
+            >
+              Login
+            </Button>
+          </Typography>
+        </StyledCard>
       </SignInContainer>
     </AppTheme>
   );
