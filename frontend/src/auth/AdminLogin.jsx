@@ -1,77 +1,77 @@
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import MuiCard from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import Stack from '@mui/material/Stack';
-import { styled } from '@mui/material/styles';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import Dashboard from '../dashboard/Dashboard';
-import AppTheme from '../share-theme/AppTheme';
-import ColorModeSelect from '../share-theme/ColorModeSelect';
-import ForgotPassword from './ForgotPassword';
-import {toast} from 'mui-sonner'
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import MuiCard from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import CssBaseline from "@mui/material/CssBaseline";
+import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import Stack from "@mui/material/Stack";
+import { styled } from "@mui/material/styles";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { toast } from "mui-sonner";
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import Dashboard from "../dashboard/Dashboard";
+import AppTheme from "../share-theme/AppTheme";
+import ColorModeSelect from "../share-theme/ColorModeSelect";
+import ForgotPassword from "./ForgotPassword";
 
 const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignSelf: 'center',
-  width: '100%',
+  display: "flex",
+  flexDirection: "column",
+  alignSelf: "center",
+  width: "100%",
   padding: theme.spacing(4),
   gap: theme.spacing(2),
-  margin: 'auto',
-  [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
+  margin: "auto",
+  [theme.breakpoints.up("sm")]: {
+    maxWidth: "450px",
   },
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+    "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
 }));
 
 const LoginContainer = styled(Stack)(({ theme }) => ({
-  height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-  minHeight: '100%',
+  height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
+  minHeight: "100%",
   padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
+  [theme.breakpoints.up("sm")]: {
     padding: theme.spacing(4),
   },
-  '&::before': {
+  "&::before": {
     content: '""',
-    display: 'block',
-    position: 'absolute',
+    display: "block",
+    position: "absolute",
     zIndex: -1,
     inset: 0,
     backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
+      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
+    backgroundRepeat: "no-repeat",
+    ...theme.applyStyles("dark", {
       backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
+        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
     }),
   },
 }));
 
 export default function AdminLog(props) {
   const [loggedIn, setLoggedIn] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const validateInputs = () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      toast.error('Please enter a valid email address.');
+      toast.error("Please enter a valid  address.");
       return false;
     }
 
     if (!password || password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
+      toast.error("Password must be at least 6 characters long.");
       return false;
     }
 
@@ -79,20 +79,20 @@ export default function AdminLog(props) {
   };
 
   const handleRedirect = () => {
-    navigate('/register')
-  }
+    navigate("/register");
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
     if (!validateInputs()) return;
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
@@ -100,36 +100,35 @@ export default function AdminLog(props) {
 
       if (response.ok) {
         const { token } = JSON.parse(text); // Only parse JSON if the response is okay
-        localStorage.setItem('authToken', token);
+        localStorage.setItem("authToken", token);
         setLoggedIn(true);
-        toast.success("Login Successful!")
+        toast.success("Login Successful!");
       } else {
         const error = JSON.parse(text); // Assuming the response contains JSON error
-        toast.error(error.message || 'Login failed. Please try again.' )
+        toast.error(error.message || "Login failed. Please try again.");
       }
     } catch (error) {
-      console.error('Error:', error);
-        toast.error(error.message || 'An error is occured..' )
+      console.error("Error:", error);
+      toast.error(error.message || "An error is occured..");
     }
   };
-
 
   if (loggedIn) {
     return <Dashboard />;
   }
 
-
-
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <LoginContainer direction="column" justifyContent="space-between">
-        <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+        <ColorModeSelect
+          sx={{ position: "fixed", top: "1rem", right: "1rem" }}
+        />
         <Card variant="outlined">
           <Typography
             component="h1"
             variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+            sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
           >
             Log in
           </Typography>
@@ -137,9 +136,9 @@ export default function AdminLog(props) {
             component="form"
             noValidate
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
               gap: 2,
             }}
           >
@@ -185,9 +184,9 @@ export default function AdminLog(props) {
             </Button>
           </Box>
           <Divider>or</Divider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography sx={{ textAlign: 'center' }}>
-              Don&apos;t have an account?{' '}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography sx={{ textAlign: "center" }}>
+              Don&apos;t have an account?{" "}
               <Button
                 component="button"
                 variant="text"
