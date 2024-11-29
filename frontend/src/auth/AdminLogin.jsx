@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
@@ -12,8 +13,9 @@ import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { toast } from "mui-sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "../context/useAuth";
 import Dashboard from "../dashboard/Dashboard";
 import AppTheme from "../share-theme/AppTheme";
 import ColorModeSelect from "../share-theme/ColorModeSelect";
@@ -58,20 +60,73 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function AdminLog(props) {
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      verifyToken(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const verifyToken = async (token) => {
+    try {
+      const response = await fetch("http://localhost:8000/auth/verify", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setLoggedIn(true);
+      } else {
+        localStorage.removeItem("authToken");
+      }
+    } catch (error) {
+      console.error("Token verification error:", error);
+      localStorage.removeItem("authToken");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateInputs = () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      toast.error("Please enter a valid  address.");
+    // Check if both fields are empty
+    if (!email && !password) {
+      toast.error("Please input valid credentials");
       return false;
     }
 
-    if (!password || password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+    // Check if email is empty but password is filled
+    if (!email) {
+      toast.error("Please enter your email address");
+      return false;
+    }
+
+    // Check if password is empty but email is filled
+    if (!password) {
+      toast.error("Please enter your password");
+      return false;
+    }
+
+    // Validate email format
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
       return false;
     }
 
@@ -96,22 +151,41 @@ export default function AdminLog(props) {
         body: JSON.stringify({ email, password }),
       });
 
-      const text = await response.text(); // Get the raw text response
+      const text = await response.text();
 
       if (response.ok) {
-        const { token } = JSON.parse(text); // Only parse JSON if the response is okay
-        localStorage.setItem("authToken", token);
-        setLoggedIn(true);
+        const { token } = JSON.parse(text);
         toast.success("Login Successful!");
+        // Wait for a short time to allow the toast to be displayed
+        setTimeout(() => {
+          login(token);
+          setLoggedIn(true);
+        }, 1000);
       } else {
-        const error = JSON.parse(text); // Assuming the response contains JSON error
+        const error = JSON.parse(text);
         toast.error(error.message || "Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error.message || "An error is occured..");
+      toast.error(error.message || "An error occurred.");
     }
   };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100%",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (loggedIn) {
     return <Dashboard />;

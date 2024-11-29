@@ -1,12 +1,12 @@
+import { Toaster } from "mui-sonner";
 import { Outlet } from "react-router-dom";
-import {Toaster} from 'mui-sonner'
 
 function App() {
   return (
     <div>
       <main>
+        <Toaster position="top-right" />
         <Outlet /> {/* Renders the child routes under /app */}
-        <Toaster position="top-right"/>
       </main>
     </div>
   );

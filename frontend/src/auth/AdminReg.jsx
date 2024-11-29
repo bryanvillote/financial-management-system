@@ -94,7 +94,10 @@ export default function AdminReg(props) {
         alert("Admin registration successful!");
         navigate("/login");
       } else {
-        alert(result.message || "Registration failed. Please try again.");
+        const errorMessage = result.errors
+          ? result.errors[0].msg
+          : result.message || "Registration failed. Please try again.";
+        alert(errorMessage);
       }
     } catch (error) {
       console.error("Error:", error);

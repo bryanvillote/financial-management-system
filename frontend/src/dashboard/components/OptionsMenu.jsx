@@ -1,79 +1,54 @@
-import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Divider, { dividerClasses } from '@mui/material/Divider';
-import Menu from '@mui/material/Menu';
-import MuiMenuItem from '@mui/material/MenuItem';
-import { paperClasses } from '@mui/material/Paper';
-import { listClasses } from '@mui/material/List';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemIcon, { listItemIconClasses } from '@mui/material/ListItemIcon';
-import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import MenuButton from './MenuButton';
-
-const MenuItem = styled(MuiMenuItem)({
-  margin: '2px 0',
-});
+import LogoutIcon from "@mui/icons-material/Logout";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import IconButton from "@mui/material/IconButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { toast } from "mui-sonner";
+import { useState } from "react";
+import { useAuth } from "../../context/useAuth";
 
 export default function OptionsMenu() {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const open = Boolean(anchorEl);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const { logout } = useAuth();
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleLogout = () => {
+    handleClose();
+    toast.success("Logout Successful!");
+    logout();
+  };
+
   return (
-    <React.Fragment>
-      <MenuButton
-        aria-label="Open menu"
+    <>
+      <IconButton
+        aria-label="more"
+        aria-controls="long-menu"
+        aria-haspopup="true"
         onClick={handleClick}
-        sx={{ borderColor: 'transparent' }}
       >
-        <MoreVertRoundedIcon />
-      </MenuButton>
+        <MoreVertIcon />
+      </IconButton>
       <Menu
+        id="long-menu"
         anchorEl={anchorEl}
-        id="menu"
-        open={open}
+        open={Boolean(anchorEl)}
         onClose={handleClose}
-        onClick={handleClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        sx={{
-          [`& .${listClasses.root}`]: {
-            padding: '4px',
-          },
-          [`& .${paperClasses.root}`]: {
-            padding: 0,
-          },
-          [`& .${dividerClasses.root}`]: {
-            margin: '4px -4px',
-          },
-        }}
       >
-        <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleClose}>Add another account</MenuItem>
-        <MenuItem onClick={handleClose}>Settings</MenuItem>
-        <Divider />
-        <MenuItem
-          onClick={handleClose}
-          sx={{
-            [`& .${listItemIconClasses.root}`]: {
-              ml: 'auto',
-              minWidth: 0,
-            },
-          }}
-        >
-          <ListItemText>Logout</ListItemText>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
-            <LogoutRoundedIcon fontSize="small" />
+            <LogoutIcon fontSize="small" />
           </ListItemIcon>
+          Logout
         </MenuItem>
       </Menu>
-    </React.Fragment>
+    </>
   );
 }
