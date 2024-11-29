@@ -38,6 +38,49 @@ const router = createBrowserRouter([
         path: '/app', // Protected app routes
         element: <ProtectedRoute><App /></ProtectedRoute>,
         children: [
+            { path: '/app/login', element: <AdminLog /> },
+            {
+                path: '/app/registration',
+                element: (
+                    <ProtectedRoute>
+                        <HomeownersRegistration />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: '/app/receipt',
+                element: (
+                    <ProtectedRoute>
+                        <Receipt />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: '/app/personal-record',
+                element: (
+                    <ProtectedRoute>
+                        <PersonalRecord />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: '/app/expenses',
+                element: (
+                    <ProtectedRoute>
+                        <Expenses />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: '/app/dashboard',
+                element: (
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                ),
+            },
+            { path: '/app/admin-register', element: <AdminRegister /> },
+            { path: '/app/forgot-password', element: <ForgotPassword /> },
             { path: 'registration', element: <HomeownersRegistration /> },
             { path: 'receipt', element: <Receipt /> },
             { path: 'personal-record', element: <PersonalRecord /> },

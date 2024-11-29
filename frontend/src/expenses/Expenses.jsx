@@ -166,6 +166,7 @@ export default function Expenses() {
       padding: '20px'  // Removed alignItems: 'center'
     }}> 
       <ReactVirtualizedTable />
+
       <div>
       <BasicTextFields />
       <BasicButtons />
