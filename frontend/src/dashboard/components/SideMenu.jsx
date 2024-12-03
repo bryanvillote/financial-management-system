@@ -5,10 +5,8 @@ import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import CardAlert from "./CardAlert";
 import MenuContent from "./MenuContent";
 import OptionsMenu from "./OptionsMenu";
-import SelectContent from "./SelectContent";
 
 const drawerWidth = 240;
 
@@ -34,7 +32,7 @@ export default function SideMenu() {
         },
       }}
     >
-      <Box
+      {/* <Box
         sx={{
           display: "flex",
           mt: "calc(var(--template-frame-height, 0px) + 4px)",
@@ -42,10 +40,10 @@ export default function SideMenu() {
         }}
       >
         <SelectContent />
-      </Box>
+      </Box> */}
       <Divider />
       <MenuContent />
-      <CardAlert />
+      {/* <CardAlert /> */}
       <Stack
         direction="row"
         sx={{
@@ -67,10 +65,10 @@ export default function SideMenu() {
             variant="body2"
             sx={{ fontWeight: 500, lineHeight: "16px" }}
           >
-            Riley Carter
+            Maxine Mabalabag
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            riley@email.com
+            maxine@gmail.com
           </Typography>
         </Box>
         <OptionsMenu />
