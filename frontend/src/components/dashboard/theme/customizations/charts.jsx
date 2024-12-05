@@ -1,6 +1,6 @@
 import { axisClasses, chartsGridClasses, legendClasses } from '@mui/x-charts';
 
-import { gray } from '../../../share-theme/themePrimitives';
+import { gray } from '../../../../utils/share-theme/themePrimitives';
 
 export const chartsCustomizations = {
   MuiChartsAxis: {

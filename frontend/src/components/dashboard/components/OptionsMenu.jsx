@@ -6,7 +6,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { toast } from "mui-sonner";
 import { useState } from "react";
-import { useAuth } from "../../context/useAuth";
+import { useAuth } from "../../../utils/context/useAuth";
 
 export default function OptionsMenu() {
   const [anchorEl, setAnchorEl] = useState(null);

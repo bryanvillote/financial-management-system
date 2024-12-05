@@ -15,10 +15,10 @@ import Typography from "@mui/material/Typography";
 import { toast } from "mui-sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../context/useAuth";
-import Dashboard from "../dashboard/Dashboard";
-import AppTheme from "../share-theme/AppTheme";
-import ColorModeSelect from "../share-theme/ColorModeSelect";
+import { useAuth } from "../utils/context/useAuth";
+import Dashboard from "../components/dashboard/Dashboard";
+import AppTheme from "../utils/share-theme/AppTheme";
+import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
 
 const Card = styled(MuiCard)(({ theme }) => ({

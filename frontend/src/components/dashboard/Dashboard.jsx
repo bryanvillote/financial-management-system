@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
-import AppTheme from "../share-theme/AppTheme";
+import AppTheme from "../../utils/share-theme/AppTheme";
 import AppNavbar from './components/AppNavbar';
 import Header from './components/Header';
 import MainGrid from './components/MainGrid';

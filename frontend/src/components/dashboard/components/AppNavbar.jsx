@@ -8,7 +8,7 @@ import { tabsClasses } from '@mui/material/Tabs';
 import MuiToolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-import ColorModeIconDropdown from '../../share-theme/ColorModeIconDropdown';
+import ColorModeIconDropdown from '../../../utils/share-theme/ColorModeIconDropdown';
 import MenuButton from './MenuButton';
 import SideMenuMobile from './SideMenuMobile';
 

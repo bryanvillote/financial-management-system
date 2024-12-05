@@ -6,7 +6,7 @@ import {
   pickersMonthClasses,
   pickersYearClasses,
 } from '@mui/x-date-pickers';
-import { brand, gray } from '../../../share-theme/themePrimitives';
+import { brand, gray } from '../../../../utils/share-theme/themePrimitives';
 
 /* eslint-disable import/prefer-default-export */
 export const datePickersCustomizations = {

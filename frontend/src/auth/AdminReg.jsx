@@ -13,8 +13,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import React from "react";
 import { useNavigate } from "react-router";
-import AppTheme from "../share-theme/AppTheme";
-import ColorModeSelect from "../share-theme/ColorModeSelect";
+import AppTheme from "../utils/share-theme/AppTheme";
+import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
 
 const StyledCard = styled(Card)(({ theme }) => ({
