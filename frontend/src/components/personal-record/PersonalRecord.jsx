@@ -42,12 +42,12 @@ const rows = [
 
 export default function App() {
   return (
-    <Box sx={{ display: 'flex', gap: 2, padding: 2 }}>
+    <Box sx={{ display: 'flex', gap: 3, padding: 4 }}>
       {/* Left Card Container */}
       <Card sx={{ flex: 1 }}>
         {/* First Table */}
         <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <Table sx={{ minWidth: 720 }} aria-label="simple table">
             <TableHead>
               <TableRow>
                 <TableCell>Dessert (100g serving)</TableCell>

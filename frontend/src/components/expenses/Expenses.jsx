@@ -1,44 +1,31 @@
-import * as React from 'react';
+import React from 'react';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
 import { TableVirtuoso } from 'react-virtuoso';
 import Chance from 'chance';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 
-// BasicTextFields Component (Modified)
-export function BasicTextFields() {
-  return (
-    <Card sx={{ backgroundColor: 'white', margin: '20px 50px' }}> {/* Added margin */}
-      <CardContent>
-        <Box
-          component="form"
-          sx={{
-            '& > :not(style)': { m: 1, width: '25ch' },
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-          }}
-          noValidate
-          autoComplete="off"
-        >
-          <TextField id="outlined-basic" label="Expense Name" variant="outlined" />
-          <TextField id="outlined-basic" label="Expense Amount" variant="outlined" />
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
+const Card = styled(Paper)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  padding: theme.spacing(4),
+  gap: theme.spacing(2),
+  position: 'relative',
+  boxShadow:
+    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+  backgroundColor: theme.palette.background.paper,
+}));
 
-// ReactVirtualizedTable Component
 const chance = new Chance(42);
 
 function createData(id) {
@@ -128,11 +115,20 @@ function rowContent(_index, row) {
   );
 }
 
-export function ReactVirtualizedTable() {
+export default function App() {
   return (
-    <Card sx={{ height: '80vh', width: '100%', backgroundColor: 'white' }}> 
-      <CardContent>
-        <Paper style={{ height: 400, width: '100%' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 3,
+        padding: 4,
+        minHeight: 600,
+        alignItems: 'stretch',
+      }}
+    >
+      {/* Left Card Container (70% width) */}
+      <Card sx={{ flex: 7 }}>
+        <Paper style={{ height: 550, width: 700 }}>
           <TableVirtuoso
             data={rows}
             components={VirtuosoTableComponents}
@@ -140,37 +136,28 @@ export function ReactVirtualizedTable() {
             itemContent={rowContent}
           />
         </Paper>
-      </CardContent>
-    </Card>
-  );
-}
+      </Card>
 
-// BasicButtons Component
-export function BasicButtons() {
-  return (
-    <Stack spacing={2} direction="row">
-      <Button variant="contained">Contained</Button>
-    </Stack>
-  );
-}
-
-// Expenses Component (Default Export - Modified)
-export default function Expenses() {
-  return (
-    <div style={{ 
-      backgroundColor: 'black', 
-      minHeight: '100vh', 
-      width: "100vw", 
-      display: 'flex',
-      flexDirection: 'row', 
-      padding: '20px'  // Removed alignItems: 'center'
-    }}> 
-      <ReactVirtualizedTable />
-
-      <div>
-      <BasicTextFields />
-      <BasicButtons />
-      </div>
-    </div>
+      {/* Right Card Container (30% width) */}
+      <Card sx={{ flex: 3 }}>
+        {/* Vertical Alignment */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',  // Changed from 'row' to 'column' for vertical alignment
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            flex: 1,
+          }}
+        >
+          <TextField id="expense-name" label="Expense Name" variant="outlined" fullWidth />
+          <TextField id="expense-amount" label="Expense Amount" variant="outlined" fullWidth />
+          <Button variant="contained" color="primary">
+            Add Expense
+          </Button>
+        </Box>
+      </Card>
+    </Box>
   );
 }

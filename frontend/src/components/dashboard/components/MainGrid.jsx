@@ -11,8 +11,8 @@ import StatCard from "./StatCard";
 
 const data = [
   {
-    title: "Users",
-    value: "14k",
+    title: "Monthly Payments",
+    value: "400k",
     interval: "Last 30 days",
     trend: "up",
     data: [
@@ -21,8 +21,8 @@ const data = [
     ],
   },
   {
-    title: "Conversions",
-    value: "325",
+    title: "Car Sticker Owner",
+    value: "126",
     interval: "Last 30 days",
     trend: "down",
     data: [
@@ -32,8 +32,8 @@ const data = [
     ],
   },
   {
-    title: "Event count",
-    value: "200k",
+    title: "HOA Expenses",
+    value: "68k",
     interval: "Last 30 days",
     trend: "neutral",
     data: [
@@ -57,7 +57,7 @@ export default function MainGrid() {
         sx={{ mb: (theme) => theme.spacing(2) }}
       >
         {data.map((card, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+          <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
             <StatCard {...card} />
           </Grid>
         ))}
