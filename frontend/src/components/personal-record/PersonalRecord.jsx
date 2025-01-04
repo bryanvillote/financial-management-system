@@ -22,11 +22,12 @@ const Card = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   gap: theme.spacing(2),
   position: 'relative',
+  borderRadius: theme.spacing(3),
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+    'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 30px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 10px 25px -5px',
   ...theme.applyStyles?.('dark', {
     boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+      'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 30px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 10px 25px -5px',
   }),
 }));
 
@@ -126,18 +127,19 @@ export default function App() {
         <Box
           sx={{
             position: 'absolute',
-            top: theme => theme.spacing(2),
+            top: theme => theme.spacing(3.5),
             right: theme => theme.spacing(2),
           }}
         >
           <Paper
             component="form"
-            sx={{ display: 'flex', alignItems: 'center', p: '2px 4px', width: 220 }}
+            sx={{ display: 'flex', alignItems: 'center', p: '2px 4px', width: 215 }}
           >
             <InputBase
               sx={{ ml: 1, flex: 1 }}
               placeholder="Search Homeowner"
               inputProps={{ 'aria-label': 'search' }}
+              borderRadius={2}
             />
             <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
               <SearchIcon />

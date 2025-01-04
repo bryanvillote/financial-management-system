@@ -17,17 +17,17 @@ export default function App() {
       }}
     >
       <Card sx={{ 
-        minWidth: 1920, 
+        minWidth: 250, 
         maxWidth: '80%', 
         width: '50%',  
-        height: 400, 
+        height: 450, 
         display: 'flex', 
         flexDirection: 'column', 
         alignSelf: 'center', 
-        padding: 4,  
-        gap: 2, 
+        padding: 5,  
         margin: 'auto', 
-        boxShadow: 'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px', 
+        borderRadius: 3.5,
+        boxShadow: 'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 40px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 15px 35px -5px', 
       }}> 
         <CardContent>
           <Box
@@ -35,15 +35,16 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              gap: 2,
               width: '100%', 
             }}
           >
-            <TextField required id="outlined-block-no" label="Block No." sx={{ m: 1, width: '25ch' }} />
-            <TextField required id="outlined-lot-no" label="Lot No." sx={{ m: 1, width: '25ch' }} />
-            <TextField id="outlined-phone-no" label="Phone No." type="tel" sx={{ m: 1, width: '25ch' }} />
-            <TextField id="outlined-email" label="Email" type="email" sx={{ m: 1, width: '25ch' }} />
+            <TextField required id="outlined-block-no" label="Block No." sx={{ m: 1, width: '30ch' }} />
+            <TextField required id="outlined-lot-no" label="Lot No." sx={{ m: 1, width: '30ch' }} />
+            <TextField id="outlined-phone-no" label="Phone No." type="tel" sx={{ m: 1, width: '30ch' }} />
+            <TextField id="outlined-email" label="Email" type="email" sx={{ m: 1, width: '30ch' }} />
 
-            <Button variant="contained" sx={{ mt: 2 }}>Save</Button> {/* Added the Save button */}
+            <Button variant="contained" size="large" color="primary" fullWidth sx={{ mt: 3 }}>Save</Button> {/* Added the Save button */}
           </Box>
         </CardContent>
       </Card>
