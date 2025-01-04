@@ -15,6 +15,26 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Divider from '@mui/material/Divider';
 
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#3B1E54',
+      // light: will be calculated from palette.primary.main,
+      // dark: will be calculated from palette.primary.main,
+      // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    secondary: {
+      main: '#F0A8D0',
+      light: '#FFC6C6',
+      // dark: will be calculated from palette.secondary.main,
+      contrastText: '#000000',
+    },
+  },
+});
+
 const Card = styled(Paper)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -43,6 +63,7 @@ const rows = [
 
 export default function App() {
   return (
+    <ThemeProvider theme={theme}>
     <Box sx={{ display: 'flex', gap: 3, padding: 4, marginLeft: 30 }}>
       {/* Left Card Container */}
       <Card sx={{ flex: 1 }}>
@@ -149,7 +170,7 @@ export default function App() {
 
         {/* Buttons at Bottom-Right */}
         <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', flexDirection: 'column', gap: 2 }}>
-          <Button variant="outlined" color="secondary" sx={{ mt: 1, borderRadius: '10px' }} size="large">
+          <Button variant="contained" color="secondary" sx={{ mt: 1, borderRadius: '10px' }} size="large">
             Notify Homeowner
           </Button>
           <Button variant="contained" color="primary" sx={{ mt: 1, borderRadius: '10px' }} size="large">
@@ -158,5 +179,6 @@ export default function App() {
         </Box>
       </Card>
     </Box>
+    </ThemeProvider>
   );
 }

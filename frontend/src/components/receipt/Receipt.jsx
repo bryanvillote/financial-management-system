@@ -14,6 +14,26 @@ import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box'; // Ensure Box is imported for spacing
 import { styled } from '@mui/material/styles';
 
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#3B1E54',
+      // light: will be calculated from palette.primary.main,
+      // dark: will be calculated from palette.primary.main,
+      // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    secondary: {
+      main: '#F0A8D0',
+      light: '#FFC6C6',
+      // dark: will be calculated from palette.secondary.main,
+      contrastText: '#000000',
+    },
+  },
+});
+
 const CustomCard = styled(Paper)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -21,11 +41,12 @@ const CustomCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   gap: theme.spacing(2),
   position: 'relative',
+  borderRadius: theme.spacing(2.5),
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+    'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 30px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 10px 25px -5px',
   ...theme.applyStyles?.('dark', {
     boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+      'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 30px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 10px 25px -5px',
   }),
 }));
 
@@ -82,7 +103,8 @@ export default function LayoutWithPadding() {
   };
 
   return (
-    <Box sx={{ display: 'flex', paddingLeft: 18 }}> {/* Adds padding to shift content */}
+    <ThemeProvider theme={theme}>
+    <Box sx={{display: 'flex', marginLeft: 35 }}> {/* Adds padding to shift content */}
       <Stack direction="row" spacing={4} sx={{ flex: 1 }}>
         {/* Left Card: Table */}
         <CustomCard>
@@ -131,10 +153,11 @@ export default function LayoutWithPadding() {
         </CustomCard>
 
         {/* Right Card: Buttons */}
-        <CustomCard sx={{ justifyContent: 'flex-end', alignItems: 'flex-end', height: '20vh' }}>
+        <CustomCard sx={{justifyContent: 'flex-end', alignItems: 'flex-end', height: '20vh', paddingTop: 14 }}>
+          <Typography variant="h6" sx={{ mt: 2, mb: 2,}}>Receipt Options</Typography>
           <Stack spacing={2} direction="column">
-            <Button variant="contained">Save as PDF</Button>
-            <Button variant="contained">Send in Email</Button>
+            <Button variant="contained" size='large' sx={{ mt: 1, borderRadius: '10px' }}>Save as PDF</Button>
+            <Button variant="contained" size='large' sx={{ mt: 1, borderRadius: '10px' }}>Send in Email</Button>
             <Button variant="text" onClick={handleExitClick}>
               Exit
             </Button>
@@ -149,7 +172,7 @@ export default function LayoutWithPadding() {
         aria-labelledby="exit-modal-title"
         aria-describedby="exit-modal-description"
       >
-        <Box sx={style}>
+        <Box sx={style} borderRadius={3} >
           <Typography id="exit-modal-title" variant="h6" component="h2">
             Do you really want to exit the receipt?
           </Typography>
@@ -168,5 +191,6 @@ export default function LayoutWithPadding() {
         </Box>
       </Modal>
     </Box>
+    </ThemeProvider>
   );
 }
