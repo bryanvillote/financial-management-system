@@ -47,7 +47,7 @@ export default function App() {
         padding: 5,  
         margin: 'auto',
         marginLeft: 70,
-        borderRadius: 3.5,
+        borderRadius: 4,
         boxShadow: 'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 40px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 15px 35px -5px', 
       }}> 
         <CardContent>

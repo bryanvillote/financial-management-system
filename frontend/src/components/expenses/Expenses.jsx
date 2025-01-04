@@ -149,7 +149,7 @@ export default function App() {
       }}
     >
       {/* Left Card Container (70% width) */}
-      <Card sx={{ flex: 7, borderRadius: '15px' }}>
+      <Card sx={{ flex: 7, borderRadius: '20px' }}>
         <Paper style={{ height: 550, width: 700 }}>
           <TableVirtuoso
             data={rows}
@@ -161,7 +161,7 @@ export default function App() {
       </Card>
 
       {/* Right Card Container (30% width) */}
-      <Card sx={{ flex: 3, borderRadius: '15px'}}>
+      <Card sx={{ flex: 3, borderRadius: '20px'}}>
         <h2>Homeowners Association Expense Tracker</h2> {/* Add this line to display the title */}
         {/* Vertical Alignment */}
         <Box
