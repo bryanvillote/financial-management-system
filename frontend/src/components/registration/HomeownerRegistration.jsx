@@ -39,12 +39,12 @@ export default function App() {
               width: '100%', 
             }}
           >
-            <TextField required id="outlined-block-no" label="Block No." sx={{ m: 1, width: '30ch' }} />
-            <TextField required id="outlined-lot-no" label="Lot No." sx={{ m: 1, width: '30ch' }} />
-            <TextField id="outlined-phone-no" label="Phone No." type="tel" sx={{ m: 1, width: '30ch' }} />
-            <TextField id="outlined-email" label="Email" type="email" sx={{ m: 1, width: '30ch' }} />
+            <TextField required id="outlined-block-no" label="Block No." sx={{m: 1, width: '30ch', '& .MuiOutlinedInput-root': { borderRadius: '10px',},}} />
+            <TextField required id="outlined-lot-no" label="Lot No." sx={{m: 1, width: '30ch', '& .MuiOutlinedInput-root': { borderRadius: '10px',},}} />
+            <TextField id="outlined-phone-no" label="Phone No." type="tel" sx={{m: 1, width: '30ch', '& .MuiOutlinedInput-root': { borderRadius: '10px',}, }} />
+            <TextField id="outlined-email" label="Email" type="email" sx={{m: 1, width: '30ch', '& .MuiOutlinedInput-root': { borderRadius: '10px',}, }} />
 
-            <Button variant="contained" size="large" color="primary" fullWidth sx={{ mt: 3 }}>Save</Button> {/* Added the Save button */}
+            <Button variant="contained" size="large" color="primary" fullWidth sx={{ mt: 3, borderRadius: '10px' }}>Save</Button> {/* Added the Save button */}
           </Box>
         </CardContent>
       </Card>

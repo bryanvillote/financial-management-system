@@ -34,50 +34,19 @@ export default function AppNavbar() {
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
-
-  return (
-    <AppBar
-      position="fixed"
-      sx={{
-        display: { xs: 'auto', md: 'none' },
-        boxShadow: 0,
-        bgcolor: 'background.paper',
-        backgroundImage: 'none',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        top: 'var(--template-frame-height, 0px)',
-      }}
-    >
-      <Toolbar variant="regular">
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: 'center',
-            flexGrow: 1,
-            width: '100%',
-            gap: 1,
-          }}
-        >
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ justifyContent: 'center', mr: 'auto' }}
-          >
-            <CustomIcon />
-            <Typography variant="h4" component="h1" sx={{ color: 'text.primary' }}>
-              Dashboard
-            </Typography>
-          </Stack>
-          <ColorModeIconDropdown data-screenshot="" />
-          <MenuButton aria-label="menu" onClick={toggleDrawer(true)}>
+    
+      return (
+        <AppBar position="fixed">
+          {/* Other navbar content */}
+          <MenuButton onClick={toggleDrawer(true)}>
             <MenuRoundedIcon />
           </MenuButton>
           <SideMenuMobile open={open} toggleDrawer={toggleDrawer} />
-        </Stack>
-      </Toolbar>
-    </AppBar>
-  );
-}
+        </AppBar>
+      );
+    }
+  ;
+
 
 export function CustomIcon() {
   return (

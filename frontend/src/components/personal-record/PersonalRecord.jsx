@@ -43,7 +43,7 @@ const rows = [
 
 export default function App() {
   return (
-    <Box sx={{ display: 'flex', gap: 3, padding: 4 }}>
+    <Box sx={{ display: 'flex', gap: 3, padding: 4, marginLeft: 30 }}>
       {/* Left Card Container */}
       <Card sx={{ flex: 1 }}>
         {/* First Table */}
@@ -119,8 +119,8 @@ export default function App() {
             minHeight: '300px',
           }}
         >
-          <TextField id="outlined-basic" label="Due Amount" variant="outlined" sx={{ mb: 2 }} />
-          <TextField id="outlined-basic-2" label="Payment Amount" variant="outlined" />
+          <TextField id="outlined-basic" label="Due Amount" variant="outlined" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '10px',}}} />
+          <TextField id="outlined-basic-2" label="Payment Amount" variant="outlined" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '10px',}}} />
         </Box>
 
         {/* Search Field */}
@@ -139,9 +139,9 @@ export default function App() {
               sx={{ ml: 1, flex: 1 }}
               placeholder="Search Homeowner"
               inputProps={{ 'aria-label': 'search' }}
-              borderRadius={2}
+              borderRadius={4}
             />
-            <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+            <IconButton type="button" sx={{ p: '10px'}} aria-label="search">
               <SearchIcon />
             </IconButton>
           </Paper>
@@ -149,10 +149,10 @@ export default function App() {
 
         {/* Buttons at Bottom-Right */}
         <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', flexDirection: 'column', gap: 2 }}>
-          <Button variant="outlined" color="secondary">
+          <Button variant="outlined" color="secondary" sx={{ mt: 1, borderRadius: '10px' }} size="large">
             Notify Homeowner
           </Button>
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="primary" sx={{ mt: 1, borderRadius: '10px' }} size="large">
             Generate Receipt
           </Button>
         </Box>

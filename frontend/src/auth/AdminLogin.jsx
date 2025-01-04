@@ -15,8 +15,8 @@ import Typography from "@mui/material/Typography";
 import { toast } from "mui-sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../utils/context/useAuth";
 import Dashboard from "../components/dashboard/Dashboard";
+import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
@@ -95,7 +95,6 @@ export default function AdminLog(props) {
       setLoading(false);
     }
   };
-
   const validateInputs = () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -160,6 +159,7 @@ export default function AdminLog(props) {
         setTimeout(() => {
           login(token);
           setLoggedIn(true);
+          navigate("/app/dashboard");
         }, 1000);
       } else {
         const error = JSON.parse(text);
