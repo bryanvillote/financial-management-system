@@ -13,9 +13,9 @@ import Stack from "@mui/material/Stack";
 
 const mainListItems = [
   { text: "Home", icon: <HomeRoundedIcon /> },
-  { text: "Analytics", icon: <AnalyticsRoundedIcon /> },
-  { text: "Home Owners", icon: <PeopleRoundedIcon /> },
-  { text: "Billing", icon: <AssignmentRoundedIcon /> },
+  { text: "Reports", icon: <AnalyticsRoundedIcon /> },
+  { text: "Expenses", icon: <PeopleRoundedIcon /> },
+  { text: "Billing & Payments", icon: <AssignmentRoundedIcon /> },
 ];
 
 const secondaryListItems = [

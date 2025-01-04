@@ -14,6 +14,26 @@ import Divider from '@mui/material/Divider';
 import { TableVirtuoso } from 'react-virtuoso';
 import Chance from 'chance';
 
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#3B1E54',
+      // light: will be calculated from palette.primary.main,
+      // dark: will be calculated from palette.primary.main,
+      // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    secondary: {
+      main: '#F0A8D0',
+      light: '#FFC6C6',
+      // dark: will be calculated from palette.secondary.main,
+      contrastText: '#000000',
+    },
+  },
+});
+
 const Card = styled(Paper)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -22,7 +42,7 @@ const Card = styled(Paper)(({ theme }) => ({
   gap: theme.spacing(2),
   position: 'relative',
   boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+  'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 40px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 15px 35px -5px',
   backgroundColor: theme.palette.background.paper,
 }));
 
@@ -117,6 +137,7 @@ function rowContent(_index, row) {
 
 export default function App() {
   return (
+    <ThemeProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -124,10 +145,11 @@ export default function App() {
         padding: 4,
         minHeight: 600,
         alignItems: 'stretch',
+        marginLeft: 30,
       }}
     >
       {/* Left Card Container (70% width) */}
-      <Card sx={{ flex: 7 }}>
+      <Card sx={{ flex: 7, borderRadius: '15px' }}>
         <Paper style={{ height: 550, width: 700 }}>
           <TableVirtuoso
             data={rows}
@@ -139,7 +161,8 @@ export default function App() {
       </Card>
 
       {/* Right Card Container (30% width) */}
-      <Card sx={{ flex: 3 }}>
+      <Card sx={{ flex: 3, borderRadius: '15px'}}>
+        <h2>Homeowners Association Expense Tracker</h2> {/* Add this line to display the title */}
         {/* Vertical Alignment */}
         <Box
           sx={{
@@ -151,13 +174,14 @@ export default function App() {
             flex: 1,
           }}
         >
-          <TextField id="expense-name" label="Expense Name" variant="outlined" fullWidth />
-          <TextField id="expense-amount" label="Expense Amount" variant="outlined" fullWidth />
-          <Button variant="contained" color="primary">
+          <TextField id="expense-name" label="Expense Name" variant="outlined" fullWidth sx={{m: 1, width: '20', '& .MuiOutlinedInput-root': { borderRadius: '10px',},}} />
+          <TextField id="expense-amount" label="Expense Amount" variant="outlined" fullWidth sx={{m: 1, width: '20', '& .MuiOutlinedInput-root': { borderRadius: '10px',},}}/>
+          <Button variant="contained" color="primary" fullWidth size='large' sx={{ mt: 3, borderRadius: '10px' }}>
             Add Expense
           </Button>
         </Box>
       </Card>
     </Box>
+    </ThemeProvider>
   );
 }

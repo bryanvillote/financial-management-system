@@ -4,9 +4,29 @@ import TextField from '@mui/material/TextField';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button'; // Import the Button component
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#3B1E54',
+      // light: will be calculated from palette.primary.main,
+      // dark: will be calculated from palette.primary.main,
+      // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    secondary: {
+      main: '#F0A8D0',
+      light: '#FFC6C6',
+      // dark: will be calculated from palette.secondary.main,
+      contrastText: '#000000',
+    },
+  },
+});
 
 export default function App() {
   return (
+    <ThemeProvider theme={theme}>
     <Box
       sx={{
         display: 'flex',
@@ -25,7 +45,8 @@ export default function App() {
         flexDirection: 'column', 
         alignSelf: 'center', 
         padding: 5,  
-        margin: 'auto', 
+        margin: 'auto',
+        marginLeft: 70,
         borderRadius: 3.5,
         boxShadow: 'hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 40px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 15px 35px -5px', 
       }}> 
@@ -37,6 +58,7 @@ export default function App() {
               alignItems: 'center',
               gap: 2,
               width: '100%', 
+
             }}
           >
             <TextField required id="outlined-block-no" label="Block No." sx={{m: 1, width: '30ch', '& .MuiOutlinedInput-root': { borderRadius: '10px',},}} />
@@ -49,5 +71,6 @@ export default function App() {
         </CardContent>
       </Card>
     </Box>
+    </ThemeProvider>
   );
 }
