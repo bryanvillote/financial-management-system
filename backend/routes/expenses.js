@@ -7,7 +7,7 @@ const auth = require("../middleware/auth");
 router.get("/", auth, async (req, res) => {
   //console.log("Fetching expenses for user ID: ", req.user.id);
   try {
-    const expenses = await Expense.find({ userId: req.user.id });
+    const expenses = await Expense.find();
     res.json(expenses);
   } catch (err) {
     res.status(500).json({ message: err.message });
