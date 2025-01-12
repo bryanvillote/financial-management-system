@@ -32,7 +32,7 @@ export default function BasicButtons() {
             fontSize: "1.5rem", // Larger text
             padding: "1rem 2rem", // Larger button padding
             "&:hover": {
-              backgroundColor: "#9bd867", // Slightly darker pastel green on hover
+              backgroundColor: "#3820A1", // Slightly darker pastel green on hover
             },
             zIndex: "10",
           }}
