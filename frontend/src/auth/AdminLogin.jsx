@@ -24,13 +24,13 @@ import ForgotPassword from "./ForgotPassword";
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
-  alignSelf: "center",
+  alignSelf: "flex-start",
   width: "100%",
   padding: theme.spacing(4),
   gap: theme.spacing(2),
-  margin: "auto",
+  marginTop: "6rem",
   [theme.breakpoints.up("sm")]: {
-    maxWidth: "450px",
+    maxWidth: "400px",
   },
   boxShadow:
     "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
@@ -38,8 +38,13 @@ const Card = styled(MuiCard)(({ theme }) => ({
 
 const LoginContainer = styled(Stack)(({ theme }) => ({
   height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
+  width: "100vw",
   minHeight: "100%",
   padding: theme.spacing(2),
+  backgroundImage: `linear-gradient(to right, #020140, transparent), url('/loginbg.png')`,
+  backgroundSize: "cover",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
   [theme.breakpoints.up("sm")]: {
     padding: theme.spacing(4),
   },
@@ -48,10 +53,6 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
     display: "block",
     position: "absolute",
     zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
-    backgroundRepeat: "no-repeat",
     ...theme.applyStyles("dark", {
       backgroundImage:
         "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
@@ -249,7 +250,7 @@ export default function AdminLog(props) {
             />
             <ForgotPassword />
             <Button
-              type="button"
+              type="submit"
               fullWidth
               variant="contained"
               onClick={handleLogin}
