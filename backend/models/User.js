@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // Drop any existing indexes before creating new ones
-userSchema.index({ email: 1 }, { unique: true });
+//userSchema.index({ email: 1 }, { unique: true });
 
 // method to compare passwords
 userSchema.methods.comparePassword = async function (password) {
