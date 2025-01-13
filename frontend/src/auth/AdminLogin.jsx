@@ -195,7 +195,7 @@ export default function AdminLog(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <LoginContainer direction="column" justifyContent="space-between">
+      <LoginContainer direction="column" justifyContent="space-between" >
         <ColorModeSelect
           sx={{ position: "fixed", top: "1rem", right: "1rem" }}
         />
