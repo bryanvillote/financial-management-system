@@ -12,24 +12,24 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import PropTypes from "prop-types";
 import * as React from "react";
 
-import { IndiaFlag, UsaFlag } from "../internals/components/CustomIcons";
+import { PaidIcon, UnpaidIcon } from "../internals/components/CustomIcons";
 
 const data = [
-  { label: "India", value: 50000 },
-  { label: "USA", value: 35000 },
+  { label: "Paid", value: 50000 },
+  { label: "Unpaid", value: 35000 },
 ];
 
 const countries = [
   {
     name: "Paid",
     value: 50,
-    flag: <IndiaFlag />,
+    flag: <PaidIcon />,
     color: "hsl(220, 25%, 65%)",
   },
   {
     name: "Unpaid",
     value: 35,
-    flag: <UsaFlag />,
+    flag: <UnpaidIcon />,
     color: "hsl(220, 25%, 45%)",
   },
 ];

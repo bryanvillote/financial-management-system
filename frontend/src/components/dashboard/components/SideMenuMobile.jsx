@@ -43,9 +43,6 @@ function SideMenuMobile({ open, toggleDrawer }) {
               Maxine Mabalabag
             </Typography>
           </Stack>
-          {/* <MenuButton showBadge>
-            <NotificationsRoundedIcon />
-          </MenuButton> */}
         </Stack>
         <Divider />
         <Stack sx={{ flexGrow: 1 }}>

@@ -5,11 +5,13 @@ import AdminLog from "./auth/AdminLogin.jsx";
 import AdminRegister from "./auth/AdminReg.jsx";
 import ForgotPassword from "./auth/ForgotPassword.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
+import Billing from "./components/billing/Billing.jsx";
+import Homeowners from "./components/dashboard/components/Homeowners.jsx";
 import Dashboard from "./components/dashboard/Dashboard.jsx";
 import Expenses from "./components/expenses/Expenses.jsx";
-import PersonalRecord from "./components/personal-record/PersonalRecord.jsx";
 import Receipt from "./components/receipt/Receipt.jsx";
 import HomeownersRegistration from "./components/registration/HomeownerRegistration.jsx";
+import Reports from "./components/reports/Reports.jsx";
 import Welcome from "./components/welcome/Welcome.jsx";
 
 const router = createBrowserRouter([
@@ -60,10 +62,10 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/app/personal-record",
+        path: "/app/billing",
         element: (
           <ProtectedRoute>
-            <PersonalRecord />
+            <Billing />
           </ProtectedRoute>
         ),
       },
@@ -83,13 +85,31 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "/app/homeowners",
+        element: (
+          <ProtectedRoute>
+            <Homeowners />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/app/reports",
+        element: (
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        ),
+      },
       { path: "/app/admin-register", element: <AdminRegister /> },
       { path: "/app/forgot-password", element: <ForgotPassword /> },
       { path: "registration", element: <HomeownersRegistration /> },
       { path: "receipt", element: <Receipt /> },
-      { path: "personal-record", element: <PersonalRecord /> },
+      { path: "billing", element: <Billing /> },
       { path: "expenses", element: <Expenses /> },
+      { path: "homeowners", element: <Homeowners /> },
       { path: "dashboard", element: <Dashboard /> },
+      { path: "reports", element: <Reports /> },
     ],
   },
   {
