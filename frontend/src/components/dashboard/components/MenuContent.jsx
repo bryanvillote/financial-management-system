@@ -12,24 +12,9 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const mainListItems = [
-  { text: "Dashboard", icon: <HomeRoundedIcon />, path: "/app/dashboard" },
-  { text: "Reports", icon: <AnalyticsRoundedIcon />, path: "/app/reports" },
-  { text: "Expenses", icon: <MonetizationIcon />, path: "/app/expenses" },
-  { text: "HomeOwners", icon: <PeopleRoundedIcon />, path: "/app/homeowners" },
-  {
-    text: "Billing & Payments",
-    icon: <AssignmentRoundedIcon />,
-    path: "/app/billing",
-  },
-  {
-    text: "Admin Registration",
-    icon: <AdminPanel />,
-    path: "/app/admin-register",
-  },
-];
 
 const secondaryListItems = [
   { text: "Settings", icon: <SettingsRoundedIcon /> },
@@ -37,10 +22,49 @@ const secondaryListItems = [
 ];
 
 export default function MenuContent() {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setRole(decodedToken.role);
+    }
+  }, []);
+
+  const mainListItems = [
+    { text: "Dashboard", icon: <HomeRoundedIcon />, path: "/app/dashboard" },
+    { text: "Reports", icon: <AnalyticsRoundedIcon />, path: "/app/reports" },
+    { text: "Expenses", icon: <MonetizationIcon />, path: "/app/expenses" },
+    {
+      text: "HomeOwners",
+      icon: <PeopleRoundedIcon />,
+      path: "/app/homeowners",
+    },
+    {
+      text: "Billing & Payments",
+      icon: <AssignmentRoundedIcon />,
+      path: "/app/billing",
+    },
+    {
+      text: "Admin Registration",
+      icon: <AdminPanel />,
+      path: "/app/admin-register",
+    },
+  ];
+
+  const filteredMainListItems = mainListItems.filter((item) => {
+    if (role === "Treasurer") {
+      return item.text === "Expenses" || item.text === "Billing & Payments";
+    }
+    // Add more conditions for other roles if needed
+    return true;
+  });
+
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: "space-between" }}>
       <List dense>
-        {mainListItems.map((item, index) => (
+        {filteredMainListItems.map((item, index) => (
           <Link to={item.path} key={index}>
             <ListItem key={index} disablePadding sx={{ display: "block" }}>
               <ListItemButton selected={location.pathname === item.path}>
