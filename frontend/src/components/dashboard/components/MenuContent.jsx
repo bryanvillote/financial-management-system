@@ -1,3 +1,4 @@
+import AdminPanel from "@mui/icons-material/AdminPanelSettingsRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
@@ -22,6 +23,11 @@ const mainListItems = [
     text: "Billing & Payments",
     icon: <AssignmentRoundedIcon />,
     path: "/app/billing",
+  },
+  {
+    text: "Admin Registration",
+    icon: <AdminPanel />,
+    path: "/app/admin-register",
   },
 ];
 

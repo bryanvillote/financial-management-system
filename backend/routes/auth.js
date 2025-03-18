@@ -17,6 +17,9 @@ router.post(
     body("password")
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters long"),
+    body("role")
+      .isIn(["President", "Vice President", "Treasurer"])
+      .withMessage("Invalid role"),
   ],
   async (req, res) => {
     try {
@@ -25,7 +28,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { email, password } = req.body;
+      const { email, password, role } = req.body;
 
       // Log the received data (remove in production)
       console.log("Received registration request for email:", email);
@@ -38,7 +41,7 @@ router.post(
       const hashedPassword = await bcrypt.hash(password, 10);
       console.log("Password hashed successfully");
 
-      const newUser = new User({ email, password: hashedPassword });
+      const newUser = new User({ email, password: hashedPassword, role });
       await newUser.save();
       console.log("User saved successfully");
 
@@ -91,5 +94,46 @@ router.post(
     }
   }
 );
+
+// Fetch all users
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.find({}, "email role");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Update a user
+router.put("/users/:id", async (req, res) => {
+  const { email, role } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { email, role },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ message: "User updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// Delete a user
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
 
 module.exports = router;

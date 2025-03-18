@@ -17,8 +17,8 @@ import React, { useEffect, useState } from "react";
 import { TableVirtuoso } from "react-virtuoso";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import Header from "../dashboard/components/Header";
-import SideMenu from "../dashboard/components/SideMenu";
 
+import SideMenu from "../dashboard/components/SideMenu";
 import {
   chartsCustomizations,
   dataGridCustomizations,
@@ -196,8 +196,9 @@ export default function Expenses(props) {
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <ThemeProvider theme={theme}>
-        <SideMenu />
         <CssBaseline enableColorScheme />
+
+        <SideMenu />
         <Stack
           spacing={2}
           sx={{
@@ -208,6 +209,7 @@ export default function Expenses(props) {
           }}
         >
           <Header />
+
           <Stack>
             <Box
               sx={{
