@@ -12,9 +12,10 @@ import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { jwtDecode } from "jwt-decode";
 import { toast } from "mui-sonner";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import Dashboard from "../components/dashboard/Dashboard";
 import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
@@ -59,6 +60,19 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
     }),
   },
 }));
+
+const getRoleBasedRedirectPath = (role) => {
+  switch (role) {
+    case "Treasurer":
+      return "/app/billing";
+    case "Vice President":
+      return "/app/dashboard";
+    case "President":
+      return "/app/dashboard";
+    default:
+      return "/login";
+  }
+};
 
 export default function AdminLog(props) {
   const { login } = useAuth();
@@ -151,24 +165,29 @@ export default function AdminLog(props) {
         body: JSON.stringify({ email, password }),
       });
 
-      const text = await response.text();
+      const data = await response.json();
 
       if (response.ok) {
-        const { token } = JSON.parse(text);
+        const decodedToken = jwtDecode(data.token);
         toast.success("Login Successful!");
-        // Wait for a short time to allow the toast to be displayed
+
+        // Store token and handle login
+        login(data.token);
+        setLoggedIn(true);
+
+        // Get the correct redirect path based on role
+        const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
+
+        // Use setTimeout to ensure the toast is visible
         setTimeout(() => {
-          login(token);
-          setLoggedIn(true);
-          navigate("/app/dashboard");
+          navigate(redirectPath);
         }, 1000);
       } else {
-        const error = JSON.parse(text);
-        toast.error(error.message || "Login failed. Please try again.");
+        toast.error(data.message || "Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error.message || "An error occurred.");
+      toast.error("An error occurred during login.");
     }
   };
 
@@ -195,7 +214,7 @@ export default function AdminLog(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <LoginContainer direction="column" justifyContent="space-between" >
+      <LoginContainer direction="column" justifyContent="space-between">
         <ColorModeSelect
           sx={{ position: "fixed", top: "1rem", right: "1rem" }}
         />

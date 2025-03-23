@@ -33,32 +33,47 @@ export default function MenuContent() {
   }, []);
 
   const mainListItems = [
-    { text: "Dashboard", icon: <HomeRoundedIcon />, path: "/app/dashboard" },
-    { text: "Reports", icon: <AnalyticsRoundedIcon />, path: "/app/reports" },
-    { text: "Expenses", icon: <MonetizationIcon />, path: "/app/expenses" },
+    {
+      text: "Dashboard",
+      icon: <HomeRoundedIcon />,
+      path: "/app/dashboard",
+      allowedRoles: ["President", "Vice President"],
+    },
+    {
+      text: "Reports",
+      icon: <AnalyticsRoundedIcon />,
+      path: "/app/reports",
+      allowedRoles: ["President", "Vice President"],
+    },
+    {
+      text: "Expenses",
+      icon: <MonetizationIcon />,
+      path: "/app/expenses",
+      allowedRoles: ["President", "Vice President"],
+    },
     {
       text: "HomeOwners",
       icon: <PeopleRoundedIcon />,
       path: "/app/homeowners",
+      allowedRoles: ["President", "Vice President"],
     },
     {
       text: "Billing & Payments",
       icon: <AssignmentRoundedIcon />,
       path: "/app/billing",
+      allowedRoles: ["President", "Vice President", "Treasurer"],
     },
     {
       text: "Admin Registration",
       icon: <AdminPanel />,
       path: "/app/admin-register",
+      allowedRoles: ["President", "Vice President"],
     },
   ];
 
   const filteredMainListItems = mainListItems.filter((item) => {
-    if (role === "Treasurer") {
-      return item.text === "Expenses" || item.text === "Billing & Payments";
-    }
-    // Add more conditions for other roles if needed
-    return true;
+    if (!role) return false;
+    return item.allowedRoles.includes(role);
   });
 
   return (
