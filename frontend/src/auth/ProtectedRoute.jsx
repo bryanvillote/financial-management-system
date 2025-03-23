@@ -8,6 +8,7 @@ const roleRouteMap = {
   "/app/homeowners": ["President"],
   "/app/billing": ["President", "Treasurer"],
   "/app/admin-register": ["President"],
+  "/app/receipt": ["President", "Vice President", "Home Owner"],
 };
 
 const PrivateRoute = ({ children }) => {

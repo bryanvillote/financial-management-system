@@ -18,7 +18,7 @@ router.post(
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters long"),
     body("role")
-      .isIn(["President", "Vice President", "Treasurer"])
+      .isIn(["President", "Vice President", "Treasurer", "Home Owner"])
       .withMessage("Invalid role"),
   ],
   async (req, res) => {

@@ -12,60 +12,59 @@ import {
 } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
+// import Card from "@mui/material/Card";
 import CssBaseline from "@mui/material/CssBaseline";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import Stack from "@mui/material/Stack";
-import { styled } from "@mui/material/styles";
+// import Stack from "@mui/material/Stack";
+// import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import SideMenu from "../components/dashboard/components/SideMenu";
 import AppTheme from "../utils/share-theme/AppTheme";
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignSelf: "center",
-  width: "100%",
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
-  margin: "auto",
-  maxWidth: "450px",
-  boxShadow: "0px 5px 15px rgba(0,0,0,0.1), 0px 15px 35px rgba(0,0,0,0.05)",
-  [theme.breakpoints.down("sm")]: {
-    padding: theme.spacing(2),
-  },
-}));
+// const StyledCard = styled(Card)(({ theme }) => ({
+//   display: "flex",
+//   flexDirection: "column",
+//   alignSelf: "center",
+//   width: "100%",
+//   padding: theme.spacing(4),
+//   gap: theme.spacing(2),
+//   margin: "auto",
+//   maxWidth: "450px",
+//   boxShadow: "0px 5px 15px rgba(0,0,0,0.1), 0px 15px 35px rgba(0,0,0,0.05)",
+//   [theme.breakpoints.down("sm")]: {
+//     padding: theme.spacing(2),
+//   },
+// }));
 
-const SignInContainer = styled(Stack)(({ theme }) => ({
-  height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
-  width: "100vw",
-  minHeight: "100%",
-  padding: theme.spacing(2),
-  backgroundColor: "#000",
-  // backgroundImage: `linear-gradient(to right, #020140, transparent), url('/loginbg.png')`,
-  // backgroundSize: "cover",
-  // backgroundRepeat: "no-repeat",
-  // backgroundPosition: "center",
-  [theme.breakpoints.up("sm")]: {
-    padding: theme.spacing(4),
-  },
-  "&::before": {
-    content: '""',
-    display: "block",
-    position: "absolute",
-    zIndex: -1,
-    ...theme.applyStyles("dark", {
-      backgroundImage:
-        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
-    }),
-  },
-}));
+// const SignInContainer = styled(Stack)(({ theme }) => ({
+//   height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
+//   width: "100vw",
+//   minHeight: "100%",
+//   padding: theme.spacing(2),
+//   backgroundColor: "#000",
+//   // backgroundImage: `linear-gradient(to right, #020140, transparent), url('/loginbg.png')`,
+//   // backgroundSize: "cover",
+//   // backgroundRepeat: "no-repeat",
+//   // backgroundPosition: "center",
+//   [theme.breakpoints.up("sm")]: {
+//     padding: theme.spacing(4),
+//   },
+//   "&::before": {
+//     content: '""',
+//     display: "block",
+//     position: "absolute",
+//     zIndex: -1,
+//     ...theme.applyStyles("dark", {
+//       backgroundImage:
+//         "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
+//     }),
+//   },
+// }));
 
 export default function AdminReg(props) {
   const [email, setEmail] = useState("");
@@ -80,7 +79,7 @@ export default function AdminReg(props) {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
@@ -96,11 +95,11 @@ export default function AdminReg(props) {
     }
   };
 
-  const handleRedirect = () => {
-    navigate("/login");
-  };
+  // const handleRedirect = () => {
+  //   navigate("/login");
+  // };
 
-  const handleClose = () => setOpen(false);
+  // const handleClose = () => setOpen(false);
 
   const handleRoleChange = (event) => {
     setRole(event.target.value);
@@ -312,6 +311,7 @@ export default function AdminReg(props) {
                 <MenuItem value="President">President</MenuItem>
                 <MenuItem value="Vice President">Vice President</MenuItem>
                 <MenuItem value="Treasurer">Treasurer</MenuItem>
+                <MenuItem value="Home Owner">Home Owner</MenuItem>
               </Select>
             </FormControl>
             {/* this forgot passowrd is disabled for now... */}

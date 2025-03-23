@@ -1,6 +1,7 @@
 import AdminPanel from "@mui/icons-material/AdminPanelSettingsRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import PersonalRecord from "@mui/icons-material/BookOnlineRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import MonetizationIcon from "@mui/icons-material/MonetizationOnRounded";
@@ -68,6 +69,12 @@ export default function MenuContent() {
       icon: <AdminPanel />,
       path: "/app/admin-register",
       allowedRoles: ["President", "Vice President"],
+    },
+    {
+      text: "HO Personal Record",
+      icon: <PersonalRecord />,
+      path: "/app/receipt",
+      allowedRoles: ["President", "Vice President", "Home Owner"],
     },
   ];
 
