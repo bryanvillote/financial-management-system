@@ -223,6 +223,15 @@ export default function AdminReg(props) {
     setShowPassword((prev) => !prev);
   };
 
+  // Update the role options to exclude Home Owner
+  const roleOptions = [
+    "President",
+    "Vice President",
+    "Treasurer",
+    "Secretary",
+    // Remove "Home Owner" from the list
+  ];
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
@@ -293,25 +302,17 @@ export default function AdminReg(props) {
                 }}
               />
             </FormControl>
-            <FormControl>
+            <FormControl required fullWidth>
               <FormLabel>Role</FormLabel>
-              <Select
-                id="role"
-                name="role"
-                value={role}
-                onChange={handleRoleChange}
-                fullWidth
-                variant="outlined"
-                required
-                displayEmpty
-              >
+              <Select value={role} onChange={handleRoleChange} displayEmpty>
                 <MenuItem value="" disabled>
-                  Choose role
+                  Select Role
                 </MenuItem>
-                <MenuItem value="President">President</MenuItem>
-                <MenuItem value="Vice President">Vice President</MenuItem>
-                <MenuItem value="Treasurer">Treasurer</MenuItem>
-                <MenuItem value="Home Owner">Home Owner</MenuItem>
+                {roleOptions.map((roleOption) => (
+                  <MenuItem key={roleOption} value={roleOption}>
+                    {roleOption}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             {/* this forgot passowrd is disabled for now... */}

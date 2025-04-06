@@ -41,6 +41,7 @@ export default function HomeownerRegistration() {
     lotNo: "",
     phoneNo: "",
     email: "",
+    password: "",
   });
   const [homeowners, setHomeowners] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -53,7 +54,10 @@ export default function HomeownerRegistration() {
   // Fetch all homeowners
   const fetchHomeowners = async () => {
     try {
-      const response = await fetch(`${API_URL}/homeowners`);
+      const response = await fetch("http://localhost:8000/homeowners");
+      if (!response.ok) {
+        throw new Error("Failed to fetch homeowners");
+      }
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {
@@ -77,14 +81,19 @@ export default function HomeownerRegistration() {
 
   // Validate inputs
   const validateInputs = (data) => {
-    const { blockNo, lotNo, phoneNo, email } = data;
-    if (!blockNo || !lotNo || !phoneNo || !email) {
+    const { blockNo, lotNo, phoneNo, email, password } = data;
+    if (!blockNo || !lotNo || !phoneNo || !email || !password) {
       setSnackbarMessage("All fields are required");
       setSnackbarOpen(true);
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
       setSnackbarMessage("Please enter a valid email address");
+      setSnackbarOpen(true);
+      return false;
+    }
+    if (password.length < 6) {
+      setSnackbarMessage("Password must be at least 6 characters long");
       setSnackbarOpen(true);
       return false;
     }
@@ -98,35 +107,70 @@ export default function HomeownerRegistration() {
     if (!validateInputs(formData)) return;
 
     try {
-      const url = editingId
-        ? `${API_URL}/homeowners/${editingId}`
-        : `${API_URL}/homeowners/register`;
+      // First register the user account
+      const registerResponse = await fetch(
+        "http://localhost:8000/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            role: "Home Owner",
+          }),
+        }
+      );
 
-      const response = await fetch(url, {
-        method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const registerData = await registerResponse.json();
+
+      if (!registerResponse.ok) {
+        throw new Error(
+          registerData.message || "Failed to create user account"
+        );
+      }
+
+      // Then create the homeowner record
+      const homeownerResponse = await fetch(
+        "http://localhost:8000/homeowners/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            blockNo: formData.blockNo,
+            lotNo: formData.lotNo,
+            phoneNo: formData.phoneNo,
+            email: formData.email,
+            status: "Active",
+            penalty: "None",
+          }),
+        }
+      );
+
+      const homeownerData = await homeownerResponse.json();
+
+      if (!homeownerResponse.ok) {
+        throw new Error(
+          homeownerData.message || "Failed to create homeowner record"
+        );
+      }
+
+      setSnackbarMessage("Homeowner registered successfully");
+      setSnackbarOpen(true);
+
+      // Clear form
+      setFormData({
+        blockNo: "",
+        lotNo: "",
+        phoneNo: "",
+        email: "",
+        password: "",
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setSnackbarMessage(
-          editingId
-            ? "Homeowner updated successfully"
-            : "Homeowner registered successfully"
-        );
-        setSnackbarOpen(true);
-        setFormData({ blockNo: "", lotNo: "", phoneNo: "", email: "" });
-        setEditingId(null);
-        fetchHomeowners();
-      } else {
-        setSnackbarMessage(result.message || "Operation failed");
-        setSnackbarOpen(true);
-      }
+      // Refresh homeowners list immediately after successful registration
+      await fetchHomeowners();
     } catch (error) {
       console.error("Operation error:", error);
-      setSnackbarMessage("Network error occurred");
+      setSnackbarMessage(error.message || "Registration failed");
       setSnackbarOpen(true);
     }
   };
@@ -144,32 +188,33 @@ export default function HomeownerRegistration() {
 
   // Delete homeowner
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this homeowner?")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this homeowner? This will also delete their login account."
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/homeowners/${id}`, {
+      const response = await fetch(`http://localhost:8000/homeowners/${id}`, {
         method: "DELETE",
       });
+
+      const result = await response.json();
 
       if (response.ok) {
         setSnackbarMessage("Homeowner deleted successfully");
         setSnackbarOpen(true);
-        fetchHomeowners();
+        fetchHomeowners(); // Refresh the list
       } else {
-        setSnackbarMessage("Failed to delete homeowner");
-        setSnackbarOpen(true);
+        throw new Error(result.message || "Failed to delete homeowner");
       }
     } catch (error) {
       console.error("Delete error:", error);
-      setSnackbarMessage("Network error occurred");
+      setSnackbarMessage(error.message || "Failed to delete homeowner");
       setSnackbarOpen(true);
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
   };
 
   return (
@@ -239,6 +284,15 @@ export default function HomeownerRegistration() {
                 type="email"
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
               />
+              <TextField
+                required
+                name="password"
+                label="Password"
+                value={formData.password}
+                onChange={handleChange}
+                type="password"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+              />
               <Stack direction="row" spacing={2}>
                 <Button
                   variant="contained"
@@ -246,7 +300,7 @@ export default function HomeownerRegistration() {
                   size="large"
                   sx={{ borderRadius: "10px", flex: 1 }}
                 >
-                  {editingId ? "Update" : "Save"}
+                  {editingId ? "Update" : "Register"}
                 </Button>
                 {editingId && (
                   <Button
@@ -259,6 +313,7 @@ export default function HomeownerRegistration() {
                         lotNo: "",
                         phoneNo: "",
                         email: "",
+                        password: "",
                       });
                     }}
                     sx={{ borderRadius: "10px" }}
@@ -318,7 +373,7 @@ export default function HomeownerRegistration() {
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
+          onClose={() => setSnackbarOpen(false)}
           message={snackbarMessage}
         />
       </Box>

@@ -1,4 +1,5 @@
 const Homeowner = require("../models/Homeowner");
+const User = require("../models/User");
 
 // Create
 exports.registerHomeowner = async (req, res) => {
@@ -32,6 +33,7 @@ exports.registerHomeowner = async (req, res) => {
       lotNo,
       phoneNo,
       email,
+      status: "Active",
     });
 
     await homeowner.save();
@@ -45,7 +47,7 @@ exports.registerHomeowner = async (req, res) => {
     console.error("Error in registerHomeowner:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Failed to register homeowner",
       error: error.message,
     });
   }
@@ -121,7 +123,8 @@ exports.updateHomeowner = async (req, res) => {
 // Delete
 exports.deleteHomeowner = async (req, res) => {
   try {
-    const homeowner = await Homeowner.findByIdAndDelete(req.params.id);
+    // First find the homeowner to get their email
+    const homeowner = await Homeowner.findById(req.params.id);
 
     if (!homeowner) {
       return res.status(404).json({
@@ -130,14 +133,58 @@ exports.deleteHomeowner = async (req, res) => {
       });
     }
 
+    // Delete the auth user record
+    await User.findOneAndDelete({ email: homeowner.email });
+
+    // Delete the homeowner record
+    await Homeowner.findByIdAndDelete(req.params.id);
+
     res.status(200).json({
       success: true,
-      message: "Homeowner deleted successfully",
+      message: "Homeowner and associated user account deleted successfully",
     });
   } catch (error) {
+    console.error("Delete error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to delete homeowner",
+      error: error.message,
+    });
+  }
+};
+
+// Add this new controller method
+exports.getHomeownerByEmail = async (req, res) => {
+  try {
+    const email = req.params.email;
+    const homeowner = await Homeowner.findOne({ email });
+
+    if (!homeowner) {
+      return res.status(404).json({
+        success: false,
+        message: "Homeowner not found",
+      });
+    }
+
+    // Return all homeowner data
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: homeowner._id,
+        blockNo: homeowner.blockNo,
+        lotNo: homeowner.lotNo,
+        phoneNo: homeowner.phoneNo,
+        email: homeowner.email,
+        status: homeowner.status || "Active",
+        penalty: homeowner.penalty || "None",
+        createdAt: homeowner.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching homeowner",
       error: error.message,
     });
   }

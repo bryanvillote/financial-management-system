@@ -7,5 +7,6 @@ router.post("/register", homeownerController.registerHomeowner);
 router.get("/", homeownerController.getAllHomeowners);
 router.put("/:id", homeownerController.updateHomeowner);
 router.delete("/:id", homeownerController.deleteHomeowner);
+router.get("/email/:email", homeownerController.getHomeownerByEmail);
 
 module.exports = router;

@@ -15,7 +15,8 @@ import {
   styled,
 } from "@mui/material";
 import html2pdf from "html2pdf.js";
-import React from "react";
+import { jwtDecode } from "jwt-decode";
+import React, { useEffect, useState } from "react";
 
 // Theme setup
 const theme = createTheme({
@@ -63,6 +64,47 @@ const modalStyle = {
 export default function ReceiptUI() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const receiptRef = React.useRef(null);
+  const [homeownerData, setHomeownerData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchHomeownerData = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("No auth token found");
+        return;
+      }
+
+      const decodedToken = jwtDecode(token);
+      const userEmail = decodedToken.email;
+
+      const response = await fetch(
+        `http://localhost:8000/homeowners/email/${userEmail}`
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to fetch homeowner data");
+      }
+
+      if (!result.data) {
+        throw new Error("No homeowner data found");
+      }
+
+      setHomeownerData(result.data);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching homeowner data:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHomeownerData();
+  }, []);
 
   const handleSaveAsPDF = () => {
     if (!receiptRef.current) return;
@@ -76,9 +118,54 @@ export default function ReceiptUI() {
     html2pdf().set(opt).from(receiptRef.current).save();
   };
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!homeownerData) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Typography>No homeowner data found for your account.</Typography>
+      </Box>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ pl: 50 }}>
+      <Box sx={{ display: "flex", marginLeft: 35 }}>
         <Stack direction="row" spacing={4} alignItems="flex-start">
           {/* Receipt Card */}
           <CustomCard ref={receiptRef} sx={{ flex: 2 }}>
@@ -90,17 +177,37 @@ export default function ReceiptUI() {
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell>Due Period:</TableCell>
-                    <TableCell align="right">January 2024</TableCell>
+                    <TableCell>Block No:</TableCell>
+                    <TableCell align="right">{homeownerData.blockNo}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Due Amount:</TableCell>
-                    <TableCell align="right">₱5,000.00</TableCell>
+                    <TableCell>Lot No:</TableCell>
+                    <TableCell align="right">{homeownerData.lotNo}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: "bold" }}>Total</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                      ₱{total.toFixed(2)}
+                    <TableCell>Email:</TableCell>
+                    <TableCell align="right">{homeownerData.email}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Phone Number:</TableCell>
+                    <TableCell align="right">{homeownerData.phoneNo}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Status:</TableCell>
+                    <TableCell align="right">
+                      {homeownerData.status || "Active"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Penalty:</TableCell>
+                    <TableCell align="right">
+                      {homeownerData.penalty || "None"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Registration Date:</TableCell>
+                    <TableCell align="right">
+                      {new Date(homeownerData.createdAt).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -138,7 +245,7 @@ export default function ReceiptUI() {
           </CustomCard>
         </Stack>
 
-        {/* Exit Confirmation Modal */}
+        {/* Modal */}
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
           <Box sx={modalStyle}>
             <Typography variant="h6" gutterBottom>

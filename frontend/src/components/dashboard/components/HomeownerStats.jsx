@@ -1,180 +1,81 @@
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import LinearProgress, {
-  linearProgressClasses,
-} from "@mui/material/LinearProgress";
-import Stack from "@mui/material/Stack";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
-import { useDrawingArea } from "@mui/x-charts/hooks";
-import { PieChart } from "@mui/x-charts/PieChart";
-import PropTypes from "prop-types";
-import * as React from "react";
+import { useEffect, useState } from "react";
 
-import { PaidIcon, UnpaidIcon } from "../internals/components/CustomIcons";
-
-const data = [
-  { label: "Paid", value: 50000 },
-  { label: "Unpaid", value: 35000 },
-];
-
-const countries = [
-  {
-    name: "Paid",
-    value: 50,
-    flag: <PaidIcon />,
-    color: "hsl(220, 25%, 65%)",
-  },
-  {
-    name: "Unpaid",
-    value: 35,
-    flag: <UnpaidIcon />,
-    color: "hsl(220, 25%, 45%)",
-  },
-];
-
-const StyledText = styled("text", {
-  shouldForwardProp: (prop) => prop !== "variant",
-})(({ theme }) => ({
-  textAnchor: "middle",
-  dominantBaseline: "central",
-  fill: (theme.vars || theme).palette.text.secondary,
-  variants: [
-    {
-      props: {
-        variant: "primary",
-      },
-      style: {
-        fontSize: theme.typography.h5.fontSize,
-      },
-    },
-    {
-      props: ({ variant }) => variant !== "primary",
-      style: {
-        fontSize: theme.typography.body2.fontSize,
-      },
-    },
-    {
-      props: {
-        variant: "primary",
-      },
-      style: {
-        fontWeight: theme.typography.h5.fontWeight,
-      },
-    },
-    {
-      props: ({ variant }) => variant !== "primary",
-      style: {
-        fontWeight: theme.typography.body2.fontWeight,
-      },
-    },
-  ],
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.spacing(2),
+  boxShadow:
+    "hsla(220, 60.00%, 2.00%, 0.12) 0px 8px 30px 0px, hsla(222, 25.50%, 10.00%, 0.06) 0px 10px 25px -5px",
+  height: "100%",
 }));
 
-function PieCenterLabel({ primaryText, secondaryText }) {
-  const { width, height, left, top } = useDrawingArea();
-  const primaryY = top + height / 2 - 10;
-  const secondaryY = primaryY + 24;
-
-  return (
-    <React.Fragment>
-      <StyledText variant="primary" x={left + width / 2} y={primaryY}>
-        {primaryText}
-      </StyledText>
-      <StyledText variant="secondary" x={left + width / 2} y={secondaryY}>
-        {secondaryText}
-      </StyledText>
-    </React.Fragment>
-  );
-}
-
-PieCenterLabel.propTypes = {
-  primaryText: PropTypes.string.isRequired,
-  secondaryText: PropTypes.string.isRequired,
-};
-
-const colors = [
-  "hsl(220, 20%, 65%)",
-  "hsl(220, 20%, 42%)",
-  "hsl(220, 20%, 35%)",
-  "hsl(220, 20%, 25%)",
-];
+const StatBox = ({ title, value, color = "primary.main" }) => (
+  <Box
+    sx={{
+      p: 2,
+      borderRadius: 2,
+      backgroundColor: "rgba(59, 30, 84, 0.04)",
+    }}
+  >
+    <Typography variant="body2" color="text.secondary" gutterBottom>
+      {title}
+    </Typography>
+    <Typography variant="h4" color={color} sx={{ fontWeight: "medium" }}>
+      {value}
+    </Typography>
+  </Box>
+);
 
 export default function HomeownerStats() {
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/homeowners");
+      const data = await response.json();
+
+      setStats({
+        total: data.length,
+        active: data.filter((h) => h.status !== "inactive").length,
+        pending: data.filter((h) => h.status === "pending").length,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
   return (
-    <Card
-      variant="outlined"
-      sx={{ display: "flex", flexDirection: "column", gap: "8px", flexGrow: 1 }}
-    >
-      <CardContent>
-        <Typography component="h2" variant="subtitle2">
-          Payment Status
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <PieChart
-            colors={colors}
-            margin={{
-              left: 80,
-              right: 80,
-              top: 80,
-              bottom: 80,
-            }}
-            series={[
-              {
-                data,
-                innerRadius: 75,
-                outerRadius: 100,
-                paddingAngle: 0,
-                highlightScope: { faded: "global", highlighted: "item" },
-              },
-            ]}
-            height={260}
-            width={260}
-            slotProps={{
-              legend: { hidden: true },
-            }}
-          >
-            <PieCenterLabel primaryText="98.5K" secondaryText="Total" />
-          </PieChart>
-        </Box>
-        {countries.map((country, index) => (
-          <Stack
-            key={index}
-            direction="row"
-            sx={{ alignItems: "center", gap: 2, pb: 2 }}
-          >
-            {country.flag}
-            <Stack sx={{ gap: 1, flexGrow: 1 }}>
-              <Stack
-                direction="row"
-                sx={{
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: "500" }}>
-                  {country.name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {country.value}%
-                </Typography>
-              </Stack>
-              <LinearProgress
-                variant="determinate"
-                aria-label="Number of users by country"
-                value={country.value}
-                sx={{
-                  [`& .${linearProgressClasses.bar}`]: {
-                    backgroundColor: country.color,
-                  },
-                }}
-              />
-            </Stack>
-          </Stack>
-        ))}
-      </CardContent>
-    </Card>
+    <StyledPaper elevation={0}>
+      <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+        Overview
+      </Typography>
+      <Stack spacing={2}>
+        <StatBox
+          title="Total Homeowners"
+          value={stats.total}
+          color="primary.main"
+        />
+        <StatBox
+          title="Active Members"
+          value={stats.active}
+          color="success.main"
+        />
+        {/* <StatBox
+          title="Pending Approval"
+          value={stats.pending}
+          color="warning.main"
+        /> */}
+      </Stack>
+    </StyledPaper>
   );
 }

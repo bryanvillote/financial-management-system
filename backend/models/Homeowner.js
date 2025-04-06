@@ -20,14 +20,19 @@ const homeownerSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  role: {
+    type: String,
+    default: "Home Owner",
+    immutable: true, // Cannot be changed once set
   },
   status: {
     type: String,
-    enum: ["pending", "active", "inactive"],
-    default: "pending",
+    enum: ["Active", "Inactive", "Pending"],
+    default: "Active",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
