@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const homeownerController = require("../controllers/homeownerController");
+const { Homeowner } = require("../models");
 
 // Make sure these match exactly with your controller method names
 router.post("/register", homeownerController.registerHomeowner);

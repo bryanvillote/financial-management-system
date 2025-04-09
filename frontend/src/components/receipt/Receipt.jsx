@@ -210,6 +210,43 @@ export default function ReceiptUI() {
                       {new Date(homeownerData.createdAt).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
+                  {/* Add Penalty Records Section */}
+                  {homeownerData.penaltyRecords &&
+                    homeownerData.penaltyRecords.length > 0 && (
+                      <>
+                        <TableRow>
+                          <TableCell colSpan={2}>
+                            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                              Penalty Records
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                        {homeownerData.penaltyRecords.map((record, index) => (
+                          <React.Fragment key={index}>
+                            <TableRow>
+                              <TableCell>Penalty Type:</TableCell>
+                              <TableCell align="right">
+                                {record.description}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Applied On:</TableCell>
+                              <TableCell align="right">
+                                {new Date(
+                                  record.appliedAt
+                                ).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Duration:</TableCell>
+                              <TableCell align="right">
+                                {record.duration} minutes
+                              </TableCell>
+                            </TableRow>
+                          </React.Fragment>
+                        ))}
+                      </>
+                    )}
                 </TableBody>
               </Table>
             </TableContainer>

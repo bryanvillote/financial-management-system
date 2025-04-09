@@ -1,6 +1,7 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useEffect, useState } from "react";
+import PenaltyCard from "./PenaltyCard";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -28,7 +29,10 @@ const StatBox = ({ title, value, color = "primary.main" }) => (
   </Box>
 );
 
-export default function HomeownerStats() {
+export default function HomeownerStats({
+  selectedHomeowner,
+  onPenaltyApplied,
+}) {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -70,11 +74,10 @@ export default function HomeownerStats() {
           value={stats.active}
           color="success.main"
         />
-        {/* <StatBox
-          title="Pending Approval"
-          value={stats.pending}
-          color="warning.main"
-        /> */}
+        <PenaltyCard
+          selectedHomeowner={selectedHomeowner}
+          onPenaltyApplied={onPenaltyApplied}
+        />
       </Stack>
     </StyledPaper>
   );

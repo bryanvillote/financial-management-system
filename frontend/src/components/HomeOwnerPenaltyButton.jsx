@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function HomeOwnerPenaltyButton() {
   const [homeowners, setHomeowners] = useState([]);
@@ -157,7 +157,7 @@ export default function HomeOwnerPenaltyButton() {
             onClick={() => handleApplyPenalty(selectedHomeowner?._id, 1)}
             fullWidth
           >
-            Warning (2 minutes)
+            Warning (1 hour)
           </Button>
           <Button
             variant="contained"

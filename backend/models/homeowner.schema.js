@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+const penaltyRecordSchema = new mongoose.Schema({
+  level: Number,
+  description: String,
+  appliedAt: Date,
+  duration: Number,
+});
+
 const homeownerSchema = new mongoose.Schema({
   blockNo: {
     type: String,
@@ -23,16 +30,12 @@ const homeownerSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "Home Owner",
-    immutable: true, // Cannot be changed once set
+    immutable: true,
   },
   status: {
     type: String,
     enum: ["Active", "Warning", "Danger", "No Participation"],
     default: "Active",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
   penaltyLevel: {
     type: Number,
@@ -51,9 +54,14 @@ const homeownerSchema = new mongoose.Schema({
     enum: ["None", "Pending", "Active"],
     default: "None",
   },
+  penaltyRecords: [penaltyRecordSchema],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 // Compound unique index for block and lot numbers
 homeownerSchema.index({ blockNo: 1, lotNo: 1 }, { unique: true });
 
-module.exports = mongoose.model("Homeowner", homeownerSchema);
+module.exports = homeownerSchema;

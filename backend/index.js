@@ -6,18 +6,19 @@ const transactionRoutes = require("./routes/transactions");
 const expenseRoutes = require("./routes/expenses");
 const billingRoutes = require("./routes/billings");
 const homeownerRoutes = require("./routes/homeownerRoutes");
+const penaltyRoutes = require("./routes/penaltyRoutes");
 const cors = require("cors");
 
 const app = express();
 
+// Connect to MongoDB first
+mongoose
+  .connect(process.env.DATABASE_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
 // Middleware
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 // Routes
@@ -26,22 +27,13 @@ app.use("/transactions", transactionRoutes);
 app.use("/expenses", expenseRoutes);
 app.use("/billing", billingRoutes);
 app.use("/homeowners", homeownerRoutes);
+app.use("/penalty", penaltyRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: "Something went wrong!",
-    error: err.message,
-  });
+  res.status(500).send("Something broke!");
 });
-
-// Connect to MongoDB
-mongoose
-  .connect(process.env.DATABASE_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
 
 // Start the server
 const PORT = process.env.PORT || 8000;
