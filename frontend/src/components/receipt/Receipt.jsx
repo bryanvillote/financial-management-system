@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import html2pdf from "html2pdf.js";
 import { jwtDecode } from "jwt-decode";
+import { toast } from "mui-sonner";
 import React, { useEffect, useState } from "react";
 
 // Theme setup
@@ -116,6 +117,47 @@ export default function ReceiptUI() {
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
     html2pdf().set(opt).from(receiptRef.current).save();
+  };
+
+  const handleSendEmail = async () => {
+    if (!receiptRef.current || !homeownerData) return;
+
+    // Create a unique ID for the loading toast so we can dismiss it later
+    const loadingToastId = toast.loading("Sending receipt to your email...");
+
+    try {
+      // Get the HTML content of the receipt
+      const receiptHtml = receiptRef.current.outerHTML;
+
+      // Send to backend
+      const response = await fetch("http://localhost:8000/email/send-receipt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          html: receiptHtml,
+          email: homeownerData.email,
+          blockNo: homeownerData.blockNo,
+          lotNo: homeownerData.lotNo,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send email");
+      }
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
+      toast.success("Receipt sent to your email successfully");
+    } catch (error) {
+      console.error("Error sending email:", error);
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToastId);
+      toast.error("Failed to send receipt: " + error.message);
+    }
   };
 
   if (loading) {
@@ -272,8 +314,12 @@ export default function ReceiptUI() {
               >
                 Save as PDF
               </Button>
-              <Button variant="contained" size="large">
-                Send in Email
+              <Button
+                variant="contained"
+                onClick={handleSendEmail}
+                sx={{ textTransform: "none" }}
+              >
+                Send to Email
               </Button>
               <Button variant="text" onClick={() => setModalOpen(true)}>
                 Exit

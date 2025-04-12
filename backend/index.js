@@ -8,6 +8,7 @@ const billingRoutes = require("./routes/billings");
 const homeownerRoutes = require("./routes/homeownerRoutes");
 const penaltyRoutes = require("./routes/penaltyRoutes");
 const cors = require("cors");
+const emailRoutes = require("./routes/emailRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/expenses", expenseRoutes);
 app.use("/billing", billingRoutes);
 app.use("/homeowners", homeownerRoutes);
 app.use("/penalty", penaltyRoutes);
+app.use("/email", emailRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
