@@ -56,7 +56,7 @@ export default function MenuContent() {
       text: "HomeOwners",
       icon: <PeopleRoundedIcon />,
       path: "/app/homeowners",
-      allowedRoles: ["President", "Vice President"],
+      allowedRoles: ["President", "Vice President", "Treasurer"],
     },
     {
       text: "Billing & Payments",

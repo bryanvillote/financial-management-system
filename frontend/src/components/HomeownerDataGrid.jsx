@@ -37,7 +37,7 @@ export default function HomeownerDataGrid() {
             size="small"
             onClick={() => handleApplyPenalty(params.row._id, 1)}
           >
-            Warning
+            5 secs
           </Button>
           <Button
             variant="contained"
@@ -45,7 +45,7 @@ export default function HomeownerDataGrid() {
             size="small"
             onClick={() => handleApplyPenalty(params.row._id, 2)}
           >
-            Danger
+            10 secs
           </Button>
           <Button
             variant="contained"
@@ -53,7 +53,7 @@ export default function HomeownerDataGrid() {
             size="small"
             onClick={() => handleApplyPenalty(params.row._id, 3)}
           >
-            No Part.
+            15 secs
           </Button>
         </Stack>
       ),

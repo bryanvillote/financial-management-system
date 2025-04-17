@@ -1,10 +1,8 @@
-const { Homeowner } = require("../models");
+const { Homeowner, Billing } = require("../models");
 
-const PENALTY_DURATIONS = {
-  1: 2 * 60 * 1000, // 2 minutes in milliseconds
-  2: 4 * 60 * 1000, // 4 minutes
-  3: 5 * 60 * 1000, // 5 minutes
-};
+// Progressive penalty durations (in milliseconds)
+const BASE_PENALTY_DURATION = 10000; // 10 seconds base duration
+const PENALTY_INCREMENT = 10000; // 10 seconds increment
 
 const PENALTY_STATUSES = {
   1: "Warning",
@@ -19,30 +17,64 @@ const PENALTY_DESCRIPTIONS = {
   3: "No Participation Penalty - Severe violation",
 };
 
-const startPenalty = async (homeownerId, penaltyLevel) => {
+const startPenalty = async (homeownerId) => {
   try {
     const homeowner = await Homeowner.findById(homeownerId);
     if (!homeowner) {
       throw new Error("Homeowner not found");
     }
 
-    // Set pending penalty status
-    homeowner.pendingPenaltyLevel = penaltyLevel;
+    // Get current billing status
+    const billing = await Billing.findOne({ homeownerId });
+    if (!billing || billing.dueAmount === 0) {
+      throw new Error("No due payment found");
+    }
+
+    // Calculate next penalty level
+    const currentLevel = homeowner.penaltyLevel || 0;
+    const nextLevel = currentLevel + 1;
+    const penaltyDuration =
+      BASE_PENALTY_DURATION + (nextLevel - 1) * PENALTY_INCREMENT;
+
+    // Set penalty status
+    homeowner.penaltyLevel = nextLevel;
     homeowner.penaltyStartTime = new Date();
-    homeowner.penaltyStatus = "Pending";
+    homeowner.status = PENALTY_STATUSES[Math.min(nextLevel, 3)]; // Cap at level 3 status
+    homeowner.penaltyStatus = "Active";
 
     await homeowner.save();
 
-    // Schedule the penalty application
+    // Schedule the next penalty check
     setTimeout(async () => {
-      await applyPendingPenalty(homeownerId);
-    }, PENALTY_DURATIONS[penaltyLevel]);
+      try {
+        // Check if payment has been made
+        const currentBilling = await Billing.findOne({ homeownerId });
+        if (currentBilling && currentBilling.dueAmount > 0) {
+          // If still unpaid, start next penalty level
+          await startPenalty(homeownerId);
+        } else {
+          // If paid, reset penalty
+          const homeowner = await Homeowner.findById(homeownerId);
+          if (homeowner) {
+            homeowner.penaltyLevel = 0;
+            homeowner.penaltyStartTime = null;
+            homeowner.status = "Active";
+            homeowner.penaltyStatus = "None";
+            await homeowner.save();
+          }
+        }
+      } catch (error) {
+        console.error("Error in penalty progression:", error);
+      }
+    }, penaltyDuration);
 
     // Return message for notification
-    const minutes = PENALTY_DURATIONS[penaltyLevel] / 60000;
+    const seconds = penaltyDuration / 1000;
     return {
-      message: `Penalty will be reflected in the homeowner's account after ${minutes} minutes`,
-      dueTime: new Date(Date.now() + PENALTY_DURATIONS[penaltyLevel]),
+      message: `Penalty level ${nextLevel} applied for ${seconds} seconds`,
+      dueTime: new Date(Date.now() + penaltyDuration),
+      penaltyLevel: nextLevel,
+      duration: seconds,
     };
   } catch (error) {
     throw new Error(`Error starting penalty: ${error.message}`);
@@ -57,7 +89,9 @@ const applyPendingPenalty = async (homeownerId) => {
     }
 
     const elapsedTime = Date.now() - homeowner.penaltyStartTime.getTime();
-    const requiredDuration = PENALTY_DURATIONS[homeowner.pendingPenaltyLevel];
+    const requiredDuration =
+      BASE_PENALTY_DURATION +
+      (homeowner.pendingPenaltyLevel - 1) * PENALTY_INCREMENT;
 
     if (elapsedTime >= requiredDuration) {
       // Apply the penalty
@@ -74,7 +108,10 @@ const applyPendingPenalty = async (homeownerId) => {
         level: homeowner.pendingPenaltyLevel,
         description: PENALTY_DESCRIPTIONS[homeowner.pendingPenaltyLevel],
         appliedAt: new Date(),
-        duration: PENALTY_DURATIONS[homeowner.pendingPenaltyLevel] / 60000, // in minutes
+        duration:
+          (BASE_PENALTY_DURATION +
+            (homeowner.pendingPenaltyLevel - 1) * PENALTY_INCREMENT) /
+          60000, // in minutes
       });
 
       homeowner.pendingPenaltyLevel = null;
@@ -95,26 +132,27 @@ const checkAndUpdatePenalty = async (homeownerId) => {
       throw new Error("Homeowner not found");
     }
 
-    // First check if there's a pending penalty to apply
-    if (homeowner.pendingPenaltyLevel) {
-      const result = await applyPendingPenalty(homeownerId);
-      if (result) {
-        return result;
-      }
-    }
-
-    // Then check if current penalty should be cleared
+    // Check if there's an active penalty
     if (homeowner.penaltyLevel && homeowner.penaltyStartTime) {
-      const elapsedTime = Date.now() - homeowner.penaltyStartTime.getTime();
-      const penaltyDuration = PENALTY_DURATIONS[homeowner.penaltyLevel];
+      const currentTime = new Date();
+      const penaltyDuration =
+        BASE_PENALTY_DURATION +
+        (homeowner.penaltyLevel - 1) * PENALTY_INCREMENT;
 
+      const elapsedTime = currentTime - homeowner.penaltyStartTime;
+
+      // If penalty duration has passed, check billing status
       if (elapsedTime >= penaltyDuration) {
-        // Reset penalty
-        homeowner.penaltyLevel = 0;
-        homeowner.penaltyStartTime = null;
-        homeowner.status = PENALTY_STATUSES[0];
-        homeowner.penaltyStatus = "None";
-        return await homeowner.save();
+        const billing = await Billing.findOne({ homeownerId });
+
+        if (!billing || billing.dueAmount === 0) {
+          // Reset penalty if paid
+          homeowner.penaltyLevel = 0;
+          homeowner.penaltyStartTime = null;
+          homeowner.status = "Active";
+          homeowner.penaltyStatus = "None";
+          await homeowner.save();
+        }
       }
     }
 
@@ -128,6 +166,7 @@ module.exports = {
   startPenalty,
   checkAndUpdatePenalty,
   PENALTY_STATUSES,
-  PENALTY_DURATIONS,
   PENALTY_DESCRIPTIONS,
+  BASE_PENALTY_DURATION,
+  PENALTY_INCREMENT,
 };

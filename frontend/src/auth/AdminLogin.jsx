@@ -64,7 +64,7 @@ const LoginContainer = styled(Stack)(({ theme }) => ({
 const getRoleBasedRedirectPath = (role) => {
   switch (role) {
     case "Treasurer":
-      return "/app/billing";
+      return "/app/homeowners";
     case "Vice President":
       return "/app/dashboard";
     case "President":

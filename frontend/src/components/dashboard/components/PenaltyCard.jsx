@@ -1,41 +1,85 @@
 import { Button, Card, Stack, Typography } from "@mui/material";
 import { toast } from "mui-sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
   const [isApplying, setIsApplying] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
 
-  const handleApplyPenalty = async (penaltyLevel) => {
+  const calculateNextPenaltyDuration = (currentLevel) => {
+    const level = (currentLevel || 0) + 1;
+    return 2 + (level - 1) * 2; // in seconds
+  };
+
+  useEffect(() => {
+    let timer;
+    if (
+      selectedHomeowner?.penaltyStartTime &&
+      selectedHomeowner?.penaltyLevel
+    ) {
+      const updateTimer = () => {
+        const startTime = new Date(
+          selectedHomeowner.penaltyStartTime
+        ).getTime();
+        const duration = (2 + (selectedHomeowner.penaltyLevel - 1) * 2) * 1000; // Convert to milliseconds
+        const endTime = startTime + duration;
+        const now = new Date().getTime();
+        const remaining = Math.max(0, endTime - now);
+
+        if (remaining > 0) {
+          setTimeLeft(Math.ceil(remaining / 1000));
+        } else {
+          setTimeLeft(null);
+        }
+      };
+
+      updateTimer();
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [selectedHomeowner]);
+
+  const handleApplyPenalty = async () => {
     if (!selectedHomeowner) return;
 
     setIsApplying(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch("http://localhost:8000/penalty/start", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           homeownerId: selectedHomeowner._id,
-          penaltyLevel,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to apply penalty");
+        const data = await response.json();
+        throw new Error(data.message || "Failed to apply penalty");
       }
 
       const data = await response.json();
 
-      // Show toast notification
-      toast.success(data.message, {
-        duration: 5000,
-      });
+      const nextDuration = calculateNextPenaltyDuration(
+        selectedHomeowner.penaltyLevel
+      );
+      toast.success(
+        `Penalty level ${data.penaltyLevel} applied for ${data.duration} seconds. Next penalty will be ${nextDuration} seconds if payment remains unpaid.`,
+        {
+          duration: 5000,
+        }
+      );
 
       onPenaltyApplied();
     } catch (error) {
       console.error("Error applying penalty:", error);
-      toast.error("Failed to apply penalty");
+      toast.error(error.message || "Failed to apply penalty");
     } finally {
       setIsApplying(false);
     }
@@ -44,37 +88,34 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
   return (
     <Card sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Apply Penalty
+        Progressive Penalty System
       </Typography>
       {selectedHomeowner ? (
         <>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Selected: {selectedHomeowner.blockNo}-{selectedHomeowner.lotNo}
+            Selected: Block {selectedHomeowner.blockNo} Lot{" "}
+            {selectedHomeowner.lotNo}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Current Level: {selectedHomeowner.penaltyLevel || 0}
+            {timeLeft !== null && ` (${timeLeft}s remaining)`}
+          </Typography>
+          <Typography variant="body2" color="info.main" gutterBottom>
+            Next Penalty:{" "}
+            {calculateNextPenaltyDuration(selectedHomeowner.penaltyLevel)}{" "}
+            seconds
           </Typography>
           <Stack direction="row" spacing={1} mt={2}>
             <Button
               variant="contained"
-              color="warning"
-              disabled={isApplying}
-              onClick={() => handleApplyPenalty(1)}
-            >
-              Warning (2m)
-            </Button>
-            <Button
-              variant="contained"
               color="error"
-              disabled={isApplying}
-              onClick={() => handleApplyPenalty(2)}
+              disabled={isApplying || timeLeft !== null}
+              onClick={handleApplyPenalty}
+              fullWidth
             >
-              Danger (4m)
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              disabled={isApplying}
-              onClick={() => handleApplyPenalty(3)}
-            >
-              No Part. (5m)
+              {timeLeft !== null
+                ? `Penalty Active (${timeLeft}s)`
+                : "Apply Penalty"}
             </Button>
           </Stack>
         </>

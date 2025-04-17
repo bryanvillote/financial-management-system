@@ -1,4 +1,4 @@
-const Homeowner = require("../models/Homeowner");
+const { Homeowner, Billing } = require("../models");
 const User = require("../models/User");
 
 // Create
@@ -16,14 +16,25 @@ exports.registerHomeowner = async (req, res) => {
 
     // Check if homeowner already exists
     const existingHomeowner = await Homeowner.findOne({
-      $or: [{ email }, { blockNo, lotNo }],
+      $or: [{ email }, { $and: [{ blockNo }, { lotNo }] }],
     });
 
     if (existingHomeowner) {
       return res.status(400).json({
         success: false,
         message:
-          "A homeowner with this email or block/lot number already exists",
+          existingHomeowner.email === email
+            ? "A homeowner with this email already exists"
+            : "A homeowner with this block and lot number already exists",
+      });
+    }
+
+    // Check if user exists in auth system
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "A user with this email already exists",
       });
     }
 
@@ -34,9 +45,16 @@ exports.registerHomeowner = async (req, res) => {
       phoneNo,
       email,
       status: "Active",
+      name: req.body.name || `${blockNo}-${lotNo} Resident`, // Add a default name if not provided
     });
 
     await homeowner.save();
+
+    // Initialize billing record with 0 due amount
+    await Billing.create({
+      homeownerId: homeowner._id,
+      dueAmount: 0,
+    });
 
     res.status(201).json({
       success: true,

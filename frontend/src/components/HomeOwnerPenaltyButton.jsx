@@ -157,7 +157,7 @@ export default function HomeOwnerPenaltyButton() {
             onClick={() => handleApplyPenalty(selectedHomeowner?._id, 1)}
             fullWidth
           >
-            Warning (1 hour)
+            5 secs
           </Button>
           <Button
             variant="contained"
@@ -166,7 +166,7 @@ export default function HomeOwnerPenaltyButton() {
             onClick={() => handleApplyPenalty(selectedHomeowner?._id, 2)}
             fullWidth
           >
-            Danger (4 minutes)
+            10 secs
           </Button>
           <Button
             variant="contained"
@@ -175,7 +175,7 @@ export default function HomeOwnerPenaltyButton() {
             onClick={() => handleApplyPenalty(selectedHomeowner?._id, 3)}
             fullWidth
           >
-            No Participation (5 minutes)
+            15 secs
           </Button>
         </Stack>
       </DialogContent>

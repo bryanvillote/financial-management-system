@@ -107,7 +107,32 @@ export default function HomeownerRegistration() {
     if (!validateInputs(formData)) return;
 
     try {
-      // First register the user account
+      // First try to create the homeowner record
+      const homeownerResponse = await fetch(
+        "http://localhost:8000/homeowners/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            blockNo: formData.blockNo,
+            lotNo: formData.lotNo,
+            phoneNo: formData.phoneNo,
+            email: formData.email,
+            name: `${formData.blockNo}-${formData.lotNo} Resident`, // Add a default name
+            status: "Active",
+          }),
+        }
+      );
+
+      const homeownerData = await homeownerResponse.json();
+
+      if (!homeownerResponse.ok) {
+        throw new Error(
+          homeownerData.message || "Failed to create homeowner record"
+        );
+      }
+
+      // If homeowner creation was successful, create the user account
       const registerResponse = await fetch(
         "http://localhost:8000/auth/register",
         {
@@ -124,33 +149,15 @@ export default function HomeownerRegistration() {
       const registerData = await registerResponse.json();
 
       if (!registerResponse.ok) {
+        // If user creation fails, delete the homeowner record
+        await fetch(
+          `http://localhost:8000/homeowners/${homeownerData.data._id}`,
+          {
+            method: "DELETE",
+          }
+        );
         throw new Error(
           registerData.message || "Failed to create user account"
-        );
-      }
-
-      // Then create the homeowner record
-      const homeownerResponse = await fetch(
-        "http://localhost:8000/homeowners/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            blockNo: formData.blockNo,
-            lotNo: formData.lotNo,
-            phoneNo: formData.phoneNo,
-            email: formData.email,
-            status: "Active",
-            penalty: "None",
-          }),
-        }
-      );
-
-      const homeownerData = await homeownerResponse.json();
-
-      if (!homeownerResponse.ok) {
-        throw new Error(
-          homeownerData.message || "Failed to create homeowner record"
         );
       }
 
@@ -166,8 +173,8 @@ export default function HomeownerRegistration() {
         password: "",
       });
 
-      // Refresh homeowners list immediately after successful registration
-      await fetchHomeowners();
+      // Refresh homeowners list
+      fetchHomeowners();
     } catch (error) {
       console.error("Operation error:", error);
       setSnackbarMessage(error.message || "Registration failed");

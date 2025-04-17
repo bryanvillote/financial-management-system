@@ -14,7 +14,8 @@ import {
   createTheme,
   styled,
 } from "@mui/material";
-import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "mui-sonner";
 import React, { useEffect, useState } from "react";
@@ -35,19 +36,22 @@ const theme = createTheme({
 
 // Styled container card
 const CustomCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
+  padding: theme.spacing(3),
   borderRadius: theme.spacing(2),
   boxShadow:
     "hsla(220, 60%, 2%, 0.12) 0px 8px 30px, hsla(222, 25.5%, 10%, 0.06) 0px 10px 25px -5px",
+  background: "#fff",
+  "& .MuiTableCell-root": {
+    borderBottom: "1px solid rgba(224, 224, 224, 0.4)",
+    padding: theme.spacing(1.5),
+  },
+  "& .MuiTableRow-root:last-child .MuiTableCell-root": {
+    borderBottom: "none",
+  },
 }));
 
 // Data logic
 const TAX_RATE = 0.07;
-
-// Use direct values instead of calculated ones
-const subtotal = 5000.0; // Based on the Payment Amount
-const taxes = subtotal * TAX_RATE;
-const total = subtotal + taxes;
 
 // Modal styles
 const modalStyle = {
@@ -58,16 +62,53 @@ const modalStyle = {
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
-  borderRadius: 3,
+  borderRadius: 2,
   width: 400,
+  outline: "none",
+};
+
+// Add penalty level descriptions
+const PENALTY_DESCRIPTIONS = {
+  0: "None",
+  1: "Warning (2 minutes)",
+  2: "Danger (4 minutes)",
+  3: "No Participation (5 minutes)",
+};
+
+// Add these constants at the top of the file
+const BASE_PENALTY_DURATION = 3; // 3 seconds
+const PENALTY_INCREMENT = 3; // 3 seconds increment
+
+// Helper function to calculate current penalty duration
+const calculatePenaltyDuration = (penaltyLevel) => {
+  if (!penaltyLevel || penaltyLevel === 0) return 0;
+  return BASE_PENALTY_DURATION + (penaltyLevel - 1) * PENALTY_INCREMENT;
+};
+
+// Helper function to get penalty description
+const getPenaltyDescription = (penaltyLevel, penaltyStatus) => {
+  if (!penaltyLevel || penaltyLevel === 0) return "No Active Penalty";
+  const duration = calculatePenaltyDuration(penaltyLevel);
+  const status = penaltyStatus === "Pending" ? "Pending" : "Active";
+  return `Level ${penaltyLevel} (${duration} seconds) - ${status}`;
 };
 
 export default function ReceiptUI() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const receiptRef = React.useRef(null);
+  const pdfRef = React.useRef(null);
   const [homeownerData, setHomeownerData] = useState(null);
+  const [billingData, setBillingData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Calculate totals based on actual billing data
+  const calculateTotals = (dueAmount) => {
+    const subtotal = dueAmount || 0;
+    const taxes = subtotal * TAX_RATE;
+    const total = subtotal + taxes;
+    return { subtotal, taxes, total };
+  };
 
   const fetchHomeownerData = async () => {
     try {
@@ -80,23 +121,36 @@ export default function ReceiptUI() {
       const decodedToken = jwtDecode(token);
       const userEmail = decodedToken.email;
 
-      const response = await fetch(
+      // Fetch homeowner data
+      const homeownerResponse = await fetch(
         `http://localhost:8000/homeowners/email/${userEmail}`
       );
-      const result = await response.json();
+      const homeownerResult = await homeownerResponse.json();
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to fetch homeowner data");
+      if (!homeownerResponse.ok) {
+        throw new Error(
+          homeownerResult.message || "Failed to fetch homeowner data"
+        );
       }
 
-      if (!result.data) {
-        throw new Error("No homeowner data found");
+      setHomeownerData(homeownerResult.data);
+
+      // Fetch billing data
+      const billingResponse = await fetch(
+        `http://localhost:8000/billing/by-email/${userEmail}`
+      );
+      const billingResult = await billingResponse.json();
+
+      if (!billingResponse.ok) {
+        throw new Error(
+          billingResult.message || "Failed to fetch billing data"
+        );
       }
 
-      setHomeownerData(result.data);
+      setBillingData(billingResult.data);
       setError(null);
     } catch (error) {
-      console.error("Error fetching homeowner data:", error);
+      console.error("Error fetching data:", error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -107,16 +161,27 @@ export default function ReceiptUI() {
     fetchHomeownerData();
   }, []);
 
-  const handleSaveAsPDF = () => {
-    if (!receiptRef.current) return;
-    const opt = {
-      margin: 1,
-      filename: "receipt.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-    };
-    html2pdf().set(opt).from(receiptRef.current).save();
+  const handleSaveAsPDF = async () => {
+    try {
+      const pdfContent = pdfRef.current;
+      const canvas = await html2canvas(pdfContent, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`Receipt_${homeownerData?.name || "Homeowner"}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
   };
 
   const handleSendEmail = async () => {
@@ -160,7 +225,7 @@ export default function ReceiptUI() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Box
         sx={{
@@ -173,9 +238,7 @@ export default function ReceiptUI() {
         <Typography>Loading...</Typography>
       </Box>
     );
-  }
-
-  if (error) {
+  if (error)
     return (
       <Box
         sx={{
@@ -188,164 +251,432 @@ export default function ReceiptUI() {
         <Typography color="error">{error}</Typography>
       </Box>
     );
-  }
 
-  if (!homeownerData) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Typography>No homeowner data found for your account.</Typography>
-      </Box>
-    );
-  }
+  const { subtotal, taxes, total } = calculateTotals(billingData?.dueAmount);
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex", marginLeft: 35 }}>
-        <Stack direction="row" spacing={4} alignItems="flex-start">
-          {/* Receipt Card */}
-          <CustomCard ref={receiptRef} sx={{ flex: 2 }}>
-            <Typography variant="h6" gutterBottom align="center" sx={{ mb: 3 }}>
-              Centro de San Lorenzo <br />
-              Sta. Rosa, Laguna
-            </Typography>
-            <TableContainer>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Block No:</TableCell>
-                    <TableCell align="right">{homeownerData.blockNo}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Lot No:</TableCell>
-                    <TableCell align="right">{homeownerData.lotNo}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Email:</TableCell>
-                    <TableCell align="right">{homeownerData.email}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Phone Number:</TableCell>
-                    <TableCell align="right">{homeownerData.phoneNo}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Status:</TableCell>
-                    <TableCell align="right">
-                      {homeownerData.status || "Active"}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Penalty:</TableCell>
-                    <TableCell align="right">
-                      {homeownerData.penalty || "None"}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Registration Date:</TableCell>
-                    <TableCell align="right">
-                      {new Date(homeownerData.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                  {/* Add Penalty Records Section */}
-                  {homeownerData.penaltyRecords &&
-                    homeownerData.penaltyRecords.length > 0 && (
+      <Box sx={{ p: 3 }}>
+        {/* Receipt Content */}
+        <Box ref={receiptRef} sx={{ p: 4, maxWidth: 1200, marginLeft: 50 }}>
+          {/* Header */}
+          <Typography variant="h4" align="center" gutterBottom sx={{ mb: 4 }}>
+            Centro de San Lorenzo
+          </Typography>
+
+          {/* Main Content Grid */}
+          <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
+            {/* Left Card - Homeowner Information */}
+            <CustomCard sx={{ flex: 1 }}>
+              <Typography variant="h6" gutterBottom>
+                Homeowner Information
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Block & Lot:
+                      </TableCell>
+                      <TableCell>
+                        Block {homeownerData?.blockNo || "N/A"}, Lot{" "}
+                        {homeownerData?.lotNo || "N/A"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Email:</TableCell>
+                      <TableCell>{homeownerData?.email || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Status:</TableCell>
+                      <TableCell
+                        sx={{
+                          color:
+                            homeownerData?.status === "Active"
+                              ? "success.main"
+                              : "error.main",
+                          fontWeight: "medium",
+                        }}
+                      >
+                        {homeownerData?.status || "Active"}
+                      </TableCell>
+                    </TableRow>
+                    {/* Add Penalty Information */}
+                    {(homeownerData?.penaltyLevel > 0 ||
+                      homeownerData?.penaltyStatus === "Pending") && (
                       <>
                         <TableRow>
-                          <TableCell colSpan={2}>
-                            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-                              Penalty Records
-                            </Typography>
+                          <TableCell sx={{ fontWeight: "bold" }}>
+                            Penalty Level:
+                          </TableCell>
+                          <TableCell sx={{ color: "error.main" }}>
+                            {getPenaltyDescription(
+                              homeownerData.penaltyLevel ||
+                                homeownerData.pendingPenaltyLevel,
+                              homeownerData.penaltyStatus
+                            )}
                           </TableCell>
                         </TableRow>
-                        {homeownerData.penaltyRecords.map((record, index) => (
-                          <React.Fragment key={index}>
-                            <TableRow>
-                              <TableCell>Penalty Type:</TableCell>
-                              <TableCell align="right">
-                                {record.description}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>Applied On:</TableCell>
-                              <TableCell align="right">
-                                {new Date(
-                                  record.appliedAt
-                                ).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>Duration:</TableCell>
-                              <TableCell align="right">
-                                {record.duration} minutes
-                              </TableCell>
-                            </TableRow>
-                          </React.Fragment>
-                        ))}
+                        {homeownerData.penaltyStartTime && (
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: "bold" }}>
+                              Penalty Started:
+                            </TableCell>
+                            <TableCell>
+                              {new Date(
+                                homeownerData.penaltyStartTime
+                              ).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </>
                     )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CustomCard>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CustomCard>
 
-          {/* Action Buttons */}
-          <CustomCard
-            sx={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "stretch",
-              justifyContent: "space-between",
-              minHeight: "280px",
-            }}
-          >
-            <Typography variant="h6">Receipt Options</Typography>
-            <Stack spacing={2} mt={2}>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handleSaveAsPDF}
+            {/* Right Card - Billing Information */}
+            <CustomCard sx={{ flex: 1 }}>
+              <Typography variant="h6" gutterBottom>
+                Billing Information
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold", width: "40%" }}>
+                        Due Amount:
+                      </TableCell>
+                      <TableCell>
+                        ₱{billingData?.dueAmount?.toFixed(2) || "0.00"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Tax ({(TAX_RATE * 100).toFixed(0)}%):
+                      </TableCell>
+                      <TableCell>
+                        ₱{(billingData?.dueAmount * TAX_RATE || 0).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Total Amount Due:
+                      </TableCell>
+                      <TableCell>
+                        ₱
+                        {(
+                          (billingData?.dueAmount || 0) *
+                          (1 + TAX_RATE)
+                        ).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Payment Status:
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          color={
+                            billingData?.isPaid ? "success.main" : "error.main"
+                          }
+                          fontWeight="bold"
+                        >
+                          {billingData?.isPaid ? "PAID" : "UNPAID"}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CustomCard>
+          </Box>
+
+          {/* Center Card - Add Penalty Warning if applicable */}
+          <CustomCard sx={{ mb: 3 }}>
+            <Stack spacing={2}>
+              <Typography variant="h6" align="center" gutterBottom>
+                Payment Reminder
+              </Typography>
+              <Typography variant="body1" align="center" color="text.secondary">
+                Please ensure timely payment of your dues to avoid penalties.
+                {billingData?.lastPaymentDate && (
+                  <>
+                    <br />
+                    Last Payment: ₱{billingData.lastPaymentAmount?.toFixed(
+                      2
+                    )}{" "}
+                    on{" "}
+                    {new Date(billingData.lastPaymentDate).toLocaleDateString()}
+                  </>
+                )}
+              </Typography>
+
+              {/* Add Penalty Warning */}
+              {homeownerData?.penaltyLevel > 0 && (
+                <Typography
+                  variant="body1"
+                  align="center"
+                  color="error.main"
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: "error.lighter",
+                    borderRadius: 1,
+                    fontWeight: "medium",
+                  }}
+                >
+                  ⚠️ Your account is currently under penalty level{" "}
+                  {homeownerData.penaltyLevel}. The penalty duration will
+                  increase by {PENALTY_INCREMENT} seconds for each unpaid
+                  period. Please settle your payment to avoid further penalties.
+                </Typography>
+              )}
+
+              <Typography
+                variant="body2"
+                align="center"
+                color="text.secondary"
+                sx={{ mt: 2 }}
               >
-                Save as PDF
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSendEmail}
-                sx={{ textTransform: "none" }}
+                This is an official receipt from Centro de San Lorenzo. Please
+                keep this for your records.
+              </Typography>
+
+              {/* Action Buttons */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 2,
+                  mt: 2,
+                }}
               >
-                Send to Email
-              </Button>
-              <Button variant="text" onClick={() => setModalOpen(true)}>
-                Exit
-              </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSaveAsPDF}
+                  disabled={loading}
+                  sx={{ minWidth: 150 }}
+                >
+                  Save as PDF
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSendEmail}
+                  disabled={loading}
+                  sx={{ minWidth: 150 }}
+                >
+                  Send to Email
+                </Button>
+              </Box>
             </Stack>
           </CustomCard>
-        </Stack>
+        </Box>
+
+        {/* Hidden PDF content - This will be used for PDF generation */}
+        <Box
+          ref={pdfRef}
+          sx={{
+            position: "absolute",
+            left: "-9999px",
+            width: "210mm",
+            padding: "20mm",
+            backgroundColor: "#ffffff",
+          }}
+        >
+          {/* PDF Header */}
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Typography variant="h4" gutterBottom>
+              Centro de San Lorenzo
+            </Typography>
+            <Typography variant="h5" gutterBottom>
+              Official Receipt
+            </Typography>
+            <Typography variant="body2">
+              Date: {new Date().toLocaleDateString()}
+            </Typography>
+          </Box>
+
+          {/* PDF Content Grid */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {/* Homeowner Information Section */}
+            <Box sx={{ border: "1px solid #ddd", p: 2, borderRadius: "4px" }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ borderBottom: "2px solid #000", pb: 1 }}
+              >
+                Homeowner Information
+              </Typography>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      Block & Lot:
+                    </TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      Block {homeownerData?.blockNo || "N/A"}, Lot{" "}
+                      {homeownerData?.lotNo || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>Email:</TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      {homeownerData?.email || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      Status:
+                    </TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      {homeownerData?.status || "Active"}
+                    </TableCell>
+                  </TableRow>
+                  {(homeownerData?.penaltyLevel > 0 ||
+                    homeownerData?.penaltyStatus === "Pending") && (
+                    <>
+                      <TableRow>
+                        <TableCell sx={{ border: "none", py: 1 }}>
+                          Penalty Status:
+                        </TableCell>
+                        <TableCell sx={{ border: "none", py: 1, color: "red" }}>
+                          {getPenaltyDescription(
+                            homeownerData.penaltyLevel ||
+                              homeownerData.pendingPenaltyLevel,
+                            homeownerData.penaltyStatus
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {homeownerData.penaltyStartTime && (
+                        <TableRow>
+                          <TableCell sx={{ border: "none", py: 1 }}>
+                            Started On:
+                          </TableCell>
+                          <TableCell sx={{ border: "none", py: 1 }}>
+                            {new Date(
+                              homeownerData.penaltyStartTime
+                            ).toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+
+            {/* Billing Information Section */}
+            <Box sx={{ border: "1px solid #ddd", p: 2, borderRadius: "4px" }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ borderBottom: "2px solid #000", pb: 1 }}
+              >
+                Billing Information
+              </Typography>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ width: "40%", border: "none", py: 1 }}>
+                      Due Amount:
+                    </TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      ₱{billingData?.dueAmount?.toFixed(2) || "0.00"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      Tax ({(TAX_RATE * 100).toFixed(0)}%):
+                    </TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      ₱{(billingData?.dueAmount * TAX_RATE || 0).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell
+                      sx={{ border: "none", py: 1, fontWeight: "bold" }}
+                    >
+                      Total Amount Due:
+                    </TableCell>
+                    <TableCell
+                      sx={{ border: "none", py: 1, fontWeight: "bold" }}
+                    >
+                      ₱
+                      {((billingData?.dueAmount || 0) * (1 + TAX_RATE)).toFixed(
+                        2
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      Payment Status:
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        border: "none",
+                        py: 1,
+                        color: billingData?.isPaid ? "green" : "red",
+                      }}
+                    >
+                      {billingData?.isPaid ? "PAID" : "UNPAID"}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+
+            {/* Payment History Section */}
+            {billingData?.lastPaymentDate && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  Last Payment: ₱{billingData.lastPaymentAmount?.toFixed(2)} on{" "}
+                  {new Date(billingData.lastPaymentDate).toLocaleDateString()}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Footer */}
+            <Box sx={{ mt: 4, textAlign: "center" }}>
+              <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+                This is an official receipt from Centro de San Lorenzo. Please
+                keep this for your records.
+              </Typography>
+            </Box>
+
+            {/* Signature Line */}
+            <Box
+              sx={{
+                mt: 6,
+                pt: 4,
+                borderTop: "1px solid #000",
+                width: "200px",
+                mx: "auto",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="body2">Authorized Signature</Typography>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Modal */}
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
           <Box sx={modalStyle}>
-            <Typography variant="h6" gutterBottom>
-              Do you really want to exit the receipt?
+            <Typography variant="h6" component="h2" gutterBottom>
+              Receipt sent successfully!
             </Typography>
-            <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={() => setModalOpen(false)}
-              >
-                Yes
-              </Button>
-              <Button variant="text" onClick={() => setModalOpen(false)}>
-                No
-              </Button>
-            </Stack>
+            <Typography>
+              The receipt has been sent to your email address.
+            </Typography>
+            <Button
+              sx={{ mt: 2 }}
+              variant="contained"
+              onClick={() => setModalOpen(false)}
+            >
+              Close
+            </Button>
           </Box>
         </Modal>
       </Box>

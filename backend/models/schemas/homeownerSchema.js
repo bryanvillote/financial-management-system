@@ -1,12 +1,5 @@
 const mongoose = require("mongoose");
 
-const penaltyRecordSchema = new mongoose.Schema({
-  level: Number,
-  description: String,
-  appliedAt: Date,
-  duration: Number,
-});
-
 const homeownerSchema = new mongoose.Schema({
   blockNo: {
     type: String,
@@ -37,6 +30,10 @@ const homeownerSchema = new mongoose.Schema({
     enum: ["Active", "Warning", "Danger", "No Participation"],
     default: "Active",
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
   penaltyLevel: {
     type: Number,
     default: 0,
@@ -53,11 +50,6 @@ const homeownerSchema = new mongoose.Schema({
     type: String,
     enum: ["None", "Pending", "Active"],
     default: "None",
-  },
-  penaltyRecords: [penaltyRecordSchema],
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 

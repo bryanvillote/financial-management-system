@@ -6,6 +6,7 @@ import Grid from "@mui/material/Grid2";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { DataGrid } from "@mui/x-data-grid";
+import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeownerStats from "./HomeownerStats";
@@ -14,6 +15,7 @@ export default function HomeOwnerGrid() {
   const navigate = useNavigate();
   const [homeowners, setHomeowners] = useState([]);
   const [selectedHomeowner, setSelectedHomeowner] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   const columns = [
     {
@@ -50,6 +52,12 @@ export default function HomeOwnerGrid() {
         />
       ),
     },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 400,
+      renderCell: (params) => getActions(params),
+    },
   ];
 
   const fetchHomeowners = async () => {
@@ -73,6 +81,76 @@ export default function HomeOwnerGrid() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setUserRole(decodedToken.role);
+    }
+  }, []);
+
+  // Customize actions based on role
+  const getActions = (params) => {
+    if (userRole === "Treasurer") {
+      return (
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => handleViewDetails(params.row)}
+          >
+            View Details
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => handleSendNotification(params.row)}
+          >
+            Send Notification
+          </Button>
+        </Stack>
+      );
+    }
+
+    // Return full actions for President and Vice President
+    return (
+      <Stack direction="row" spacing={1}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => handleViewDetails(params.row)}
+        >
+          View Details
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => handleEdit(params.row)}
+        >
+          Edit
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          onClick={() => handleDelete(params.row.id)}
+        >
+          Delete
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="small"
+          onClick={() => handleSendNotification(params.row)}
+        >
+          Send Notification
+        </Button>
+      </Stack>
+    );
+  };
 
   return (
     <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>

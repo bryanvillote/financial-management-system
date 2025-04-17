@@ -5,7 +5,7 @@ const roleRouteMap = {
   "/app/dashboard": ["President", "Vice President"],
   "/app/reports": ["President", "Vice President"],
   "/app/expenses": ["President"],
-  "/app/homeowners": ["President"],
+  "/app/homeowners": ["President", "Vice President", "Treasurer"],
   "/app/billing": ["President", "Treasurer"],
   "/app/admin-register": ["President"],
   "/app/receipt": ["President", "Vice President", "Home Owner"],

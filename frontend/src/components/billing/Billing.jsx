@@ -1,24 +1,19 @@
 import { useTheme } from "@emotion/react";
-import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Header from "../dashboard/components/Header";
 
+import EmailIcon from "@mui/icons-material/Email";
 import { CssBaseline } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Collapse from "@mui/material/Collapse";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { DataGrid } from "@mui/x-data-grid";
+import { useEffect, useState } from "react";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
@@ -80,6 +75,248 @@ const rows = [
 
 export default function Billing(props) {
   const theme = useTheme();
+  const [homeowners, setHomeowners] = useState([]);
+  const [selectedHomeowner, setSelectedHomeowner] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [notificationStatus, setNotificationStatus] = useState({
+    show: false,
+    severity: "success",
+    message: "",
+  });
+  const [editingDueAmount, setEditingDueAmount] = useState("");
+
+  const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      width: 200,
+      renderCell: (params) => params.row.name || "N/A",
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      width: 250,
+      renderCell: (params) => params.row.email || "N/A",
+    },
+    {
+      field: "blockNo",
+      headerName: "Block",
+      width: 100,
+      renderCell: (params) => params.row.blockNo || "N/A",
+    },
+    {
+      field: "lotNo",
+      headerName: "Lot",
+      width: 100,
+      renderCell: (params) => params.row.lotNo || "N/A",
+    },
+    {
+      field: "dueAmount",
+      headerName: "Due Amount",
+      width: 150,
+      renderCell: (params) => {
+        const amount = params.row.dueAmount ?? 0;
+        return `₱${Number(amount).toFixed(2)}`;
+      },
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => handleSelectHomeowner(params.row)}
+        >
+          Select
+        </Button>
+      ),
+    },
+  ];
+
+  const fetchHomeowners = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch homeowners first
+      const homeownersResponse = await fetch(
+        "http://localhost:8000/homeowners"
+      );
+      if (!homeownersResponse.ok) {
+        throw new Error("Failed to fetch homeowners");
+      }
+      const homeownersData = await homeownersResponse.json();
+
+      // Initialize with 0 due amounts
+      const initialHomeowners = homeownersData.map((homeowner) => ({
+        ...homeowner,
+        dueAmount: 0,
+      }));
+
+      // Then fetch billing data
+      const billingResponse = await fetch("http://localhost:8000/billing");
+      if (billingResponse.ok) {
+        const billingData = await billingResponse.json();
+
+        // Update homeowners with billing data only if it exists
+        initialHomeowners.forEach((homeowner) => {
+          const billing = billingData.find(
+            (b) => b.homeownerId === homeowner._id
+          );
+          if (billing && billing.dueAmount !== undefined) {
+            homeowner.dueAmount = billing.dueAmount;
+          }
+        });
+      }
+
+      setHomeowners(initialHomeowners);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectHomeowner = (homeowner) => {
+    if (!homeowner) return;
+
+    setSelectedHomeowner({
+      _id: homeowner._id,
+      name: homeowner.name,
+      email: homeowner.email,
+      blockNo: homeowner.blockNo,
+      lotNo: homeowner.lotNo,
+      dueAmount: homeowner.dueAmount || 0,
+    });
+    setPaymentAmount("");
+    setEditingDueAmount("");
+  };
+
+  const handleDueAmountChange = async (newAmount) => {
+    if (!selectedHomeowner) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/billing/${selectedHomeowner._id}/update-due`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            dueAmount: parseFloat(newAmount),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update due amount");
+      }
+
+      // Update the local state and refresh the data
+      await fetchHomeowners();
+    } catch (error) {
+      console.error("Error updating due amount:", error);
+      setError(error.message);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!selectedHomeowner) return;
+    if (!paymentAmount) return;
+
+    try {
+      const response = await fetch("http://localhost:8000/billing/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          homeownerId: selectedHomeowner._id,
+          amount: parseFloat(paymentAmount),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Payment processing failed");
+      }
+
+      setPaymentAmount("");
+      setSelectedHomeowner(null);
+      await fetchHomeowners();
+    } catch (error) {
+      setError(error.message);
+      console.error("Error processing payment:", error);
+    }
+  };
+
+  const handleSendNotification = async () => {
+    if (!selectedHomeowner) return;
+
+    try {
+      const response = await fetch(
+        "http://localhost:8000/email/send-payment-reminder",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: selectedHomeowner.email,
+            name: selectedHomeowner.name,
+            dueAmount: selectedHomeowner.dueAmount,
+            blockNo: selectedHomeowner.blockNo,
+            lotNo: selectedHomeowner.lotNo,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send notification");
+      }
+
+      setNotificationStatus({
+        show: true,
+        severity: "success",
+        message: "Payment reminder sent successfully",
+      });
+
+      // Hide the success message after 5 seconds
+      setTimeout(() => {
+        setNotificationStatus((prev) => ({ ...prev, show: false }));
+      }, 5000);
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      setNotificationStatus({
+        show: true,
+        severity: "error",
+        message: error.message || "Failed to send notification",
+      });
+    }
+  };
+
+  // Add this function to check if payment amount matches due amount
+  const isPaymentValid = () => {
+    if (!selectedHomeowner || !paymentAmount) return false;
+    return parseFloat(paymentAmount) === selectedHomeowner.dueAmount;
+  };
+
+  useEffect(() => {
+    fetchHomeowners();
+  }, []);
+
+  // Add this useEffect to monitor the homeowners state
+  useEffect(() => {
+    console.log("Current homeowners state:", homeowners);
+  }, [homeowners]);
 
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
@@ -89,185 +326,132 @@ export default function Billing(props) {
           <SideMenu />
           <Box
             component="main"
-            sx={(theme) => ({
-              flexGrow: 1,
-              backgroundColor: theme.vars
-                ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
-                : alpha(theme.palette.background.default, 1),
-              overflow: "auto",
-            })}
+            sx={{ flexGrow: 1, p: 3, mt: { xs: 8, md: 0 } }}
           >
-            <Stack
-              spacing={2}
-              sx={{
-                alignItems: "center",
-                mx: 3,
-                pb: 5,
-                mt: { xs: 8, md: 0 },
-              }}
-            >
-              <Header />
-              <Box sx={{ display: "flex", gap: 3, padding: 4, marginLeft: 30 }}>
-                {/* Left Card Container */}
-                <Card sx={{ flex: 1 }}>
-                  {/* First Table */}
-                  <TableContainer component={Paper}>
-                    <Table sx={{ minWidth: 720 }} aria-label="simple table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Dessert (100g serving)</TableCell>
-                          <TableCell align="right">Calories</TableCell>
-                          <TableCell align="right">Fat&nbsp;(g)</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {rows.map((row) => (
-                          <TableRow
-                            key={row.name}
-                            sx={{
-                              "&:last-child td, &:last-child th": { border: 0 },
-                            }}
-                          >
-                            <TableCell component="th" scope="row">
-                              {row.name}
-                            </TableCell>
-                            <TableCell align="right">{row.calories}</TableCell>
-                            <TableCell align="right">{row.fat}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+            <Header />
+            <Collapse in={notificationStatus.show}>
+              <Alert
+                severity={notificationStatus.severity}
+                sx={{ mb: 2 }}
+                onClose={() =>
+                  setNotificationStatus((prev) => ({ ...prev, show: false }))
+                }
+              >
+                {notificationStatus.message}
+              </Alert>
+            </Collapse>
+            <Box sx={{ display: "flex", gap: 3, padding: 4 }}>
+              {/* Left Card - Homeowners Grid */}
+              <Card sx={{ flex: 2 }}>
+                <DataGrid
+                  rows={homeowners}
+                  columns={columns}
+                  getRowId={(row) => row._id}
+                  initialState={{
+                    pagination: {
+                      paginationModel: { page: 0, pageSize: 10 },
+                    },
+                  }}
+                  pageSizeOptions={[10]}
+                  loading={loading}
+                  error={error}
+                  onStateChange={(state) => {
+                    console.log("DataGrid state:", state);
+                  }}
+                />
+              </Card>
 
-                  {/* Divider */}
-                  <Divider sx={{ marginY: 2 }} />
-
-                  {/* Second Table */}
-                  <TableContainer component={Paper}>
-                    <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Dessert (100g serving)</TableCell>
-                          <TableCell align="right">Calories</TableCell>
-                          <TableCell align="right">Fat&nbsp;(g)</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {rows.map((row) => (
-                          <TableRow
-                            key={row.name}
-                            sx={{
-                              "&:last-child td, &:last-child th": { border: 0 },
-                            }}
-                          >
-                            <TableCell component="th" scope="row">
-                              {row.name}
-                            </TableCell>
-                            <TableCell align="right">{row.calories}</TableCell>
-                            <TableCell align="right">{row.fat}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Card>
-
-                {/* Right Card Container */}
-                <Card sx={{ flex: 1 }}>
-                  {/* Centered TextFields */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flex: 1,
-                      minHeight: "300px",
-                    }}
-                  >
+              {/* Right Card - Payment Form */}
+              <Card sx={{ flex: 1 }}>
+                <Box sx={{ p: 2 }}>
+                  <Stack spacing={3}>
                     <TextField
-                      id="outlined-basic"
+                      label="Selected Homeowner"
+                      value={
+                        selectedHomeowner
+                          ? `${selectedHomeowner.name} (Block ${selectedHomeowner.blockNo} Lot ${selectedHomeowner.lotNo})`
+                          : ""
+                      }
+                      disabled
+                      fullWidth
+                    />
+                    <TextField
                       label="Due Amount"
-                      variant="outlined"
-                      sx={{
-                        mb: 2,
-                        "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                      type="number"
+                      value={
+                        editingDueAmount === ""
+                          ? selectedHomeowner?.dueAmount || ""
+                          : editingDueAmount
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setEditingDueAmount(value);
+                      }}
+                      onBlur={() => {
+                        if (editingDueAmount !== "") {
+                          handleDueAmountChange(editingDueAmount);
+                        }
+                      }}
+                      fullWidth
+                      InputProps={{
+                        startAdornment: (
+                          <span style={{ marginRight: 8 }}>₱</span>
+                        ),
+                      }}
+                      inputProps={{
+                        min: 0,
+                        step: "0.01",
+                        placeholder: "0.00",
                       }}
                     />
                     <TextField
-                      id="outlined-basic-2"
                       label="Payment Amount"
-                      variant="outlined"
-                      sx={{
-                        mb: 2,
-                        "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      fullWidth
+                      error={paymentAmount && !isPaymentValid()}
+                      helperText={
+                        paymentAmount && !isPaymentValid()
+                          ? "Payment amount must match the due amount"
+                          : ""
+                      }
+                      InputProps={{
+                        startAdornment: (
+                          <span style={{ marginRight: 8 }}>₱</span>
+                        ),
+                      }}
+                      inputProps={{
+                        min: 0,
+                        step: "0.01",
+                        placeholder: "0.00",
                       }}
                     />
-                  </Box>
-
-                  {/* Search Field */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: (theme) => theme.spacing(3.5),
-                      right: (theme) => theme.spacing(2),
-                    }}
-                  >
-                    <Paper
-                      component="form"
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        p: "2px 4px",
-                        width: 215,
-                      }}
-                    >
-                      <InputBase
-                        sx={{ ml: 1, flex: 1 }}
-                        placeholder="Search Homeowner"
-                        inputProps={{ "aria-label": "search" }}
-                        borderRadius={4}
-                      />
-                      <IconButton
-                        type="button"
-                        sx={{ p: "10px" }}
-                        aria-label="search"
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Paper>
-                  </Box>
-
-                  {/* Buttons at Bottom-Right */}
-                  <Box
-                    sx={{
-                      mt: "auto",
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      flexDirection: "column",
-                      gap: 2,
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      sx={{ mt: 1, borderRadius: "10px" }}
-                      size="large"
-                    >
-                      Notify Homeowner
-                    </Button>
                     <Button
                       variant="contained"
                       color="primary"
-                      sx={{ mt: 1, borderRadius: "10px" }}
-                      size="large"
+                      onClick={handlePayment}
+                      disabled={
+                        !selectedHomeowner || loading || !isPaymentValid()
+                      }
+                      fullWidth
                     >
-                      Generate Receipt
+                      Process Payment
                     </Button>
-                  </Box>
-                </Card>
-              </Box>
-            </Stack>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() => handleSendNotification()}
+                      disabled={!selectedHomeowner}
+                      startIcon={<EmailIcon />}
+                      fullWidth
+                    >
+                      Notify Homeowner
+                    </Button>
+                  </Stack>
+                </Box>
+              </Card>
+            </Box>
           </Box>
         </Box>
       </ThemeProvider>
