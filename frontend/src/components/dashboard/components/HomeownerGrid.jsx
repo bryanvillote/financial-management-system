@@ -29,6 +29,11 @@ export default function HomeOwnerGrid() {
       width: 100,
     },
     {
+      field: "phoneNo",
+      headerName: "Phone No",
+      width: 150,
+    },
+    {
       field: "email",
       headerName: "Email",
       width: 200,
@@ -47,17 +52,48 @@ export default function HomeOwnerGrid() {
               ? "warning"
               : params.value === "Danger"
               ? "error"
+              : params.value === "No Participation"
+              ? "default"
               : "default"
           }
+          sx={{
+            backgroundColor:
+              params.value === "No Participation" ? "#d32f2f" : undefined,
+            color: params.value === "No Participation" ? "white" : undefined,
+          }}
         />
       ),
     },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 400,
-      renderCell: (params) => getActions(params),
-    },
+    // Only show actions column if user is not a Treasurer
+    ...(userRole !== "Treasurer"
+      ? [
+          {
+            field: "actions",
+            headerName: "Actions",
+            width: 200,
+            renderCell: (params) => (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleEdit(params.row)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => handleDelete(params.row._id)}
+                >
+                  Delete
+                </Button>
+              </Stack>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const fetchHomeowners = async () => {
@@ -77,7 +113,7 @@ export default function HomeOwnerGrid() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchHomeowners();
-    }, 30000); // Refresh every 30 seconds
+    }, 5000); // Update every 5 seconds instead of 30 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -90,66 +126,41 @@ export default function HomeOwnerGrid() {
     }
   }, []);
 
-  // Customize actions based on role
-  const getActions = (params) => {
-    if (userRole === "Treasurer") {
-      return (
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => handleViewDetails(params.row)}
-          >
-            View Details
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={() => handleSendNotification(params.row)}
-          >
-            Send Notification
-          </Button>
-        </Stack>
-      );
+  const handleEdit = (homeowner) => {
+    // Include phoneNo in the homeowner data being passed
+    navigate("/app/registration", {
+      state: {
+        isEditing: true,
+        homeowner: {
+          id: homeowner._id,
+          blockNo: homeowner.blockNo,
+          lotNo: homeowner.lotNo,
+          phoneNo: homeowner.phoneNo,
+          email: homeowner.email,
+        },
+      },
+    });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this homeowner?")) {
+      return;
     }
 
-    // Return full actions for President and Vice President
-    return (
-      <Stack direction="row" spacing={1}>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => handleViewDetails(params.row)}
-        >
-          View Details
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={() => handleEdit(params.row)}
-        >
-          Edit
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          size="small"
-          onClick={() => handleDelete(params.row.id)}
-        >
-          Delete
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="small"
-          onClick={() => handleSendNotification(params.row)}
-        >
-          Send Notification
-        </Button>
-      </Stack>
-    );
+    try {
+      const response = await fetch(`http://localhost:8000/homeowners/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete homeowner");
+      }
+
+      // Refresh the homeowners list
+      fetchHomeowners();
+    } catch (error) {
+      console.error("Error deleting homeowner:", error);
+    }
   };
 
   return (
@@ -163,17 +174,20 @@ export default function HomeOwnerGrid() {
         <Typography variant="h5" fontWeight="medium">
           Home Owners
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/app/registration")}
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-          }}
-        >
-          Add Homeowner
-        </Button>
+        {/* Only show Add Homeowner button if user is not a Treasurer */}
+        {userRole !== "Treasurer" && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate("/app/registration")}
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+            }}
+          >
+            Add Homeowner
+          </Button>
+        )}
       </Stack>
 
       <Grid container spacing={3}>

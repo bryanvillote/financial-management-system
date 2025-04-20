@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
       email: homeowner.email,
       blockNo: homeowner.blockNo,
       lotNo: homeowner.lotNo,
+      phoneNo: homeowner.phoneNo,
       status: homeowner.status || "Active",
     }));
     console.log("Sending homeowners:", formattedHomeowners); // Debug log

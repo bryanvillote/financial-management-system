@@ -14,6 +14,7 @@ import Collapse from "@mui/material/Collapse";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
+import { formatCurrency } from "../../utils/formatCurrency";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
@@ -118,7 +119,7 @@ export default function Billing(props) {
       width: 150,
       renderCell: (params) => {
         const amount = params.row.dueAmount ?? 0;
-        return `₱${Number(amount).toFixed(2)}`;
+        return formatCurrency(amount);
       },
     },
     {
@@ -142,38 +143,32 @@ export default function Billing(props) {
       setLoading(true);
       setError(null);
 
-      // Fetch homeowners first
-      const homeownersResponse = await fetch(
-        "http://localhost:8000/homeowners"
-      );
+      // Fetch both homeowners and billing data
+      const [homeownersResponse, billingResponse] = await Promise.all([
+        fetch("http://localhost:8000/homeowners"),
+        fetch("http://localhost:8000/billing"),
+      ]);
+
       if (!homeownersResponse.ok) {
         throw new Error("Failed to fetch homeowners");
       }
-      const homeownersData = await homeownersResponse.json();
 
-      // Initialize with 0 due amounts
-      const initialHomeowners = homeownersData.map((homeowner) => ({
+      const homeownersData = await homeownersResponse.json();
+      const billingData = await billingResponse.json();
+
+      // Create a map of billing data by homeowner ID for faster lookups
+      const billingMap = billingData.reduce((acc, billing) => {
+        acc[billing.homeownerId] = billing;
+        return acc;
+      }, {});
+
+      // Combine homeowner and billing data
+      const combinedData = homeownersData.map((homeowner) => ({
         ...homeowner,
-        dueAmount: 0,
+        dueAmount: billingMap[homeowner._id]?.dueAmount ?? 0,
       }));
 
-      // Then fetch billing data
-      const billingResponse = await fetch("http://localhost:8000/billing");
-      if (billingResponse.ok) {
-        const billingData = await billingResponse.json();
-
-        // Update homeowners with billing data only if it exists
-        initialHomeowners.forEach((homeowner) => {
-          const billing = billingData.find(
-            (b) => b.homeownerId === homeowner._id
-          );
-          if (billing && billing.dueAmount !== undefined) {
-            homeowner.dueAmount = billing.dueAmount;
-          }
-        });
-      }
-
-      setHomeowners(initialHomeowners);
+      setHomeowners(combinedData);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(error.message);
@@ -197,8 +192,8 @@ export default function Billing(props) {
     setEditingDueAmount("");
   };
 
-  const handleDueAmountChange = async (newAmount) => {
-    if (!selectedHomeowner) return;
+  const handleUpdateDueAmount = async () => {
+    if (!selectedHomeowner || editingDueAmount === "") return;
 
     try {
       const response = await fetch(
@@ -209,7 +204,7 @@ export default function Billing(props) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            dueAmount: parseFloat(newAmount),
+            dueAmount: Number(editingDueAmount),
           }),
         }
       );
@@ -218,11 +213,28 @@ export default function Billing(props) {
         throw new Error("Failed to update due amount");
       }
 
-      // Update the local state and refresh the data
+      // Show success notification
+      setNotificationStatus({
+        show: true,
+        severity: "success",
+        message: "Due amount updated successfully",
+      });
+
+      // Refresh the data
       await fetchHomeowners();
+
+      // Update selected homeowner
+      setSelectedHomeowner((prev) => ({
+        ...prev,
+        dueAmount: Number(editingDueAmount),
+      }));
     } catch (error) {
       console.error("Error updating due amount:", error);
-      setError(error.message);
+      setNotificationStatus({
+        show: true,
+        severity: "error",
+        message: "Failed to update due amount",
+      });
     }
   };
 
@@ -311,6 +323,8 @@ export default function Billing(props) {
 
   useEffect(() => {
     fetchHomeowners();
+    const interval = setInterval(fetchHomeowners, 5000); // Refresh every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   // Add this useEffect to monitor the homeowners state
@@ -389,7 +403,7 @@ export default function Billing(props) {
                       }}
                       onBlur={() => {
                         if (editingDueAmount !== "") {
-                          handleDueAmountChange(editingDueAmount);
+                          handleUpdateDueAmount();
                         }
                       }}
                       fullWidth

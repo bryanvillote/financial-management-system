@@ -4,7 +4,6 @@ import MuiCard from "@mui/material/Card";
 import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
-import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormLabel from "@mui/material/FormLabel";
@@ -243,7 +242,7 @@ export default function AdminLog(props) {
                 type="email"
                 name="email"
                 placeholder="your@email.com"
-                autoComplete="email"
+                autoComplete="off"
                 autoFocus
                 required
                 fullWidth
@@ -257,7 +256,7 @@ export default function AdminLog(props) {
                 placeholder="••••••"
                 type="password"
                 id="password"
-                autoComplete="current-password"
+                autoComplete="off"
                 required
                 fullWidth
                 variant="outlined"
@@ -276,19 +275,6 @@ export default function AdminLog(props) {
             >
               Log in
             </Button>
-          </Box>
-          <Divider>or</Divider>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography sx={{ textAlign: "center" }}>
-              Don&apos;t have an account?{" "}
-              <Button
-                component="button"
-                variant="text"
-                onClick={handleRedirect}
-              >
-                Register
-              </Button>
-            </Typography>
           </Box>
         </Card>
       </LoginContainer>

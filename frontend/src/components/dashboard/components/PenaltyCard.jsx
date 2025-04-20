@@ -21,7 +21,7 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
         const startTime = new Date(
           selectedHomeowner.penaltyStartTime
         ).getTime();
-        const duration = (2 + (selectedHomeowner.penaltyLevel - 1) * 2) * 1000; // Convert to milliseconds
+        const duration = 5000; // Fixed 5 seconds for each level
         const endTime = startTime + duration;
         const now = new Date().getTime();
         const remaining = Math.max(0, endTime - now);
@@ -30,6 +30,8 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
           setTimeLeft(Math.ceil(remaining / 1000));
         } else {
           setTimeLeft(null);
+          // Fetch updated data when timer expires
+          onPenaltyApplied();
         }
       };
 
@@ -40,7 +42,7 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [selectedHomeowner]);
+  }, [selectedHomeowner, onPenaltyApplied]);
 
   const handleApplyPenalty = async () => {
     if (!selectedHomeowner) return;

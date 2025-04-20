@@ -151,15 +151,18 @@ exports.deleteHomeowner = async (req, res) => {
       });
     }
 
-    // Delete the auth user record
+    // Delete the auth user record if exists
     await User.findOneAndDelete({ email: homeowner.email });
+
+    // Delete the associated billing record
+    await Billing.findOneAndDelete({ homeownerId: homeowner._id });
 
     // Delete the homeowner record
     await Homeowner.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
-      message: "Homeowner and associated user account deleted successfully",
+      message: "Homeowner and all associated records deleted successfully",
     });
   } catch (error) {
     console.error("Delete error:", error);

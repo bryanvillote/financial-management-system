@@ -57,6 +57,17 @@ const homeownerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Add pre-delete middleware
+homeownerSchema.pre("remove", async function (next) {
+  try {
+    // Delete associated billing record
+    await mongoose.model("Billing").deleteOne({ homeownerId: this._id });
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Add compound index for block and lot numbers
 homeownerSchema.index({ blockNo: 1, lotNo: 1 }, { unique: true });
 

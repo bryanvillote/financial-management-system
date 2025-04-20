@@ -6,11 +6,13 @@ const billingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Homeowner",
       required: true,
+      unique: true,
     },
     dueAmount: {
       type: Number,
       required: true,
       default: 0,
+      min: 0,
     },
     lastPaymentDate: {
       type: Date,
@@ -21,5 +23,7 @@ const billingSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+billingSchema.index({ homeownerId: 1 });
 
 module.exports = billingSchema;

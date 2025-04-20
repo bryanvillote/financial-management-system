@@ -19,6 +19,7 @@ import jsPDF from "jspdf";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "mui-sonner";
 import React, { useEffect, useState } from "react";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 // Theme setup
 const theme = createTheme({
@@ -349,7 +350,7 @@ export default function ReceiptUI() {
                         Due Amount:
                       </TableCell>
                       <TableCell>
-                        ₱{billingData?.dueAmount?.toFixed(2) || "0.00"}
+                        {formatCurrency(billingData?.dueAmount)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -357,7 +358,7 @@ export default function ReceiptUI() {
                         Tax ({(TAX_RATE * 100).toFixed(0)}%):
                       </TableCell>
                       <TableCell>
-                        ₱{(billingData?.dueAmount * TAX_RATE || 0).toFixed(2)}
+                        {formatCurrency(billingData?.dueAmount * TAX_RATE)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -365,11 +366,9 @@ export default function ReceiptUI() {
                         Total Amount Due:
                       </TableCell>
                       <TableCell>
-                        ₱
-                        {(
-                          (billingData?.dueAmount || 0) *
-                          (1 + TAX_RATE)
-                        ).toFixed(2)}
+                        {formatCurrency(
+                          (billingData?.dueAmount || 0) * (1 + TAX_RATE)
+                        )}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -404,10 +403,8 @@ export default function ReceiptUI() {
                 {billingData?.lastPaymentDate && (
                   <>
                     <br />
-                    Last Payment: ₱{billingData.lastPaymentAmount?.toFixed(
-                      2
-                    )}{" "}
-                    on{" "}
+                    Last Payment:{" "}
+                    {formatCurrency(billingData.lastPaymentAmount)} on{" "}
                     {new Date(billingData.lastPaymentDate).toLocaleDateString()}
                   </>
                 )}
@@ -583,7 +580,7 @@ export default function ReceiptUI() {
                       Due Amount:
                     </TableCell>
                     <TableCell sx={{ border: "none", py: 1 }}>
-                      ₱{billingData?.dueAmount?.toFixed(2) || "0.00"}
+                      {formatCurrency(billingData?.dueAmount)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -591,7 +588,7 @@ export default function ReceiptUI() {
                       Tax ({(TAX_RATE * 100).toFixed(0)}%):
                     </TableCell>
                     <TableCell sx={{ border: "none", py: 1 }}>
-                      ₱{(billingData?.dueAmount * TAX_RATE || 0).toFixed(2)}
+                      {formatCurrency(billingData?.dueAmount * TAX_RATE)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -603,9 +600,8 @@ export default function ReceiptUI() {
                     <TableCell
                       sx={{ border: "none", py: 1, fontWeight: "bold" }}
                     >
-                      ₱
-                      {((billingData?.dueAmount || 0) * (1 + TAX_RATE)).toFixed(
-                        2
+                      {formatCurrency(
+                        (billingData?.dueAmount || 0) * (1 + TAX_RATE)
                       )}
                     </TableCell>
                   </TableRow>
@@ -631,7 +627,8 @@ export default function ReceiptUI() {
             {billingData?.lastPaymentDate && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2">
-                  Last Payment: ₱{billingData.lastPaymentAmount?.toFixed(2)} on{" "}
+                  Last Payment: {formatCurrency(billingData.lastPaymentAmount)}{" "}
+                  on{" "}
                   {new Date(billingData.lastPaymentDate).toLocaleDateString()}
                 </Typography>
               </Box>

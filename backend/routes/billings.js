@@ -5,34 +5,17 @@ const { Homeowner, Billing } = require("../models");
 // Get all billing information
 router.get("/", async (req, res) => {
   try {
-    const homeowners = await Homeowner.find().lean();
-    const billingInfo = await Promise.all(
-      homeowners.map(async (homeowner) => {
-        // Find or create billing record
-        let billing = await Billing.findOne({
-          homeownerId: homeowner._id,
-        }).lean();
+    const billings = await Billing.find().lean();
 
-        // If no billing record exists, create one with 0 due amount
-        if (!billing) {
-          billing = await Billing.create({
-            homeownerId: homeowner._id,
-            dueAmount: 0,
-          });
-        }
+    // Map billing records to include all necessary information
+    const billingInfo = billings.map((billing) => ({
+      _id: billing._id.toString(),
+      homeownerId: billing.homeownerId.toString(),
+      dueAmount: billing.dueAmount || 0,
+      lastPaymentDate: billing.lastPaymentDate,
+      lastPaymentAmount: billing.lastPaymentAmount,
+    }));
 
-        return {
-          _id: homeowner._id.toString(),
-          homeownerId: homeowner._id.toString(),
-          name: homeowner.name,
-          email: homeowner.email,
-          blockNo: homeowner.blockNo,
-          lotNo: homeowner.lotNo,
-          dueAmount: billing.dueAmount || 0, // Ensure we default to 0 if undefined
-        };
-      })
-    );
-    console.log("Sending billing info:", billingInfo); // Debug log
     res.json(billingInfo);
   } catch (error) {
     console.error("Error in GET /billing:", error);
@@ -146,7 +129,7 @@ router.post("/payment", async (req, res) => {
   }
 });
 
-// Add this route to your existing billings.js
+// Update the route that handles due amount updates
 router.put("/:id/update-due", async (req, res) => {
   try {
     const { id } = req.params;
@@ -159,23 +142,33 @@ router.put("/:id/update-due", async (req, res) => {
       });
     }
 
-    const billing = await Billing.findOne({ homeownerId: id });
-    if (!billing) {
-      // Create new billing record if none exists
-      const newBilling = new Billing({
-        homeownerId: id,
-        dueAmount: dueAmount,
-      });
-      await newBilling.save();
-    } else {
-      // Update existing billing record
-      billing.dueAmount = dueAmount;
-      await billing.save();
-    }
+    // Convert dueAmount to number and ensure it's not negative
+    const newDueAmount = Math.max(0, Number(dueAmount));
+
+    // Use findOneAndUpdate with upsert to create if doesn't exist
+    const billing = await Billing.findOneAndUpdate(
+      { homeownerId: id },
+      {
+        $set: {
+          dueAmount: newDueAmount,
+          // Only update lastPaymentDate if amount is being reduced
+          ...(newDueAmount === 0 ? { lastPaymentDate: new Date() } : {}),
+        },
+      },
+      {
+        new: true, // Return updated document
+        upsert: true, // Create if doesn't exist
+        runValidators: true, // Run schema validations
+      }
+    );
+
+    // Log the update for debugging
+    console.log("Updated billing:", billing);
 
     res.json({
       success: true,
       message: "Due amount updated successfully",
+      data: billing,
     });
   } catch (error) {
     console.error("Error updating due amount:", error);
