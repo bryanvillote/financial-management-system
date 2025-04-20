@@ -74,7 +74,7 @@ export default function MenuContent() {
       text: "HO Personal Record",
       icon: <PersonalRecord />,
       path: "/app/receipt",
-      allowedRoles: ["President", "Vice President", "Home Owner"],
+      allowedRoles: ["Vice President", "Home Owner"],
     },
   ];
 
