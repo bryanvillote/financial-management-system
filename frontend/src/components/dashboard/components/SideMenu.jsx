@@ -5,6 +5,9 @@ import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 import MenuContent from "./MenuContent";
 import OptionsMenu from "./OptionsMenu";
 
@@ -22,6 +25,54 @@ const Drawer = styled(MuiDrawer)({
 });
 
 export default function SideMenu() {
+  const [userData, setUserData] = useState({
+    email: "",
+    role: "",
+    name: "",
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const decodedToken = jwtDecode(token);
+
+        // Get user data directly from the token
+        setUserData({
+          email: decodedToken.email,
+          role: decodedToken.role,
+          name:
+            decodedToken.role === "Home Owner"
+              ? await fetchHomeownerName(decodedToken.email, token)
+              : decodedToken.email.split("@")[0],
+        });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    const fetchHomeownerName = async (email, token) => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/homeowners/email/${email}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return `${response.data.firstName} ${response.data.lastName}`;
+      } catch (error) {
+        console.error("Error fetching homeowner data:", error);
+        return email.split("@")[0]; // Fallback to email username if homeowner data fetch fails
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <Drawer
       variant="permanent"
@@ -56,7 +107,7 @@ export default function SideMenu() {
       >
         <Avatar
           sizes="small"
-          alt="Riley Carter"
+          alt={userData.name || "User"}
           src="/static/images/avatar/7.jpg"
           sx={{ width: 36, height: 36 }}
         />
@@ -65,10 +116,16 @@ export default function SideMenu() {
             variant="body2"
             sx={{ fontWeight: 500, lineHeight: "16px" }}
           >
-            Maxine Mabalabag
+            {userData.name || "User"}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            maxine@gmail.com
+            {userData.email}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: "text.secondary", display: "block" }}
+          >
+            {userData.role}
           </Typography>
         </Box>
         <OptionsMenu />

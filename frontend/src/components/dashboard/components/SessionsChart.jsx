@@ -5,54 +5,81 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
-import PropTypes from "prop-types";
-
-function AreaGradient({ color, id }) {
-  return (
-    <defs>
-      <linearGradient id={id} x1="50%" y1="0%" x2="50%" y2="100%">
-        <stop offset="0%" stopColor={color} stopOpacity={0.5} />
-        <stop offset="100%" stopColor={color} stopOpacity={0} />
-      </linearGradient>
-    </defs>
-  );
-}
-
-AreaGradient.propTypes = {
-  color: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired,
-};
-
-function getDaysInMonth(month, year) {
-  const date = new Date(year, month, 0);
-  const monthName = date.toLocaleDateString("en-US", {
-    month: "short",
-  });
-  const daysInMonth = date.getDate();
-  const days = [];
-  let i = 1;
-  while (days.length < daysInMonth) {
-    days.push(`${monthName} ${i}`);
-    i += 1;
-  }
-  return days;
-}
+import { useEffect, useState } from "react";
 
 export default function SessionsChart() {
   const theme = useTheme();
-  const data = getDaysInMonth(4, 2024);
+  const [chartData, setChartData] = useState({
+    dates: [],
+    payments: [],
+    totalAmount: 0,
+    trend: 0,
+  });
 
-  const colorPalette = [
-    theme.palette.primary.light,
-    theme.palette.primary.main,
-    theme.palette.primary.dark,
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/billing");
+        const data = await response.json();
+
+        // Process last 30 days of payments
+        const last30Days = Array(30).fill(0);
+        const dates = Array(30)
+          .fill(0)
+          .map((_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (29 - i));
+            return d.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            });
+          });
+
+        let totalAmount = 0;
+        data.forEach((billing) => {
+          if (billing.lastPaymentDate) {
+            const dayIndex =
+              29 -
+              Math.floor(
+                (Date.now() - new Date(billing.lastPaymentDate).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+            if (dayIndex >= 0 && dayIndex < 30) {
+              last30Days[dayIndex] += billing.lastPaymentAmount || 0;
+              totalAmount += billing.lastPaymentAmount || 0;
+            }
+          }
+        });
+
+        // Calculate trend (compare last 15 days with previous 15 days)
+        const recentSum = last30Days.slice(15).reduce((a, b) => a + b, 0);
+        const previousSum = last30Days.slice(0, 15).reduce((a, b) => a + b, 0);
+        const trend =
+          previousSum !== 0
+            ? ((recentSum - previousSum) / previousSum) * 100
+            : 0;
+
+        setChartData({
+          dates,
+          payments: last30Days,
+          totalAmount,
+          trend,
+        });
+      } catch (error) {
+        console.error("Error fetching payment data:", error);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card variant="outlined" sx={{ width: "100%" }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Monthly Trend
+          Payment Trends
         </Typography>
         <Stack sx={{ justifyContent: "space-between" }}>
           <Stack
@@ -64,91 +91,42 @@ export default function SessionsChart() {
             }}
           >
             <Typography variant="h4" component="p">
-              13,277
+              {chartData.totalAmount.toLocaleString("en-PH", {
+                style: "currency",
+                currency: "PHP",
+              })}
             </Typography>
-            <Chip size="small" color="success" label="+35%" />
+            <Chip
+              size="small"
+              color={chartData.trend > 0 ? "success" : "error"}
+              label={`${chartData.trend.toFixed(1)}%`}
+            />
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Trend for the last 30 days
+            Total payments for the last 30 days
           </Typography>
         </Stack>
         <LineChart
-          colors={colorPalette}
+          colors={[theme.palette.primary.main]}
           xAxis={[
             {
               scaleType: "point",
-              data,
-              tickInterval: (index, i) => (i + 1) % 5 === 0,
+              data: chartData.dates,
+              tickInterval: (index) => index % 5 === 0,
             },
           ]}
           series={[
             {
-              id: "direct",
-              label: "Direct",
-              showMark: false,
-              curve: "linear",
-              stack: "total",
+              data: chartData.payments,
               area: true,
-              stackOrder: "ascending",
-              data: [
-                300, 900, 600, 1200, 1500, 1800, 2400, 2100, 2700, 3000, 1800,
-                3300, 3600, 3900, 4200, 4500, 3900, 4800, 5100, 5400, 4800,
-                5700, 6000, 6300, 6600, 6900, 7200, 7500, 7800, 8100,
-              ],
-            },
-            {
-              id: "referral",
-              label: "Referral",
               showMark: false,
-              curve: "linear",
-              stack: "total",
-              area: true,
-              stackOrder: "ascending",
-              data: [
-                500, 900, 700, 1400, 1100, 1700, 2300, 2000, 2600, 2900, 2300,
-                3200, 3500, 3800, 4100, 4400, 2900, 4700, 5000, 5300, 5600,
-                5900, 6200, 6500, 5600, 6800, 7100, 7400, 7700, 8000,
-              ],
-            },
-            {
-              id: "organic",
-              label: "Organic",
-              showMark: false,
-              curve: "linear",
-              stack: "total",
-              stackOrder: "ascending",
-              data: [
-                1000, 1500, 1200, 1700, 1300, 2000, 2400, 2200, 2600, 2800,
-                2500, 3000, 3400, 3700, 3200, 3900, 4100, 3500, 4300, 4500,
-                4000, 4700, 5000, 5200, 4800, 5400, 5600, 5900, 6100, 6300,
-              ],
-              area: true,
+              label: "Payments",
             },
           ]}
           height={250}
           margin={{ left: 50, right: 20, top: 20, bottom: 20 }}
           grid={{ horizontal: true }}
-          sx={{
-            "& .MuiAreaElement-series-organic": {
-              fill: "url('#organic')",
-            },
-            "& .MuiAreaElement-series-referral": {
-              fill: "url('#referral')",
-            },
-            "& .MuiAreaElement-series-direct": {
-              fill: "url('#direct')",
-            },
-          }}
-          slotProps={{
-            legend: {
-              hidden: true,
-            },
-          }}
-        >
-          <AreaGradient color={theme.palette.primary.dark} id="organic" />
-          <AreaGradient color={theme.palette.primary.main} id="referral" />
-          <AreaGradient color={theme.palette.primary.light} id="direct" />
-        </LineChart>
+        />
       </CardContent>
     </Card>
   );

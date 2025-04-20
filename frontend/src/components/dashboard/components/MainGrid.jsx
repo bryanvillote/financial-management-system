@@ -1,48 +1,181 @@
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
+import { useEffect, useState } from "react";
 import PageViewsBarChart from "./PageViewsBarChart";
 import SessionsChart from "./SessionsChart";
 import StatCard from "./StatCard";
 
-const data = [
-  {
-    title: "Monthly Payments",
-    value: "400k",
-    interval: "Last 30 days",
-    trend: "up",
-    data: [
-      200, 24, 220, 260, 240, 380, 100, 240, 280, 240, 300, 340, 320, 360, 340,
-      380, 360, 400, 380, 420, 400, 640, 340, 460, 440, 480, 460, 600, 880, 920,
-    ],
-  },
-  {
-    title: "Car Sticker Owner",
-    value: "126",
-    interval: "Last 30 days",
-    trend: "down",
-    data: [
-      1640, 1250, 970, 1130, 1050, 900, 720, 1080, 900, 450, 920, 820, 840, 600,
-      820, 780, 800, 760, 380, 740, 660, 620, 840, 500, 520, 480, 400, 360, 300,
-      220,
-    ],
-  },
-  {
-    title: "HOA Expenses",
-    value: "68k",
-    interval: "Last 30 days",
-    trend: "neutral",
-    data: [
-      500, 400, 510, 530, 520, 600, 530, 520, 510, 730, 520, 510, 530, 620, 510,
-      530, 520, 410, 530, 520, 610, 530, 520, 610, 530, 420, 510, 430, 520, 510,
-    ],
-  },
-];
-
 export default function MainGrid() {
+  const [stats, setStats] = useState({
+    monthlyPayments: { value: 0, data: [] },
+    carStickerOwners: { value: 0, data: [] },
+    expenses: { value: 0, data: [] },
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get the auth token
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        // Fetch billing data
+        const billingsResponse = await fetch("http://localhost:8000/billing");
+        const billingsData = await billingsResponse.json();
+
+        // Fetch expenses data with authentication
+        const expensesResponse = await fetch("http://localhost:8000/expenses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!expensesResponse.ok) {
+          throw new Error(
+            `Failed to fetch expenses: ${expensesResponse.status}`
+          );
+        }
+
+        const expensesData = await expensesResponse.json();
+
+        // Ensure we have arrays to work with
+        const billings = Array.isArray(billingsData) ? billingsData : [];
+        const expenses = Array.isArray(expensesData) ? expensesData : [];
+
+        // Calculate monthly payments total and trend
+        const totalPayments = billings.reduce(
+          (sum, billing) => sum + (billing.lastPaymentAmount || 0),
+          0
+        );
+
+        // Calculate car sticker owners (homeowners with active status)
+        const activeHomeownersResponse = await fetch(
+          "http://localhost:8000/homeowners"
+        );
+        const homeownersData = await activeHomeownersResponse.json();
+        const homeowners = Array.isArray(homeownersData) ? homeownersData : [];
+        const activeHomeowners = homeowners.filter(
+          (h) => h.status === "Active"
+        ).length;
+
+        // Calculate total expenses
+        const totalExpenses = expenses.reduce(
+          (sum, expense) => sum + (parseFloat(expense.expenseAmount) || 0),
+          0
+        );
+
+        // Get last 30 days of payments
+        const last30DaysPayments = Array(30).fill(0);
+        billings.forEach((billing) => {
+          if (billing.lastPaymentDate) {
+            const dayIndex =
+              29 -
+              Math.floor(
+                (Date.now() - new Date(billing.lastPaymentDate).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+            if (dayIndex >= 0 && dayIndex < 30) {
+              last30DaysPayments[dayIndex] += billing.lastPaymentAmount || 0;
+            }
+          }
+        });
+
+        // Get last 30 days of expenses
+        const last30DaysExpenses = Array(30).fill(0);
+        expenses.forEach((expense) => {
+          if (expense.createdAt) {
+            const dayIndex =
+              29 -
+              Math.floor(
+                (Date.now() - new Date(expense.createdAt).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              );
+            if (dayIndex >= 0 && dayIndex < 30) {
+              last30DaysExpenses[dayIndex] +=
+                parseFloat(expense.expenseAmount) || 0;
+            }
+          }
+        });
+
+        setStats({
+          monthlyPayments: {
+            value: totalPayments.toLocaleString("en-PH", {
+              style: "currency",
+              currency: "PHP",
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+            data: last30DaysPayments,
+            trend: totalPayments > 0 ? "up" : "neutral",
+          },
+          carStickerOwners: {
+            value: activeHomeowners.toString(),
+            data: Array(30).fill(activeHomeowners),
+            trend: activeHomeowners > 0 ? "up" : "neutral",
+          },
+          expenses: {
+            value: totalExpenses.toLocaleString("en-PH", {
+              style: "currency",
+              currency: "PHP",
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+            data: last30DaysExpenses,
+            trend: "neutral",
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Set default values in case of error
+        setStats({
+          monthlyPayments: {
+            value: "₱0.00",
+            data: Array(30).fill(0),
+            trend: "neutral",
+          },
+          carStickerOwners: {
+            value: "0",
+            data: Array(30).fill(0),
+            trend: "neutral",
+          },
+          expenses: {
+            value: "₱0.00",
+            data: Array(30).fill(0),
+            trend: "neutral",
+          },
+        });
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const cards = [
+    {
+      title: "Monthly Payments",
+      ...stats.monthlyPayments,
+      interval: "Last 30 days",
+    },
+    {
+      title: "Car Sticker Owners",
+      ...stats.carStickerOwners,
+      interval: "Active Homeowners",
+    },
+    {
+      title: "HOA Expenses",
+      ...stats.expenses,
+      interval: "Last 30 days",
+    },
+  ];
+
   return (
     <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
-      {/* cards */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Overview
       </Typography>
@@ -52,14 +185,11 @@ export default function MainGrid() {
         columns={12}
         sx={{ mb: (theme) => theme.spacing(2) }}
       >
-        {data.map((card, index) => (
+        {cards.map((card, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
             <StatCard {...card} />
           </Grid>
         ))}
-        {/* <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <HighlightedCard />
-        </Grid> */}
         <Grid size={{ xs: 12, md: 6 }}>
           <SessionsChart />
         </Grid>
@@ -67,7 +197,6 @@ export default function MainGrid() {
           <PageViewsBarChart />
         </Grid>
       </Grid>
-      {/* <Copyright sx={{ my: 4 }} /> */}
     </Box>
   );
 }

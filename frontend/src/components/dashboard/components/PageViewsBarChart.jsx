@@ -5,20 +5,134 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { BarChart } from "@mui/x-charts/BarChart";
+import { useEffect, useState } from "react";
 
 export default function PageViewsBarChart() {
   const theme = useTheme();
-  const colorPalette = [
-    (theme.vars || theme).palette.primary.dark,
-    (theme.vars || theme).palette.primary.main,
-    (theme.vars || theme).palette.primary.light,
-  ];
+  const [chartData, setChartData] = useState({
+    months: [],
+    expenses: [],
+    totalAmount: 0,
+    trend: 0,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get the auth token from localStorage
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        // Fetch expenses data with authentication
+        const response = await fetch("http://localhost:8000/expenses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch expenses: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Raw expenses data:", data); // Debug log
+
+        // Get last 6 months
+        const last6Months = [];
+        const monthlyExpenses = [];
+        let totalAmount = 0;
+
+        // Get current date
+        const currentDate = new Date();
+
+        // Initialize arrays for last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() - i,
+            1
+          );
+          const monthName = month.toLocaleDateString("en-US", {
+            month: "short",
+          });
+          last6Months.push(monthName);
+          monthlyExpenses[5 - i] = 0; // Initialize with 0
+        }
+
+        // Process expenses
+        if (Array.isArray(data)) {
+          data.forEach((expense) => {
+            if (expense.expenseAmount && expense.createdAt) {
+              const expenseDate = new Date(expense.createdAt);
+              const expenseMonth = expenseDate.toLocaleDateString("en-US", {
+                month: "short",
+              });
+              const monthIndex = last6Months.indexOf(expenseMonth);
+
+              if (monthIndex !== -1) {
+                const amount = parseFloat(expense.expenseAmount) || 0;
+                monthlyExpenses[monthIndex] += amount;
+                totalAmount += amount;
+              }
+            }
+          });
+        }
+
+        console.log("Processed data:", {
+          months: last6Months,
+          expenses: monthlyExpenses,
+          total: totalAmount,
+        }); // Debug log
+
+        // Calculate trend
+        const recent3Months = monthlyExpenses
+          .slice(-3)
+          .reduce((a, b) => a + b, 0);
+        const previous3Months = monthlyExpenses
+          .slice(0, 3)
+          .reduce((a, b) => a + b, 0);
+        const trend =
+          previous3Months !== 0
+            ? ((recent3Months - previous3Months) / previous3Months) * 100
+            : 0;
+
+        setChartData({
+          months: last6Months,
+          expenses: monthlyExpenses,
+          totalAmount: totalAmount,
+          trend: trend,
+        });
+      } catch (error) {
+        console.error("Error fetching expense data:", error);
+        // Set default values in case of error
+        setChartData({
+          months: Array(6)
+            .fill("")
+            .map((_, i) => {
+              const d = new Date();
+              d.setMonth(d.getMonth() - (5 - i));
+              return d.toLocaleDateString("en-US", { month: "short" });
+            }),
+          expenses: Array(6).fill(0),
+          totalAmount: 0,
+          trend: 0,
+        });
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card variant="outlined" sx={{ width: "100%" }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Expenses
+          Monthly Expenses
         </Typography>
         <Stack sx={{ justifyContent: "space-between" }}>
           <Stack
@@ -30,52 +144,43 @@ export default function PageViewsBarChart() {
             }}
           >
             <Typography variant="h4" component="p">
-              1.3M
+              {chartData.totalAmount.toLocaleString("en-PH", {
+                style: "currency",
+                currency: "PHP",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </Typography>
-            <Chip size="small" color="error" label="-8%" />
+            <Chip
+              size="small"
+              color={chartData.trend < 0 ? "success" : "error"}
+              label={`${
+                chartData.trend > 0 ? "+" : ""
+              }${chartData.trend.toFixed(1)}%`}
+            />
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Page views and downloads for the last 6 months
+            Total expenses for the last 6 months
           </Typography>
         </Stack>
         <BarChart
-          borderRadius={8}
-          colors={colorPalette}
+          colors={[theme.palette.primary.main]}
           xAxis={[
             {
               scaleType: "band",
-              categoryGapRatio: 0.5,
-              data: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+              data: chartData.months,
+              categoryGapRatio: 0.3,
             },
           ]}
           series={[
             {
-              id: "page-views",
-              label: "Page views",
-              data: [2234, 3872, 2998, 4125, 3357, 2789, 2998],
-              stack: "A",
-            },
-            {
-              id: "downloads",
-              label: "Downloads",
-              data: [3098, 4215, 2384, 2101, 4752, 3593, 2384],
-              stack: "A",
-            },
-            {
-              id: "conversions",
-              label: "Conversions",
-              data: [4051, 2275, 3129, 4693, 3904, 2038, 2275],
-              stack: "A",
+              data: chartData.expenses,
+              label: "Monthly Expenses",
             },
           ]}
           height={250}
-          margin={{ left: 50, right: 0, top: 20, bottom: 20 }}
+          margin={{ left: 50, right: 20, top: 20, bottom: 20 }}
           grid={{ horizontal: true }}
-          slotProps={{
-            legend: {
-              hidden: true,
-            },
-          }}
         />
       </CardContent>
     </Card>
