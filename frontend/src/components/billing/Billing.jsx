@@ -8,12 +8,25 @@ import TextField from "@mui/material/TextField";
 import Header from "../dashboard/components/Header";
 
 import EmailIcon from "@mui/icons-material/Email";
-import { CssBaseline } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Collapse from "@mui/material/Collapse";
+import PrintIcon from "@mui/icons-material/Print";
+import {
+  CssBaseline,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
-import { useEffect, useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { toast } from "mui-sonner";
+import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "../../utils/formatCurrency";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import SideMenu from "../dashboard/components/SideMenu";
@@ -64,6 +77,37 @@ const Card = styled(Paper)(({ theme }) => ({
   }),
 }));
 
+// Add this styled component for the receipt
+const ReceiptPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  width: "210mm",
+  minHeight: "297mm",
+  backgroundColor: "#fff",
+  margin: "0 auto",
+  color: "#000", // Ensure base text color is black
+  "@media print": {
+    width: "210mm",
+    height: "297mm",
+    margin: 0,
+    padding: "20mm",
+  },
+}));
+
+// Add styled components for consistent text styles
+const LabelCell = styled(TableCell)(({ theme }) => ({
+  fontWeight: 600,
+  color: "#000000",
+  fontSize: "1rem",
+  width: "30%",
+  borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+}));
+
+const ValueCell = styled(TableCell)(({ theme }) => ({
+  color: "#000000",
+  fontSize: "1rem",
+  borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+}));
+
 function createData(name, calories, fat) {
   return { name, calories, fat };
 }
@@ -87,36 +131,37 @@ export default function Billing(props) {
     message: "",
   });
   const [editingDueAmount, setEditingDueAmount] = useState("");
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState(null);
+  const receiptRef = useRef(null);
+  const pdfRef = useRef(null);
+  const TAX_RATE = 0.07;
 
   const columns = [
     {
       field: "name",
       headerName: "Name",
-      width: 200,
-      renderCell: (params) => params.row.name || "N/A",
+      width: 150,
     },
     {
       field: "email",
       headerName: "Email",
-      width: 250,
-      renderCell: (params) => params.row.email || "N/A",
+      width: 180,
     },
     {
       field: "blockNo",
       headerName: "Block",
-      width: 100,
-      renderCell: (params) => params.row.blockNo || "N/A",
+      width: 70,
     },
     {
       field: "lotNo",
       headerName: "Lot",
-      width: 100,
-      renderCell: (params) => params.row.lotNo || "N/A",
+      width: 70,
     },
     {
       field: "dueAmount",
       headerName: "Due Amount",
-      width: 150,
+      width: 120,
       renderCell: (params) => {
         const amount = params.row.dueAmount ?? 0;
         return formatCurrency(amount);
@@ -125,15 +170,26 @@ export default function Billing(props) {
     {
       field: "actions",
       headerName: "Actions",
-      width: 120,
+      width: 200,
       renderCell: (params) => (
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => handleSelectHomeowner(params.row)}
-        >
-          Select
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => handleSelectHomeowner(params.row)}
+          >
+            Select
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="secondary"
+            onClick={() => handleViewReceipt(params.row)}
+            startIcon={<PrintIcon />}
+          >
+            Receipt
+          </Button>
+        </Stack>
       ),
     },
   ];
@@ -321,6 +377,72 @@ export default function Billing(props) {
     return parseFloat(paymentAmount) === selectedHomeowner.dueAmount;
   };
 
+  const handleViewReceipt = (homeowner) => {
+    setCurrentReceipt(homeowner);
+    setReceiptDialogOpen(true);
+  };
+
+  const handleSaveAsPDF = async () => {
+    try {
+      const pdfContent = pdfRef.current;
+      const canvas = await html2canvas(pdfContent, {
+        scale: 2, // Increased scale for better quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        width: pdfContent.offsetWidth,
+        height: pdfContent.offsetHeight,
+      });
+
+      // Use A4 dimensions (210mm x 297mm)
+      const imgWidth = 210;
+      const imgHeight = 297;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`Receipt_${currentReceipt?.name || "Homeowner"}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!receiptRef.current || !currentReceipt) return;
+
+    const loadingToastId = toast.loading("Sending receipt to email...");
+
+    try {
+      const receiptHtml = receiptRef.current.outerHTML;
+
+      const response = await fetch("http://localhost:8000/email/send-receipt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: currentReceipt.email,
+          receiptHtml: receiptHtml,
+          subject: "Your HOA Payment Receipt",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      toast.success("Receipt sent successfully!");
+      setReceiptDialogOpen(false);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Failed to send email");
+    } finally {
+      toast.dismiss(loadingToastId);
+    }
+  };
+
   useEffect(() => {
     fetchHomeowners();
     const interval = setInterval(fetchHomeowners, 5000); // Refresh every 5 seconds
@@ -335,139 +457,490 @@ export default function Billing(props) {
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ display: "flex" }}>
-          <SideMenu />
-          <Box
-            component="main"
-            sx={{ flexGrow: 1, p: 3, mt: { xs: 8, md: 0 } }}
-          >
-            <Header />
-            <Collapse in={notificationStatus.show}>
-              <Alert
-                severity={notificationStatus.severity}
-                sx={{ mb: 2 }}
-                onClose={() =>
-                  setNotificationStatus((prev) => ({ ...prev, show: false }))
-                }
+        <CssBaseline enableColorScheme />
+        <SideMenu />
+        <Stack
+          spacing={2}
+          sx={{
+            alignItems: "center",
+            mx: 3,
+            pb: 5,
+            mt: { xs: 8, md: 0 },
+          }}
+        >
+          <Header />
+          <Stack>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 3,
+                padding: 4,
+                minHeight: 600,
+                alignItems: "flex-start",
+                marginLeft: 30,
+              }}
+            >
+              {/* Table Container */}
+              <Paper
+                sx={{
+                  flex: 5,
+                  borderRadius: "20px",
+                  padding: 4,
+                  maxWidth: "850px",
+                  height: "fit-content",
+                }}
               >
-                {notificationStatus.message}
-              </Alert>
-            </Collapse>
-            <Box sx={{ display: "flex", gap: 3, padding: 4 }}>
-              {/* Left Card - Homeowners Grid */}
-              <Card sx={{ flex: 2 }}>
                 <DataGrid
                   rows={homeowners}
                   columns={columns}
                   getRowId={(row) => row._id}
-                  initialState={{
-                    pagination: {
-                      paginationModel: { page: 0, pageSize: 10 },
+                  autoHeight
+                  pageSize={10}
+                  rowsPerPageOptions={[10]}
+                  disableSelectionOnClick
+                  sx={{
+                    "& .MuiDataGrid-cell": {
+                      fontSize: "0.875rem",
+                    },
+                    "& .MuiDataGrid-columnHeader": {
+                      backgroundColor: "rgba(59, 30, 84, 0.08)",
                     },
                   }}
-                  pageSizeOptions={[10]}
-                  loading={loading}
-                  error={error}
-                  onStateChange={(state) => {
-                    console.log("DataGrid state:", state);
-                  }}
                 />
-              </Card>
+              </Paper>
 
-              {/* Right Card - Payment Form */}
-              <Card sx={{ flex: 1 }}>
-                <Box sx={{ p: 2 }}>
-                  <Stack spacing={3}>
-                    <TextField
-                      label="Selected Homeowner"
-                      value={
-                        selectedHomeowner
-                          ? `${selectedHomeowner.name} (Block ${selectedHomeowner.blockNo} Lot ${selectedHomeowner.lotNo})`
-                          : ""
-                      }
-                      disabled
-                      fullWidth
-                    />
-                    <TextField
-                      label="Due Amount"
-                      type="number"
-                      value={
-                        editingDueAmount === ""
-                          ? selectedHomeowner?.dueAmount || ""
-                          : editingDueAmount
-                      }
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setEditingDueAmount(value);
-                      }}
-                      onBlur={() => {
-                        if (editingDueAmount !== "") {
-                          handleUpdateDueAmount();
-                        }
-                      }}
-                      fullWidth
-                      InputProps={{
-                        startAdornment: (
-                          <span style={{ marginRight: 8 }}>₱</span>
-                        ),
-                      }}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                        placeholder: "0.00",
-                      }}
-                    />
-                    <TextField
-                      label="Payment Amount"
-                      type="number"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      fullWidth
-                      error={paymentAmount && !isPaymentValid()}
-                      helperText={
-                        paymentAmount && !isPaymentValid()
-                          ? "Payment amount must match the due amount"
-                          : ""
-                      }
-                      InputProps={{
-                        startAdornment: (
-                          <span style={{ marginRight: 8 }}>₱</span>
-                        ),
-                      }}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                        placeholder: "0.00",
-                      }}
-                    />
+              {/* Payment Details Card */}
+              <Paper
+                sx={{
+                  borderRadius: "20px",
+                  padding: 4,
+                  width: "320px",
+                  position: "sticky",
+                  top: 20,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    mb: 3,
+                    fontWeight: "medium",
+                    color: "primary.main",
+                  }}
+                >
+                  Payment Details
+                </Typography>
+
+                {selectedHomeowner ? (
+                  <Stack spacing={2.5}>
+                    {/* Homeowner Info Section */}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Selected Homeowner
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedHomeowner.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Block {selectedHomeowner.blockNo}, Lot{" "}
+                        {selectedHomeowner.lotNo}
+                      </Typography>
+                    </Box>
+
+                    {/* Due Amount Section */}
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Due Amount
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={editingDueAmount}
+                        onChange={(e) => setEditingDueAmount(e.target.value)}
+                        type="number"
+                        InputProps={{
+                          startAdornment: (
+                            <Typography sx={{ mr: 1 }}>₱</Typography>
+                          ),
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                          },
+                        }}
+                      />
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={handleUpdateDueAmount}
+                        sx={{
+                          mt: 1,
+                          borderRadius: "10px",
+                          textTransform: "none",
+                        }}
+                      >
+                        Update Due Amount
+                      </Button>
+                    </Box>
+
+                    {/* Payment Amount Section */}
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        Payment Amount
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        type="number"
+                        InputProps={{
+                          startAdornment: (
+                            <Typography sx={{ mr: 1 }}>₱</Typography>
+                          ),
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                          },
+                        }}
+                      />
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={handlePayment}
+                        sx={{
+                          mt: 1,
+                          borderRadius: "10px",
+                          textTransform: "none",
+                        }}
+                      >
+                        Process Payment
+                      </Button>
+                    </Box>
+
+                    {/* Notification Button */}
                     <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handlePayment}
-                      disabled={
-                        !selectedHomeowner || loading || !isPaymentValid()
-                      }
                       fullWidth
-                    >
-                      Process Payment
-                    </Button>
-                    <Button
                       variant="outlined"
-                      color="secondary"
-                      onClick={() => handleSendNotification()}
-                      disabled={!selectedHomeowner}
                       startIcon={<EmailIcon />}
-                      fullWidth
+                      onClick={handleSendNotification}
+                      sx={{
+                        mt: 1,
+                        borderRadius: "10px",
+                        textTransform: "none",
+                      }}
                     >
-                      Notify Homeowner
+                      Send Notification
                     </Button>
                   </Stack>
-                </Box>
-              </Card>
+                ) : (
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      py: 4,
+                      color: "text.secondary",
+                    }}
+                  >
+                    <Typography variant="body1">
+                      Select a homeowner to manage payments
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
             </Box>
-          </Box>
-        </Box>
+          </Stack>
+        </Stack>
+
+        {/* Receipt Dialog */}
+        <Dialog
+          open={receiptDialogOpen}
+          onClose={() => setReceiptDialogOpen(false)}
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: "230mm",
+              height: "320mm",
+              maxWidth: "none",
+              backgroundColor: "#ffffff",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{ p: 3, pb: 0, borderBottom: "1px solid rgba(0, 0, 0, 0.12)" }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography
+                variant="h6"
+                sx={{ color: "#000000", fontWeight: 600 }}
+              >
+                Payment Receipt
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  onClick={handleSaveAsPDF}
+                  startIcon={<PrintIcon />}
+                  sx={{ bgcolor: "#3B1E54" }}
+                >
+                  Save as PDF
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSendEmail}
+                  startIcon={<EmailIcon />}
+                  sx={{ bgcolor: "#3B1E54" }}
+                >
+                  Send via Email
+                </Button>
+              </Stack>
+            </Stack>
+          </DialogTitle>
+          <DialogContent sx={{ p: 3 }}>
+            <Box ref={pdfRef}>
+              <ReceiptPaper ref={receiptRef}>
+                <Stack spacing={4}>
+                  {/* Header Section */}
+                  <Box sx={{ textAlign: "center", mb: 4 }}>
+                    <Typography
+                      variant="h4"
+                      gutterBottom
+                      sx={{
+                        color: "#000000",
+                        fontWeight: 700,
+                        fontSize: "2rem",
+                        mb: 2,
+                      }}
+                    >
+                      HOA Payment Receipt
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "#000000",
+                        fontWeight: 500,
+                        opacity: 0.87,
+                      }}
+                    >
+                      {new Date().toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </Typography>
+                  </Box>
+
+                  {/* Organization Info */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      sx={{
+                        color: "#000000",
+                        fontWeight: 600,
+                        fontSize: "1.1rem",
+                      }}
+                    >
+                      Homeowners Association
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{ color: "#000000", mb: 0.5 }}
+                    >
+                      123 Main Street
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{ color: "#000000", mb: 0.5 }}
+                    >
+                      City, State 12345
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: "#000000" }}>
+                      Phone: (123) 456-7890
+                    </Typography>
+                  </Box>
+
+                  {/* Homeowner Info */}
+                  <TableContainer
+                    component={Paper}
+                    elevation={0}
+                    sx={{
+                      mb: 4,
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <LabelCell>Homeowner Name:</LabelCell>
+                          <ValueCell>{currentReceipt?.name}</ValueCell>
+                        </TableRow>
+                        <TableRow>
+                          <LabelCell>Email:</LabelCell>
+                          <ValueCell>{currentReceipt?.email}</ValueCell>
+                        </TableRow>
+                        <TableRow>
+                          <LabelCell>Block & Lot:</LabelCell>
+                          <ValueCell>
+                            Block {currentReceipt?.blockNo}, Lot{" "}
+                            {currentReceipt?.lotNo}
+                          </ValueCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  {/* Payment Details */}
+                  <TableContainer
+                    component={Paper}
+                    elevation={0}
+                    sx={{
+                      mb: 4,
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      borderRadius: 2,
+                      backgroundColor: "#f8f8f8",
+                    }}
+                  >
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <LabelCell>Due Amount:</LabelCell>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color: "#000000",
+                              fontWeight: 500,
+                              fontSize: "1rem",
+                            }}
+                          >
+                            {formatCurrency(currentReceipt?.dueAmount || 0)}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <LabelCell>Tax (7%):</LabelCell>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              color: "#000000",
+                              fontWeight: 500,
+                              fontSize: "1rem",
+                            }}
+                          >
+                            {formatCurrency(
+                              (currentReceipt?.dueAmount || 0) * TAX_RATE
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <LabelCell
+                            sx={{
+                              fontSize: "1.1rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            Total Amount:
+                          </LabelCell>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              fontSize: "1.1rem",
+                              fontWeight: 700,
+                              color: "#3B1E54",
+                            }}
+                          >
+                            {formatCurrency(
+                              (currentReceipt?.dueAmount || 0) * (1 + TAX_RATE)
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  {/* Payment Status */}
+                  <Box
+                    sx={{
+                      mb: 4,
+                      p: 2,
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      borderRadius: 2,
+                      backgroundColor: "#f8f8f8",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "#000000",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Payment Status:{" "}
+                      <Typography
+                        component="span"
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          color:
+                            currentReceipt?.dueAmount > 0
+                              ? "#d32f2f"
+                              : "#2e7d32",
+                        }}
+                      >
+                        {currentReceipt?.dueAmount > 0 ? "UNPAID" : "PAID"}
+                      </Typography>
+                    </Typography>
+                  </Box>
+
+                  {/* Footer */}
+                  <Box
+                    sx={{
+                      mt: "auto",
+                      textAlign: "center",
+                      pt: 4,
+                      borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+                    }}
+                  >
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "#000000",
+                        opacity: 0.87,
+                        mb: 1,
+                      }}
+                    >
+                      This is an official receipt of the Homeowners Association.
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#000000",
+                        opacity: 0.67,
+                      }}
+                    >
+                      Generated on {new Date().toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </ReceiptPaper>
+            </Box>
+          </DialogContent>
+        </Dialog>
       </ThemeProvider>
     </AppTheme>
   );

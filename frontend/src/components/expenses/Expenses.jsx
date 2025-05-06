@@ -18,6 +18,13 @@ import { TableVirtuoso } from "react-virtuoso";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import Header from "../dashboard/components/Header";
 
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
   chartsCustomizations,
@@ -89,6 +96,8 @@ export default function Expenses(props) {
   const [expenseAmount, setExpenseAmount] = useState("");
 
   const [editingExpenseId, setEditingExpenseId] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -160,24 +169,36 @@ export default function Expenses(props) {
     }
   };
 
-  const deleteExpense = async (id) => {
+  const handleDeleteClick = (expense) => {
+    setExpenseToDelete(expense);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!expenseToDelete) return;
     const token = localStorage.getItem("authToken");
 
     try {
-      await axios.delete(`http://localhost:8000/expenses/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.delete(
+        `http://localhost:8000/expenses/${expenseToDelete._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setExpenses((prevExpenses) =>
-        prevExpenses.filter((expense) => expense._id !== id)
+        prevExpenses.filter((expense) => expense._id !== expenseToDelete._id)
       );
     } catch (error) {
       console.error(
         "Error deleting expense:",
         error.response ? error.response.data : error.message
       );
+    } finally {
+      setDeleteDialogOpen(false);
+      setExpenseToDelete(null);
     }
   };
 
@@ -253,7 +274,7 @@ export default function Expenses(props) {
                                 <Button onClick={() => editExpense(row)}>
                                   Edit
                                 </Button>
-                                <Button onClick={() => deleteExpense(row._id)}>
+                                <Button onClick={() => handleDeleteClick(row)}>
                                   Delete
                                 </Button>
                               </>
@@ -320,6 +341,40 @@ export default function Expenses(props) {
             </Box>
           </Stack>
         </Stack>
+
+        {/* Add Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          aria-labelledby="delete-expense-dialog-title"
+          aria-describedby="delete-expense-dialog-description"
+        >
+          <DialogTitle id="delete-expense-dialog-title">
+            Confirm Delete Expense
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-expense-dialog-description">
+              Are you sure you want to delete the expense{" "}
+              <strong>{expenseToDelete?.expenseName}</strong> with amount{" "}
+              <strong>₱{expenseToDelete?.expenseAmount}</strong>?
+              <br />
+              This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              color="error"
+              autoFocus
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </ThemeProvider>
     </AppTheme>
   );

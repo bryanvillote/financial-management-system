@@ -113,19 +113,45 @@ router.get("/users", async (req, res) => {
 
 // Update a user
 router.put("/users/:id", async (req, res) => {
-  const { email, role } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { email, role },
-      { new: true }
-    );
+    const { email, role, newPassword, currentPassword } = req.body;
+    const user = await User.findById(req.params.id);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json({ message: "User updated successfully", user });
+
+    // If updating password, verify current password
+    if (newPassword && currentPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
+      }
+      user.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    // Update email and role if provided
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    await user.save();
+
+    // Return user data without password
+    const userResponse = {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+    };
+
+    res.json({ message: "User updated successfully", user: userResponse });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error updating user:", err);
+    res.status(500).json({
+      message: "Server error during update",
+      error: err.message,
+    });
   }
 });
 

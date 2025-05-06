@@ -1,5 +1,12 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Chip } from "@mui/material";
+import {
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid2";
@@ -16,6 +23,8 @@ export default function HomeOwnerGrid() {
   const [homeowners, setHomeowners] = useState([]);
   const [selectedHomeowner, setSelectedHomeowner] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [homeownerToDelete, setHomeownerToDelete] = useState(null);
 
   const columns = [
     {
@@ -85,7 +94,7 @@ export default function HomeOwnerGrid() {
                   variant="contained"
                   color="error"
                   size="small"
-                  onClick={() => handleDelete(params.row._id)}
+                  onClick={() => handleDeleteClick(params.row)}
                 >
                   Delete
                 </Button>
@@ -142,15 +151,21 @@ export default function HomeOwnerGrid() {
     });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this homeowner?")) {
-      return;
-    }
+  const handleDeleteClick = (homeowner) => {
+    setHomeownerToDelete(homeowner);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!homeownerToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/homeowners/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `http://localhost:8000/homeowners/${homeownerToDelete._id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete homeowner");
@@ -160,6 +175,9 @@ export default function HomeOwnerGrid() {
       fetchHomeowners();
     } catch (error) {
       console.error("Error deleting homeowner:", error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setHomeownerToDelete(null);
     }
   };
 
@@ -218,6 +236,40 @@ export default function HomeOwnerGrid() {
           />
         </Grid>
       </Grid>
+
+      {/* Add Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-homeowner-dialog-title"
+        aria-describedby="delete-homeowner-dialog-description"
+      >
+        <DialogTitle id="delete-homeowner-dialog-title">
+          Confirm Delete Homeowner
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-homeowner-dialog-description">
+            Are you sure you want to delete the homeowner{" "}
+            <strong>{homeownerToDelete?.email}</strong> with Block{" "}
+            {homeownerToDelete?.blockNo}, Lot {homeownerToDelete?.lotNo}?
+            <br />
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

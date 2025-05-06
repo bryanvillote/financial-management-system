@@ -1,70 +1,33 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
   Grid,
   IconButton,
   InputAdornment,
+  InputLabel,
   List,
   ListItem,
   ListItemSecondaryAction,
   ListItemText,
+  MenuItem,
   Modal,
+  Select,
   Snackbar,
 } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-// import Card from "@mui/material/Card";
 import CssBaseline from "@mui/material/CssBaseline";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-// import Stack from "@mui/material/Stack";
-// import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import SideMenu from "../components/dashboard/components/SideMenu";
 import AppTheme from "../utils/share-theme/AppTheme";
-
-// const StyledCard = styled(Card)(({ theme }) => ({
-//   display: "flex",
-//   flexDirection: "column",
-//   alignSelf: "center",
-//   width: "100%",
-//   padding: theme.spacing(4),
-//   gap: theme.spacing(2),
-//   margin: "auto",
-//   maxWidth: "450px",
-//   boxShadow: "0px 5px 15px rgba(0,0,0,0.1), 0px 15px 35px rgba(0,0,0,0.05)",
-//   [theme.breakpoints.down("sm")]: {
-//     padding: theme.spacing(2),
-//   },
-// }));
-
-// const SignInContainer = styled(Stack)(({ theme }) => ({
-//   height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
-//   width: "100vw",
-//   minHeight: "100%",
-//   padding: theme.spacing(2),
-//   backgroundColor: "#000",
-//   // backgroundImage: `linear-gradient(to right, #020140, transparent), url('/loginbg.png')`,
-//   // backgroundSize: "cover",
-//   // backgroundRepeat: "no-repeat",
-//   // backgroundPosition: "center",
-//   [theme.breakpoints.up("sm")]: {
-//     padding: theme.spacing(4),
-//   },
-//   "&::before": {
-//     content: '""',
-//     display: "block",
-//     position: "absolute",
-//     zIndex: -1,
-//     ...theme.applyStyles("dark", {
-//       backgroundImage:
-//         "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
-//     }),
-//   },
-// }));
 
 export default function AdminReg(props) {
   const [email, setEmail] = useState("");
@@ -78,8 +41,18 @@ export default function AdminReg(props) {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  // const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editData, setEditData] = useState({
+    email: "",
+    role: "",
+    newPassword: "",
+    currentPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [editError, setEditError] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -92,14 +65,10 @@ export default function AdminReg(props) {
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      setSnackbarMessage("Error fetching users");
+      setSnackbarOpen(true);
     }
   };
-
-  // const handleRedirect = () => {
-  //   navigate("/login");
-  // };
-
-  // const handleClose = () => setOpen(false);
 
   const handleRoleChange = (event) => {
     setRole(event.target.value);
@@ -124,7 +93,8 @@ export default function AdminReg(props) {
     }
 
     if (!role) {
-      alert("Please select a role.");
+      setSnackbarMessage("Please select a role");
+      setSnackbarOpen(true);
       isValid = false;
     }
 
@@ -148,7 +118,7 @@ export default function AdminReg(props) {
       if (response.ok) {
         setSnackbarMessage("Admin registration successful!");
         setSnackbarOpen(true);
-        fetchUsers(); // Refresh the user list
+        fetchUsers();
         // Clear the input fields
         setEmail("");
         setPassword("");
@@ -157,11 +127,13 @@ export default function AdminReg(props) {
         const errorMessage = result.errors
           ? result.errors[0].msg
           : result.message || "Registration failed. Please try again.";
-        alert(errorMessage);
+        setSnackbarMessage(errorMessage);
+        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Network error occurred. Please try again.");
+      setSnackbarMessage("Network error occurred. Please try again.");
+      setSnackbarOpen(true);
     }
   };
 
@@ -170,48 +142,127 @@ export default function AdminReg(props) {
     setOpen(true);
   };
 
-  const handleDelete = async (userId) => {
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
     try {
+      if (userToDelete.role === "President") {
+        setSnackbarMessage("President account cannot be deleted");
+        setSnackbarOpen(true);
+        handleDeleteDialogClose();
+        return;
+      }
+
       const response = await fetch(
-        `http://localhost:8000/auth/users/${userId}`,
+        `http://localhost:8000/auth/users/${userToDelete._id}`,
         {
           method: "DELETE",
         }
       );
 
+      const data = await response.json();
+      setSnackbarMessage(data.message);
+      setSnackbarOpen(true);
+
       if (response.ok) {
-        setSnackbarMessage("User deleted successfully");
-        setSnackbarOpen(true);
-        fetchUsers(); // Refresh the user list
-      } else {
-        alert("Failed to delete user");
+        fetchUsers();
       }
     } catch (error) {
       console.error("Error deleting user:", error);
+      setSnackbarMessage("Error deleting user");
+      setSnackbarOpen(true);
+    } finally {
+      handleDeleteDialogClose();
     }
   };
 
-  const handleUpdate = async () => {
+  const handleEditClick = (user) => {
+    setEditData({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      newPassword: "",
+      currentPassword: "",
+    });
+    setEditDialogOpen(true);
+    setEditError("");
+  };
+
+  const handleEditClose = () => {
+    setEditDialogOpen(false);
+    setEditData({
+      id: "",
+      email: "",
+      role: "",
+      newPassword: "",
+      currentPassword: "",
+    });
+    setEditError("");
+  };
+
+  const handleEditSubmit = async () => {
     try {
+      if (!editData.email || !/\S+@\S+\.\S+/.test(editData.email)) {
+        setEditError("Please enter a valid email address");
+        return;
+      }
+
+      if (!editData.role) {
+        setEditError("Please select a role");
+        return;
+      }
+
+      if (editData.newPassword && !editData.currentPassword) {
+        setEditError("Current password is required to set a new password");
+        return;
+      }
+
+      if (editData.newPassword && editData.newPassword.length < 6) {
+        setEditError("New password must be at least 6 characters long");
+        return;
+      }
+
       const response = await fetch(
-        `http://localhost:8000/auth/users/${editUser._id}`,
+        `http://localhost:8000/auth/users/${editData.id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: editUser.email, role: editUser.role }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: editData.email,
+            role: editData.role,
+            ...(editData.newPassword && {
+              newPassword: editData.newPassword,
+              currentPassword: editData.currentPassword,
+            }),
+          }),
         }
       );
 
-      if (response.ok) {
-        setSnackbarMessage("User updated successfully");
-        setSnackbarOpen(true);
-        fetchUsers(); // Refresh the user list
-        setOpen(false);
-      } else {
-        alert("Failed to update user");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update user");
       }
+
+      setSnackbarMessage("User updated successfully");
+      setSnackbarOpen(true);
+      handleEditClose();
+      fetchUsers();
     } catch (error) {
       console.error("Error updating user:", error);
+      setEditError(error.message || "Failed to update user");
     }
   };
 
@@ -231,6 +282,97 @@ export default function AdminReg(props) {
     "Secretary",
     // Remove "Home Owner" from the list
   ];
+
+  const handleDelete = async (userId) => {
+    try {
+      const userToDelete = users.find((user) => user._id === userId);
+      if (userToDelete.role === "President") {
+        setSnackbarMessage("Cannot delete President account");
+        setSnackbarOpen(true);
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:8000/auth/users/${userId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        setSnackbarMessage("User deleted successfully");
+        setSnackbarOpen(true);
+        fetchUsers(); // Refresh the users list
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setSnackbarMessage(error.message || "Error deleting user");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      // Validate email
+      if (!editData.email || !/\S+@\S+\.\S+/.test(editData.email)) {
+        setEditError("Please enter a valid email address");
+        return;
+      }
+
+      // Validate role
+      if (!editData.role) {
+        setEditError("Please select a role");
+        return;
+      }
+
+      const updateData = {
+        email: editData.email,
+        role: editData.role,
+      };
+
+      // Only include password data if a new password is provided
+      if (editData.newPassword) {
+        if (!editData.currentPassword) {
+          setEditError("Current password is required to change password");
+          return;
+        }
+        if (editData.newPassword.length < 6) {
+          setEditError("New password must be at least 6 characters long");
+          return;
+        }
+        updateData.newPassword = editData.newPassword;
+        updateData.currentPassword = editData.currentPassword;
+      }
+
+      const response = await fetch(
+        `http://localhost:8000/auth/users/${editData.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update user");
+      }
+
+      setSnackbarMessage("User updated successfully");
+      setSnackbarOpen(true);
+      handleEditClose();
+      fetchUsers(); // Refresh the users list
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setEditError(error.message || "Failed to update user");
+    }
+  };
 
   return (
     <AppTheme {...props}>
@@ -262,12 +404,11 @@ export default function AdminReg(props) {
             }}
           >
             <FormControl>
-              <FormLabel>Email</FormLabel>
+              <InputLabel>Email</InputLabel>
               <TextField
                 id="email"
                 name="email"
                 type="email"
-                placeholder="your@email.com"
                 fullWidth
                 variant="outlined"
                 error={!!emailError}
@@ -278,12 +419,11 @@ export default function AdminReg(props) {
               />
             </FormControl>
             <FormControl>
-              <FormLabel>Password</FormLabel>
+              <InputLabel>Password</InputLabel>
               <TextField
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
                 fullWidth
                 variant="outlined"
                 error={!!passwordError}
@@ -303,7 +443,6 @@ export default function AdminReg(props) {
               />
             </FormControl>
             <FormControl required fullWidth>
-              <FormLabel>Role</FormLabel>
               <Select value={role} onChange={handleRoleChange} displayEmpty>
                 <MenuItem value="" disabled>
                   Select Role
@@ -343,15 +482,20 @@ export default function AdminReg(props) {
                     secondary={`Role: ${user.role}`}
                   />
                   <ListItemSecondaryAction>
-                    <Button onClick={() => handleEdit(user)} sx={{ mr: 1 }}>
+                    <Button
+                      onClick={() => handleEditClick(user)}
+                      sx={{ mr: 1 }}
+                    >
                       Update
                     </Button>
-                    <Button
-                      onClick={() => handleDelete(user._id)}
-                      color="error"
-                    >
-                      Delete
-                    </Button>
+                    {user.role !== "President" && (
+                      <Button
+                        onClick={() => handleDeleteClick(user)}
+                        color="error"
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </ListItemSecondaryAction>
                 </ListItem>
               ))}
@@ -385,6 +529,130 @@ export default function AdminReg(props) {
           </Button>
         </Box>
       </Modal>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the account for{" "}
+            <strong>{userToDelete?.email}</strong>?
+            <br />
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={editDialogOpen}
+        onClose={handleEditClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          {editError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {editError}
+            </Alert>
+          )}
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Email"
+              value={editData.email}
+              onChange={(e) =>
+                setEditData({ ...editData, email: e.target.value })
+              }
+              margin="normal"
+              type="email"
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="edit-role-label">Role</InputLabel>
+              <Select
+                labelId="edit-role-label"
+                value={editData.role}
+                label="Role"
+                onChange={(e) =>
+                  setEditData({ ...editData, role: e.target.value })
+                }
+              >
+                <MenuItem value="President">President</MenuItem>
+                <MenuItem value="Vice President">Vice President</MenuItem>
+                <MenuItem value="Treasurer">Treasurer</MenuItem>
+                <MenuItem value="Home Owner">Home Owner</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Current Password"
+              type={showCurrentPassword ? "text" : "password"}
+              value={editData.currentPassword}
+              onChange={(e) =>
+                setEditData({ ...editData, currentPassword: e.target.value })
+              }
+              margin="normal"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
+                      edge="end"
+                    >
+                      {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              label="New Password"
+              type={showNewPassword ? "text" : "password"}
+              value={editData.newPassword}
+              onChange={(e) =>
+                setEditData({ ...editData, newPassword: e.target.value })
+              }
+              margin="normal"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      edge="end"
+                    >
+                      {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={handleEditClose}>Cancel</Button>
+          <Button onClick={handleUpdate} variant="contained" color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
