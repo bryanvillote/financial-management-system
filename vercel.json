@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/frontend/index.html" }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/frontend/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/frontend/favicon.ico"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/frontend/manifest.json"
+    },
+    {
+      "src": "/logo192.png",
+      "dest": "/frontend/logo192.png"
+    },
+    {
+      "src": "/logo512.png",
+      "dest": "/frontend/logo512.png"
+    },
+    {
+      "src": "/subd.jpg",
+      "dest": "/frontend/subd.jpg"
+    },
+    {
+      "src": "/loginbg.png",
+      "dest": "/frontend/loginbg.png"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/index.html"
+    }
+  ]
+} 

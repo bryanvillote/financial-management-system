@@ -408,8 +408,8 @@ export default function ReceiptUI() {
                             <Chip
                               label={getPenaltyDescription(
                                 homeownerData.penaltyLevel || homeownerData.pendingPenaltyLevel,
-                                homeownerData.penaltyStatus
-                              )}
+                              homeownerData.penaltyStatus
+                            )}
                               color="error"
                               size="small"
                             />
@@ -494,20 +494,20 @@ export default function ReceiptUI() {
                           <TableRow key={index} hover>
                             <TableCell>
                               {new Date(payment.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
+                      </TableCell>
+                      <TableCell>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography>{formatCurrency(payment.amount)}</Typography>
                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                   <Chip
                                     label={payment.status}
-                                    color={
+                          color={
                                       payment.status === "Completed" 
                                         ? "success" 
                                         : payment.status === "Pending" 
                                         ? "warning" 
                                         : "error"
-                                    }
+                          }
                                     size="small"
                                     sx={{ fontWeight: "medium" }}
                                   />
@@ -524,9 +524,9 @@ export default function ReceiptUI() {
                         <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
                           <Typography color="text.secondary">
                             No payment history available
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
                     )}
                   </TableBody>
                 </Table>

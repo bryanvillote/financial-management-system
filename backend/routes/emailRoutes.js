@@ -9,4 +9,4 @@ router.post('/send-receipt', upload.single('receiptImage'), sendReceipt);
 // Send payment reminder
 router.post('/send-payment-reminder', sendPaymentReminder);
 
-module.exports = router; 
+module.exports = router;

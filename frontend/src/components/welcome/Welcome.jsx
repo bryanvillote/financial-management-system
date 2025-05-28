@@ -1,8 +1,11 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import { useNavigate } from "react-router-dom";
 
 export default function BasicButtons() {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -24,7 +27,7 @@ export default function BasicButtons() {
       >
         <Button
           variant="contained"
-          onClick={() => (window.location.href = "/login")} // Temporary redirect
+          onClick={() => navigate("/login")}
           sx={{
             borderRadius: "16px",
             backgroundColor: "#020140", // blue
