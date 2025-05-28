@@ -17,7 +17,12 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Global middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://financial-management-system-eta.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Import routes
