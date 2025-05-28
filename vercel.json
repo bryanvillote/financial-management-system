@@ -10,43 +10,13 @@
     }
   ],
   "rewrites": [
+    { "source": "/static/(.*)", "destination": "/frontend/static/$1" },
+    { "source": "/favicon.ico", "destination": "/frontend/favicon.ico" },
+    { "source": "/manifest.json", "destination": "/frontend/manifest.json" },
+    { "source": "/logo192.png", "destination": "/frontend/logo192.png" },
+    { "source": "/logo512.png", "destination": "/frontend/logo512.png" },
+    { "source": "/subd.jpg", "destination": "/frontend/subd.jpg" },
+    { "source": "/loginbg.png", "destination": "/frontend/loginbg.png" },
     { "source": "/(.*)", "destination": "/frontend/index.html" }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/frontend/static/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/frontend/favicon.ico"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/frontend/manifest.json"
-    },
-    {
-      "src": "/logo192.png",
-      "dest": "/frontend/logo192.png"
-    },
-    {
-      "src": "/logo512.png",
-      "dest": "/frontend/logo512.png"
-    },
-    {
-      "src": "/subd.jpg",
-      "dest": "/frontend/subd.jpg"
-    },
-    {
-      "src": "/loginbg.png",
-      "dest": "/frontend/loginbg.png"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/index.html"
-    }
   ]
 } 
