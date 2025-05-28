@@ -21,6 +21,8 @@ import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -91,7 +93,7 @@ export default function AdminLog(props) {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch("http://localhost:8000/auth/verify", {
+      const response = await fetch(`${API_URL}/auth/verify`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -162,7 +164,7 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
-      const response = await fetch("http://localhost:8000/auth/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

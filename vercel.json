@@ -3,9 +3,16 @@
     {
       "source": "/api/:path*",
       "destination": "http://localhost:8000/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "framework": "vite"
+  "framework": "vite",
+  "env": {
+    "VITE_API_URL": "https://your-backend-url.vercel.app"
+  }
 } 
