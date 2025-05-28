@@ -163,8 +163,6 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
-      console.log('Attempting to connect to:', API_URL); // Debug log
-      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,11 +195,7 @@ export default function AdminLog(props) {
       }, 1000);
     } catch (error) {
       console.error("Login error:", error);
-      if (error.message === "Failed to fetch") {
-        toast.error("Cannot connect to server. Please check your internet connection and try again.");
-      } else {
-        toast.error(error.message || "An error occurred during login.");
-      }
+      toast.error(error.message || "An error occurred during login.");
     }
   };
 
