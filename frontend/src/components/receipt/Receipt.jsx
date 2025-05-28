@@ -8,11 +8,20 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableHead,
   TableRow,
   ThemeProvider,
   Typography,
   createTheme,
   styled,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -20,6 +29,10 @@ import { jwtDecode } from "jwt-decode";
 import { toast } from "mui-sonner";
 import React, { useEffect, useState } from "react";
 import { formatCurrency } from "../../utils/formatCurrency";
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../utils/context/useAuth';
 
 // Theme setup
 const theme = createTheme({
@@ -39,15 +52,20 @@ const theme = createTheme({
 const CustomCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(2),
-  boxShadow:
-    "hsla(220, 60%, 2%, 0.12) 0px 8px 30px, hsla(222, 25.5%, 10%, 0.06) 0px 10px 25px -5px",
+  boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
   background: "#fff",
   "& .MuiTableCell-root": {
-    borderBottom: "1px solid rgba(224, 224, 224, 0.4)",
-    padding: theme.spacing(1.5),
+    padding: theme.spacing(2),
+    border: "1px solid #e0e0e0",
   },
-  "& .MuiTableRow-root:last-child .MuiTableCell-root": {
-    borderBottom: "none",
+  "& .MuiTableHead-root .MuiTableCell-root": {
+    backgroundColor: "#3B1E54",
+    color: "white",
+    fontWeight: "bold",
+    fontSize: "0.95rem",
+  },
+  "& .MuiTableRow-root:hover": {
+    backgroundColor: "rgba(59, 30, 84, 0.04)",
   },
 }));
 
@@ -94,6 +112,20 @@ const getPenaltyDescription = (penaltyLevel, penaltyStatus) => {
   return `Level ${penaltyLevel} (${duration} seconds) - ${status}`;
 };
 
+// Add this after the modalStyle constant
+const qrDialogStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+  textAlign: 'center',
+};
+
 export default function ReceiptUI() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const receiptRef = React.useRef(null);
@@ -102,6 +134,12 @@ export default function ReceiptUI() {
   const [billingData, setBillingData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [receiptImage, setReceiptImage] = useState(null);
+  const fileInputRef = React.useRef(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { logout } = useAuth();
 
   // Calculate totals based on actual billing data
   const calculateTotals = (dueAmount) => {
@@ -185,6 +223,14 @@ export default function ReceiptUI() {
     }
   };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setReceiptImage(file);
+      toast.success("Receipt screenshot uploaded successfully");
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!receiptRef.current || !homeownerData) return;
 
@@ -192,21 +238,24 @@ export default function ReceiptUI() {
     const loadingToastId = toast.loading("Sending receipt to your email...");
 
     try {
-      // Get the HTML content of the receipt
-      const receiptHtml = receiptRef.current.outerHTML;
+      // Use a simple message for the email body
+      const simpleMessage = `<p>Attached is my proof of payment for Block ${homeownerData.blockNo}, Lot ${homeownerData.lotNo}.</p><p>Thank you,</p><p>Homeowner</p>`;
+
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append('html', simpleMessage);
+      formData.append('email', homeownerData.email);
+      formData.append('blockNo', homeownerData.blockNo);
+      formData.append('lotNo', homeownerData.lotNo);
+      
+      if (receiptImage) {
+        formData.append('receiptImage', receiptImage);
+      }
 
       // Send to backend
       const response = await fetch("http://localhost:8000/email/send-receipt", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          html: receiptHtml,
-          email: homeownerData.email,
-          blockNo: homeownerData.blockNo,
-          lotNo: homeownerData.lotNo,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -226,6 +275,14 @@ export default function ReceiptUI() {
     }
   };
 
+  const handleOpenQrDialog = () => {
+    setQrDialogOpen(true);
+  };
+
+  const handleCloseQrDialog = () => {
+    setQrDialogOpen(false);
+  };
+
   if (loading)
     return (
       <Box
@@ -233,7 +290,8 @@ export default function ReceiptUI() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: isMobile ? "60vh" : "100vh",
+          px: isMobile ? 2 : 0,
         }}
       >
         <Typography>Loading...</Typography>
@@ -246,7 +304,8 @@ export default function ReceiptUI() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: isMobile ? "60vh" : "100vh",
+          px: isMobile ? 2 : 0,
         }}
       >
         <Typography color="error">{error}</Typography>
@@ -254,158 +313,333 @@ export default function ReceiptUI() {
     );
 
   const { subtotal, taxes, total } = calculateTotals(billingData?.dueAmount);
+  const totalAmount = (billingData?.dueAmount || 0) * (1 + TAX_RATE);
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: isMobile ? 1 : 3 }}>
+        {/* Mobile Logout Button */}
+        {isMobile && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            <Button
+              variant="contained"
+              color="error"
+              size="large"
+              onClick={logout}
+              startIcon={<LogoutIcon />}
+              sx={{
+                borderRadius: 3,
+                boxShadow: 2,
+                fontWeight: 600,
+                px: 3,
+                py: 1.2,
+                letterSpacing: 1,
+                textTransform: 'none',
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
+        )}
         {/* Receipt Content */}
-        <Box ref={receiptRef} sx={{ p: 4, maxWidth: 1200, marginLeft: 50 }}>
+        <Box ref={receiptRef} sx={{ p: isMobile ? 1 : 4, maxWidth: isMobile ? '100%' : 1200, marginLeft: isMobile ? 0 : 50 }}>
           {/* Header */}
-          <Typography variant="h4" align="center" gutterBottom sx={{ mb: 4 }}>
+          <Typography variant={isMobile ? "h6" : "h4"} align="center" gutterBottom sx={{ mb: isMobile ? 2 : 4 }}>
             Centro de San Lorenzo
           </Typography>
 
           {/* Main Content Grid */}
-          <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-            {/* Left Card - Homeowner Information */}
-            <CustomCard sx={{ flex: 1 }}>
-              <Typography variant="h6" gutterBottom>
-                Homeowner Information
+          <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 1 : 3, mb: isMobile ? 1 : 3 }}>
+            {/* Combined Information Table */}
+            <CustomCard sx={{ p: isMobile ? 1 : 3 }}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} gutterBottom sx={{ color: "#3B1E54", mb: isMobile ? 1 : 2 }}>
+                Receipt Information
               </Typography>
-              <TableContainer>
-                <Table>
-                  <TableBody>
+              <TableContainer sx={{ maxHeight: isMobile ? 300 : 600, overflowX: 'auto' }}>
+                <Table stickyHeader size={isMobile ? "small" : "medium"}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Block & Lot:
+                      <TableCell>Field</TableCell>
+                      <TableCell>Details</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {/* Homeowner Information Section */}
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ 
+                        backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                        fontWeight: 'bold',
+                        fontSize: '1rem'
+                      }}>
+                        Homeowner Information
                       </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold", width: "40%" }}>Name</TableCell>
+                      <TableCell>{homeownerData?.name || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Block & Lot</TableCell>
                       <TableCell>
                         Block {homeownerData?.blockNo || "N/A"}, Lot{" "}
                         {homeownerData?.lotNo || "N/A"}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>Email:</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
                       <TableCell>{homeownerData?.email || "N/A"}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>Status:</TableCell>
-                      <TableCell
-                        sx={{
-                          color:
-                            homeownerData?.status === "Active"
-                              ? "success.main"
-                              : "error.main",
-                          fontWeight: "medium",
-                        }}
-                      >
-                        {homeownerData?.status || "Active"}
+                      <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={homeownerData?.status || "Active"}
+                          color={homeownerData?.status === "Active" ? "success" : "error"}
+                          size="small"
+                          sx={{ fontWeight: "medium" }}
+                        />
                       </TableCell>
                     </TableRow>
-                    {/* Add Penalty Information */}
-                    {(homeownerData?.penaltyLevel > 0 ||
-                      homeownerData?.penaltyStatus === "Pending") && (
+                    {(homeownerData?.penaltyLevel > 0 || homeownerData?.penaltyStatus === "Pending") && (
                       <>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>
-                            Penalty Level:
-                          </TableCell>
-                          <TableCell sx={{ color: "error.main" }}>
-                            {getPenaltyDescription(
-                              homeownerData.penaltyLevel ||
-                                homeownerData.pendingPenaltyLevel,
-                              homeownerData.penaltyStatus
-                            )}
+                          <TableCell sx={{ fontWeight: "bold" }}>Penalty Level</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getPenaltyDescription(
+                                homeownerData.penaltyLevel || homeownerData.pendingPenaltyLevel,
+                                homeownerData.penaltyStatus
+                              )}
+                              color="error"
+                              size="small"
+                            />
                           </TableCell>
                         </TableRow>
                         {homeownerData.penaltyStartTime && (
                           <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>
-                              Penalty Started:
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }}>Penalty Started</TableCell>
                             <TableCell>
-                              {new Date(
-                                homeownerData.penaltyStartTime
-                              ).toLocaleString()}
+                              {new Date(homeownerData.penaltyStartTime).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         )}
                       </>
+                    )}
+
+                    {/* Billing Information Section */}
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ 
+                        backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                        fontWeight: 'bold',
+                        fontSize: '1rem'
+                      }}>
+                        Billing Information
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Due Amount</TableCell>
+                      <TableCell>{formatCurrency(billingData?.dueAmount)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Tax ({(TAX_RATE * 100).toFixed(0)}%)</TableCell>
+                      <TableCell>{formatCurrency(billingData?.dueAmount * TAX_RATE)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Total Amount Due</TableCell>
+                      <TableCell sx={{ fontWeight: "bold", color: "primary.main" }}>
+                        {formatCurrency((billingData?.dueAmount || 0) * (1 + TAX_RATE))}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Payment Status</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={billingData?.isPaid ? "PAID" : "UNPAID"}
+                          color={billingData?.isPaid ? "success" : "error"}
+                          size="small"
+                          sx={{ fontWeight: "bold" }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    {billingData?.lastPaymentDate && (
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "bold" }}>Last Payment</TableCell>
+                        <TableCell>
+                          {formatCurrency(billingData.lastPaymentAmount)} on{" "}
+                          {new Date(billingData.lastPaymentDate).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {/* Payment History Section */}
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ 
+                        backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                        fontWeight: 'bold',
+                        fontSize: '1rem'
+                      }}>
+                        Payment History (Last 12 Months)
+                      </TableCell>
+                    </TableRow>
+                    {billingData?.paymentHistory?.length > 0 ? (
+                      billingData.paymentHistory
+                        .filter(payment => {
+                          const paymentDate = new Date(payment.date);
+                          const oneYearAgo = new Date();
+                          oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                          return paymentDate >= oneYearAgo;
+                        })
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map((payment, index) => (
+                          <TableRow key={index} hover>
+                            <TableCell>
+                              {new Date(payment.date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography>{formatCurrency(payment.amount)}</Typography>
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                  <Chip
+                                    label={payment.status}
+                                    color={
+                                      payment.status === "Completed" 
+                                        ? "success" 
+                                        : payment.status === "Pending" 
+                                        ? "warning" 
+                                        : "error"
+                                    }
+                                    size="small"
+                                    sx={{ fontWeight: "medium" }}
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    Ref: {payment.referenceNo || "N/A"}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
+                          <Typography color="text.secondary">
+                            No payment history available
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
             </CustomCard>
 
-            {/* Right Card - Billing Information */}
-            <CustomCard sx={{ flex: 1 }}>
-              <Typography variant="h6" gutterBottom>
-                Billing Information
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold", width: "40%" }}>
-                        Due Amount:
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(billingData?.dueAmount)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Tax ({(TAX_RATE * 100).toFixed(0)}%):
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(billingData?.dueAmount * TAX_RATE)}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Total Amount Due:
-                      </TableCell>
-                      <TableCell>
-                        {formatCurrency(
-                          (billingData?.dueAmount || 0) * (1 + TAX_RATE)
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Payment Status:
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          color={
-                            billingData?.isPaid ? "success.main" : "error.main"
-                          }
-                          fontWeight="bold"
-                        >
-                          {billingData?.isPaid ? "PAID" : "UNPAID"}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CustomCard>
+            {/* Payment Button */}
+            {!billingData?.isPaid && (
+              <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'center', mt: isMobile ? 1 : 2, gap: isMobile ? 1 : 0 }}>
+                <Button
+                  variant="contained"
+                  size={isMobile ? "medium" : "large"}
+                  startIcon={<QrCode2Icon />}
+                  onClick={handleOpenQrDialog}
+                  sx={{
+                    backgroundColor: '#3B1E54',
+                    '&:hover': { backgroundColor: '#2a1640' },
+                    px: isMobile ? 2 : 4,
+                    py: isMobile ? 1 : 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: isMobile ? '1rem' : '1.1rem',
+                  }}
+                >
+                  Pay Due Amount ({formatCurrency(totalAmount)})
+                </Button>
+              </Box>
+            )}
+
+            {/* QR Code Dialog */}
+            <Dialog
+              open={qrDialogOpen}
+              onClose={handleCloseQrDialog}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+                Scan QR Code to Pay
+              </DialogTitle>
+              <DialogContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    Due Amount: {formatCurrency(totalAmount)}
+                  </Typography>
+                  <Box
+                    component="img"
+                    src="/QRCode.jpg"
+                    alt="Payment QR Code"
+                    sx={{
+                      width: 250,
+                      height: 250,
+                      objectFit: 'contain',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1,
+                    }}
+                  />
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    Scan this QR code using your mobile payment app to pay your due amount
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    mt: 1,
+                    p: 2,
+                    bgcolor: 'rgba(59, 30, 84, 0.04)',
+                    borderRadius: 1,
+                    width: '100%'
+                  }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#3B1E54' }}>
+                      HOA
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      JO**L BR**N V.
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      Mobile Number: 099........388
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      User ID: ........70DM95
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" align="center">
+                    Block {homeownerData?.blockNo}, Lot {homeownerData?.lotNo}
+                  </Typography>
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+                <Button
+                  onClick={handleCloseQrDialog}
+                  variant="outlined"
+                  sx={{ minWidth: 120 }}
+                >
+                  Close
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
 
           {/* Center Card - Add Penalty Warning if applicable */}
-          <CustomCard sx={{ mb: 3 }}>
-            <Stack spacing={2}>
-              <Typography variant="h6" align="center" gutterBottom>
+          <CustomCard sx={{ mb: isMobile ? 1 : 3, p: isMobile ? 1 : 3 }}>
+            <Stack spacing={isMobile ? 1 : 2}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} align="center" gutterBottom>
                 Payment Reminder
               </Typography>
-              <Typography variant="body1" align="center" color="text.secondary">
+              <Typography variant={isMobile ? "body2" : "body1"} align="center" color="text.secondary">
                 Please ensure timely payment of your dues to avoid penalties.
                 {billingData?.lastPaymentDate && (
                   <>
                     <br />
-                    Last Payment:{" "}
-                    {formatCurrency(billingData.lastPaymentAmount)} on{" "}
-                    {new Date(billingData.lastPaymentDate).toLocaleDateString()}
+                    Last Payment: {formatCurrency(billingData.lastPaymentAmount)} on {new Date(billingData.lastPaymentDate).toLocaleDateString()}
                   </>
                 )}
               </Typography>
@@ -445,6 +679,7 @@ export default function ReceiptUI() {
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
                   justifyContent: "center",
                   gap: 2,
                   mt: 2,
@@ -454,15 +689,31 @@ export default function ReceiptUI() {
                   variant="contained"
                   onClick={handleSaveAsPDF}
                   disabled={loading}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: isMobile ? 100 : 150, mb: isMobile ? 1 : 0 }}
                 >
                   Save as PDF
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  ref={fileInputRef}
+                />
+                <Button
+                  variant="contained"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  startIcon={<AttachFileIcon />}
+                  sx={{ minWidth: isMobile ? 100 : 150, mb: isMobile ? 1 : 0 }}
+                >
+                  Upload Screenshot
                 </Button>
                 <Button
                   variant="contained"
                   onClick={handleSendEmail}
                   disabled={loading}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: isMobile ? 100 : 150 }}
                 >
                   Send to Email
                 </Button>

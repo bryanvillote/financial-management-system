@@ -33,7 +33,7 @@ const homeownerSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Warning", "Danger", "No Participation"],
+      enum: ["Active", "Warning", "Penalty 1", "Penalty 2", "Penalty 3", "No Participation"],
       default: "Active",
     },
     penaltyLevel: {

@@ -466,30 +466,36 @@ export default function Billing(props) {
             mx: 3,
             pb: 5,
             mt: { xs: 8, md: 0 },
+            width: "100%",
+            maxWidth: "100%",
+            overflow: "hidden"
           }}
         >
           <Header />
-          <Stack>
+          <Stack sx={{ width: "100%", maxWidth: '1200px', mx: 'auto',  }}>
             <Box
               sx={{
                 display: "flex",
+                flexDirection: "column",
                 gap: 3,
                 padding: 4,
                 minHeight: 600,
                 alignItems: "flex-start",
-                marginLeft: 30,
+                marginLeft: { xs: 0, md: 35 },
+                width: "100%",
+                overflow: "hidden"
               }}
             >
               {/* Table Container */}
               <Paper
                 sx={{
-                  flex: 5,
-                  borderRadius: "20px",
-                  padding: 4,
-                  maxWidth: "850px",
+                  width: "100%",
+                  padding: { xs: 1, md: 4 },
                   height: "fit-content",
+                  overflow: "visible"
                 }}
               >
+                <Box sx={{ width: '100%', overflowX: 'auto' }}>
                 <DataGrid
                   rows={homeowners}
                   columns={columns}
@@ -505,8 +511,10 @@ export default function Billing(props) {
                     "& .MuiDataGrid-columnHeader": {
                       backgroundColor: "rgba(59, 30, 84, 0.08)",
                     },
+                      width: "max-content"
                   }}
                 />
+                </Box>
               </Paper>
 
               {/* Payment Details Card */}
@@ -514,10 +522,8 @@ export default function Billing(props) {
                 sx={{
                   borderRadius: "20px",
                   padding: 4,
-                  width: "320px",
-                  position: "sticky",
-                  top: 20,
-                  alignSelf: "flex-start",
+                  width: "100%",
+                  maxWidth: "850px"
                 }}
               >
                 <Typography

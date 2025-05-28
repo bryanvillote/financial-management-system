@@ -65,7 +65,7 @@ export default function MenuContent() {
       allowedRoles: ["President", "Vice President", "Treasurer"],
     },
     {
-      text: "Admin Registration",
+      text: "User Roles",
       icon: <AdminPanel />,
       path: "/app/admin-register",
       allowedRoles: ["President", "Vice President"],

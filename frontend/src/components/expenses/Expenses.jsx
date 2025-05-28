@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
 } from "@mui/material";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
@@ -32,6 +33,8 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from "../dashboard/theme/customizations";
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -94,10 +97,10 @@ export default function Expenses(props) {
   const [expenses, setExpenses] = useState([]);
   const [expenseName, setExpenseName] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
-
   const [editingExpenseId, setEditingExpenseId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -214,6 +217,25 @@ export default function Expenses(props) {
     setEditingExpenseId(null);
   };
 
+  const handleOpenExpenseModal = () => {
+    resetForm();
+    setExpenseModalOpen(true);
+  };
+
+  const handleCloseExpenseModal = () => {
+    setExpenseModalOpen(false);
+    resetForm();
+  };
+
+  const handleSubmit = async () => {
+    if (editingExpenseId) {
+      await updateExpense();
+    } else {
+      await addExpense();
+    }
+    handleCloseExpenseModal();
+  };
+
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <ThemeProvider theme={theme}>
@@ -242,11 +264,40 @@ export default function Expenses(props) {
                 marginLeft: 30,
               }}
             >
-              <Paper sx={{ flex: 7, borderRadius: "20px", padding: 4 }}>
-                <Paper style={{ height: 550, width: 700 }}>
+              <Paper sx={{ flex: 1, borderRadius: "20px", padding: 4 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  mb: 3,
+                  px: 2 
+                }}>
+                  <h2>Homeowners Association Expenses</h2>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenExpenseModal}
+                    sx={{ 
+                      borderRadius: "10px",
+                      ml: 4 
+                    }}
+                  >
+                    Add Expense
+                  </Button>
+                </Box>
+                <Paper 
+                  style={{ 
+                    height: 550, 
+                    width: "100%",
+                    overflow: "hidden"
+                  }}
+                  elevation={0}
+                >
                   <TableVirtuoso
                     data={expenses}
                     components={VirtuosoTableComponents}
+                    style={{ height: "100%" }}
                     fixedHeaderContent={() => (
                       <TableRow>
                         {columns.map((column) => (
@@ -255,7 +306,10 @@ export default function Expenses(props) {
                             variant="head"
                             align={column.numeric || false ? "right" : "left"}
                             style={{ width: column.width }}
-                            sx={{ backgroundColor: "background.paper" }}
+                            sx={{ 
+                              backgroundColor: "background.paper",
+                              fontWeight: "bold"
+                            }}
                           >
                             {column.label}
                           </TableCell>
@@ -271,10 +325,21 @@ export default function Expenses(props) {
                           >
                             {column.dataKey === "actions" ? (
                               <>
-                                <Button onClick={() => editExpense(row)}>
+                                <Button 
+                                  onClick={() => {
+                                    editExpense(row);
+                                    setExpenseModalOpen(true);
+                                  }}
+                                  size="small"
+                                  sx={{ mr: 1 }}
+                                >
                                   Edit
                                 </Button>
-                                <Button onClick={() => handleDeleteClick(row)}>
+                                <Button 
+                                  onClick={() => handleDeleteClick(row)}
+                                  size="small"
+                                  color="error"
+                                >
                                   Delete
                                 </Button>
                               </>
@@ -288,61 +353,73 @@ export default function Expenses(props) {
                   />
                 </Paper>
               </Paper>
-
-              <Paper sx={{ flex: 3, borderRadius: "20px", padding: 4 }}>
-                <h2>Homeowners Association Expense Tracker</h2>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 2,
-                    flex: 1,
-                  }}
-                >
-                  <TextField
-                    id="expense-name"
-                    label="Expense Name"
-                    variant="outlined"
-                    fullWidth="20"
-                    sx={{
-                      m: 1,
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
-                    }}
-                    value={expenseName}
-                    onChange={(e) => setExpenseName(e.target.value)}
-                  />
-                  <TextField
-                    id="expense-amount"
-                    label="Expense Amount"
-                    variant="outlined"
-                    fullWidth="20"
-                    sx={{
-                      m: 1,
-                      width: "20",
-                      "& .MuiOutlinedInput-root": { borderRadius: "10px" },
-                    }}
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    size="large"
-                    sx={{ mt: 3, borderRadius: "10px" }}
-                    onClick={editingExpenseId ? updateExpense : addExpense}
-                  >
-                    {editingExpenseId ? "Update Expense" : "Add Expense"}
-                  </Button>
-                </Box>
-              </Paper>
             </Box>
           </Stack>
         </Stack>
 
-        {/* Add Delete Confirmation Dialog */}
+        {/* Expense Form Modal */}
+        <Dialog 
+          open={expenseModalOpen} 
+          onClose={handleCloseExpenseModal}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            {editingExpenseId ? "Edit Expense" : "Add New Expense"}
+            <IconButton
+              aria-label="close"
+              onClick={handleCloseExpenseModal}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                id="expense-name"
+                label="Expense Name"
+                variant="outlined"
+                fullWidth
+                value={expenseName}
+                onChange={(e) => setExpenseName(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                }}
+              />
+              <TextField
+                id="expense-amount"
+                label="Expense Amount"
+                variant="outlined"
+                fullWidth
+                value={expenseAmount}
+                onChange={(e) => setExpenseAmount(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseExpenseModal} color="inherit">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+              color="primary"
+              sx={{ borderRadius: "10px" }}
+            >
+              {editingExpenseId ? "Update" : "Add"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
         <Dialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}

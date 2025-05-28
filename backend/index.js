@@ -1,15 +1,13 @@
 require("dotenv").config();
+// Debug environment variables
+console.log('Email User:', process.env.EMAIL_USER);
+console.log('Email Password:', process.env.EMAIL_PASS ? 'Password is set' : 'Password is not set');
+
 const express = require("express");
 const mongoose = require("mongoose");
-const authRoutes = require("./routes/auth");
-const transactionRoutes = require("./routes/transactions");
-const expenseRoutes = require("./routes/expenses");
-const billingRoutes = require("./routes/billings");
-const homeownerRoutes = require("./routes/homeownerRoutes");
-const penaltyRoutes = require("./routes/penaltyRoutes");
 const cors = require("cors");
-const emailRoutes = require("./routes/emailRoutes");
 
+// Create Express app
 const app = express();
 
 // Connect to MongoDB first
@@ -18,9 +16,18 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Middleware
+// Global middleware
 app.use(cors());
 app.use(express.json());
+
+// Import routes
+const authRoutes = require("./routes/auth");
+const transactionRoutes = require("./routes/transactions");
+const expenseRoutes = require("./routes/expenses");
+const billingRoutes = require("./routes/billings");
+const homeownerRoutes = require("./routes/homeownerRoutes");
+const penaltyRoutes = require("./routes/penaltyRoutes");
+const emailRoutes = require("./routes/emailRoutes");
 
 // Routes
 app.use("/auth", authRoutes);
@@ -34,7 +41,19 @@ app.use("/email", emailRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send("Something broke!");
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found"
+  });
 });
 
 // Start the server

@@ -3,6 +3,7 @@ import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   height: "calc(100vh - 200px)",
@@ -39,11 +40,18 @@ function renderPenalty(penalty) {
   );
 }
 
-export default function HomeownerDataGrid() {
+export default function HomeownerDataGrid({ onHomeownerSelect }) {
   const [homeowners, setHomeowners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      flex: 1,
+      minWidth: 200,
+    },
     {
       field: "blockNo",
       headerName: "Block",
@@ -97,36 +105,32 @@ export default function HomeownerDataGrid() {
 
   const fetchHomeowners = async () => {
     try {
-      const response = await fetch("http://localhost:8000/homeowners");
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:8000/homeowner", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (!response.ok) {
         throw new Error("Failed to fetch homeowners");
       }
+
       const data = await response.json();
-
-      // Transform the data
-      const homeownersWithId = data.map((homeowner) => ({
-        id: homeowner._id,
-        blockNo: homeowner.blockNo,
-        lotNo: homeowner.lotNo,
-        email: homeowner.email,
-        phoneNo: homeowner.phoneNo,
-        status: homeowner.status || "Active",
-        penalty: homeowner.penalty || "None",
-        dueDate: new Date().toLocaleDateString(),
-      }));
-
-      setHomeowners(homeownersWithId);
-    } catch (error) {
-      console.error("Error fetching homeowners:", error);
+      setHomeowners(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      toast.error("Failed to fetch homeowners");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch on mount and set up refresh interval
   useEffect(() => {
     fetchHomeowners();
-    const interval = setInterval(fetchHomeowners, 5000); // Refresh every 5 seconds
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchHomeowners, 5000);
     return () => clearInterval(interval);
   }, []);
 

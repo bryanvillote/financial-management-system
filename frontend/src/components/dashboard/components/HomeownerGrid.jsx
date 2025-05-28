@@ -16,7 +16,6 @@ import { DataGrid } from "@mui/x-data-grid";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HomeownerStats from "./HomeownerStats";
 
 export default function HomeOwnerGrid() {
   const navigate = useNavigate();
@@ -27,6 +26,11 @@ export default function HomeOwnerGrid() {
   const [homeownerToDelete, setHomeownerToDelete] = useState(null);
 
   const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      width: 200,
+    },
     {
       field: "blockNo",
       headerName: "Block No",
@@ -59,7 +63,11 @@ export default function HomeOwnerGrid() {
               ? "success"
               : params.value === "Warning"
               ? "warning"
-              : params.value === "Danger"
+              : params.value === "Penalty 1"
+              ? "error"
+              : params.value === "Penalty 2"
+              ? "error"
+              : params.value === "Penalty 3"
               ? "error"
               : params.value === "No Participation"
               ? "default"
@@ -209,7 +217,7 @@ export default function HomeOwnerGrid() {
       </Stack>
 
       <Grid container spacing={3}>
-        <Grid xs={12} lg={9}>
+        <Grid xs={12}>
           <DataGrid
             rows={homeowners}
             getRowId={(row) => row._id}
@@ -227,12 +235,6 @@ export default function HomeOwnerGrid() {
               setSelectedHomeowner(selected);
             }}
             sx={{ minWidth: 800 }}
-          />
-        </Grid>
-        <Grid xs={12} lg={3}>
-          <HomeownerStats
-            selectedHomeowner={selectedHomeowner}
-            onPenaltyApplied={fetchHomeowners}
           />
         </Grid>
       </Grid>

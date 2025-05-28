@@ -50,15 +50,12 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
     setIsApplying(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8000/penalty/start", {
+      const response = await fetch(`http://localhost:8000/penalty/start/${selectedHomeowner._id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          homeownerId: selectedHomeowner._id,
-        }),
+        }
       });
 
       if (!response.ok) {
@@ -72,7 +69,7 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
         selectedHomeowner.penaltyLevel
       );
       toast.success(
-        `Penalty level ${data.penaltyLevel} applied for ${data.duration} seconds. Next penalty will be ${nextDuration} seconds if payment remains unpaid.`,
+        `Penalty process started. Status will update every 5 seconds.`,
         {
           duration: 5000,
         }

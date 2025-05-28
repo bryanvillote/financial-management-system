@@ -1,13 +1,14 @@
 const { Homeowner, Billing } = require("../models");
 const User = require("../models/User");
+const { startAutomaticPenaltyCycle } = require("../services/penaltyService");
 
 // Create
 exports.registerHomeowner = async (req, res) => {
   try {
-    const { blockNo, lotNo, phoneNo, email } = req.body;
+    const { blockNo, lotNo, phoneNo, email, name } = req.body;
 
     // Validate required fields
-    if (!blockNo || !lotNo || !phoneNo || !email) {
+    if (!blockNo || !lotNo || !phoneNo || !email || !name) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -44,8 +45,8 @@ exports.registerHomeowner = async (req, res) => {
       lotNo,
       phoneNo,
       email,
+      name,
       status: "Active",
-      name: req.body.name || `${blockNo}-${lotNo} Resident`, // Add a default name if not provided
     });
 
     await homeowner.save();
@@ -55,6 +56,9 @@ exports.registerHomeowner = async (req, res) => {
       homeownerId: homeowner._id,
       dueAmount: 0,
     });
+
+    // Start automatic penalty cycle for new homeowner
+    await startAutomaticPenaltyCycle(homeowner._id);
 
     res.status(201).json({
       success: true,

@@ -1,5 +1,14 @@
 const mongoose = require("mongoose");
 
+const STATUS_ENUM = {
+  ACTIVE: "Active",
+  WARNING: "Warning",
+  PENALTY_1: "Penalty 1",
+  PENALTY_2: "Penalty 2",
+  PENALTY_3: "Penalty 3",
+  NO_PARTICIPATION: "No Participation"
+};
+
 const homeownerSchema = new mongoose.Schema(
   {
     blockNo: {
@@ -32,8 +41,15 @@ const homeownerSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Warning", "Danger", "No Participation"],
-      default: "Active",
+      enum: [
+        STATUS_ENUM.ACTIVE,
+        STATUS_ENUM.WARNING,
+        STATUS_ENUM.PENALTY_1,
+        STATUS_ENUM.PENALTY_2,
+        STATUS_ENUM.PENALTY_3,
+        STATUS_ENUM.NO_PARTICIPATION
+      ],
+      default: STATUS_ENUM.ACTIVE,
     },
     penaltyLevel: {
       type: Number,
@@ -52,6 +68,10 @@ const homeownerSchema = new mongoose.Schema(
       enum: ["None", "Pending", "Active"],
       default: "None",
     },
+    penaltyTimeoutId: {
+      type: String,
+      default: null,
+    }
   },
   { timestamps: true }
 );
@@ -59,4 +79,7 @@ const homeownerSchema = new mongoose.Schema(
 // Compound unique index for block and lot numbers
 homeownerSchema.index({ blockNo: 1, lotNo: 1 }, { unique: true });
 
-module.exports = homeownerSchema;
+module.exports = {
+  homeownerSchema,
+  STATUS_ENUM
+};

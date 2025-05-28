@@ -389,7 +389,7 @@ export default function AdminReg(props) {
               mb: 2,
             }}
           >
-            Admin Registration
+            User Roles
           </Typography>
           <Box
             component="form"

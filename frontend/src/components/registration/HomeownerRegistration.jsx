@@ -38,6 +38,7 @@ export default function HomeownerRegistration() {
     phoneNo: "",
     email: "",
     password: "",
+    name: "",
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -53,6 +54,7 @@ export default function HomeownerRegistration() {
         lotNo: editingHomeowner.lotNo,
         phoneNo: editingHomeowner.phoneNo,
         email: editingHomeowner.email,
+        name: editingHomeowner.name || "",
         password: "", // Password field is empty when editing
       });
     }
@@ -68,8 +70,8 @@ export default function HomeownerRegistration() {
 
   // Validate inputs
   const validateInputs = (data) => {
-    const { blockNo, lotNo, phoneNo, email, password } = data;
-    if (!blockNo || !lotNo || !phoneNo || !email || (!isEditing && !password)) {
+    const { blockNo, lotNo, phoneNo, email, password, name } = data;
+    if (!blockNo || !lotNo || !phoneNo || !email || !name || (!isEditing && !password)) {
       setSnackbarMessage("All fields are required");
       setSnackbarOpen(true);
       return false;
@@ -134,7 +136,7 @@ export default function HomeownerRegistration() {
               lotNo: formData.lotNo,
               phoneNo: formData.phoneNo,
               email: formData.email,
-              name: `${formData.blockNo}-${formData.lotNo} Resident`,
+              name: formData.name,
             }),
           }
         );
@@ -186,6 +188,7 @@ export default function HomeownerRegistration() {
           phoneNo: "",
           email: "",
           password: "",
+          name: "",
         });
 
         // Navigate to homeowners page after successful registration
@@ -229,6 +232,14 @@ export default function HomeownerRegistration() {
               onSubmit={handleSubmit}
               sx={{ display: "flex", flexDirection: "column", gap: 2 }}
             >
+              <TextField
+                required
+                name="name"
+                label="Name"
+                value={formData.name}
+                onChange={handleChange}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+              />
               <TextField
                 required
                 name="blockNo"

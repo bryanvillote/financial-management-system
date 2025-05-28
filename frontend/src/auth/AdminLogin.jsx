@@ -68,6 +68,8 @@ const getRoleBasedRedirectPath = (role) => {
       return "/app/dashboard";
     case "President":
       return "/app/dashboard";
+    case "Home Owner":
+      return "/app/receipt";
     default:
       return "/login";
   }
@@ -76,7 +78,6 @@ const getRoleBasedRedirectPath = (role) => {
 export default function AdminLog(props) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -98,7 +99,10 @@ export default function AdminLog(props) {
       });
 
       if (response.ok) {
-        setLoggedIn(true);
+        // Get user role and redirect immediately
+        const decodedToken = jwtDecode(token);
+        const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
+        navigate(redirectPath, { replace: true });
       } else {
         localStorage.removeItem("authToken");
       }
@@ -172,14 +176,13 @@ export default function AdminLog(props) {
 
         // Store token and handle login
         login(data.token);
-        setLoggedIn(true);
 
         // Get the correct redirect path based on role
         const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
 
         // Use setTimeout to ensure the toast is visible
         setTimeout(() => {
-          navigate(redirectPath);
+          navigate(redirectPath, { replace: true });
         }, 1000);
       } else {
         toast.error(data.message || "Login failed. Please try again.");
@@ -204,10 +207,6 @@ export default function AdminLog(props) {
         <CircularProgress />
       </Box>
     );
-  }
-
-  if (loggedIn) {
-    return <Dashboard />;
   }
 
   return (
@@ -262,10 +261,7 @@ export default function AdminLog(props) {
                 variant="outlined"
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
+
             <ForgotPassword />
             <Button
               type="submit"

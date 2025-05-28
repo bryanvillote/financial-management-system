@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import PageViewsBarChart from "./PageViewsBarChart";
 import SessionsChart from "./SessionsChart";
 import StatCard from "./StatCard";
+import HomeownerStats from "./HomeownerStats";
 
 export default function MainGrid() {
   const [stats, setStats] = useState({
@@ -195,6 +196,9 @@ export default function MainGrid() {
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <PageViewsBarChart />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <HomeownerStats />
         </Grid>
       </Grid>
     </Box>

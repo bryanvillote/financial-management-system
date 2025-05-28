@@ -1,166 +1,148 @@
 const { Homeowner, Billing } = require("../models");
+const { STATUS_ENUM } = require("../models/schemas/homeowner.schema");
 
-// Progressive penalty durations (in milliseconds)
-const BASE_PENALTY_DURATION = 5000; // 5 seconds base duration
+// Penalty durations in milliseconds (5 seconds = 5000ms)
+const PENALTY_INTERVAL = 5000; // 5 seconds for each level
 
-const PENALTY_STATUSES = {
-  0: "Active",
-  1: "Warning",
-  2: "Danger",
-  3: "No Participation",
-};
+// Map to store active timeouts
+const activeTimeouts = new Map();
 
-const PENALTY_DESCRIPTIONS = {
-  1: "Warning Penalty - Minor violation",
-  2: "Danger Penalty - Moderate violation",
-  3: "No Participation Penalty - Severe violation",
-};
-
-const startPenalty = async (homeownerId) => {
-  try {
-    const homeowner = await Homeowner.findById(homeownerId);
-    if (!homeowner) throw new Error("Homeowner not found");
-
-    const billing = await Billing.findOne({ homeownerId });
-    if (!billing || billing.dueAmount === 0)
-      throw new Error("No due payment found");
-
-    const currentLevel = homeowner.penaltyLevel || 0;
-
-    if (currentLevel >= 3) {
-      return {
-        message: "Maximum penalty level reached",
-        penaltyLevel: 3,
-        duration: 5,
-      };
-    }
-
-    // Immediately update penalty info
-    const nextLevel = currentLevel + 1;
-    homeowner.penaltyLevel = nextLevel;
-    homeowner.penaltyStartTime = new Date();
-    homeowner.penaltyStatus = "Pending";
-    await homeowner.save();
-
-    // Schedule application of penalty status
-    setTimeout(async () => {
-      const updatedHomeowner = await Homeowner.findById(homeownerId);
-      const updatedBilling = await Billing.findOne({ homeownerId });
-
-      if (
-        !updatedHomeowner ||
-        !updatedBilling ||
-        updatedBilling.dueAmount === 0
-      ) {
-        // Reset penalty if paid
-        updatedHomeowner.penaltyLevel = 0;
-        updatedHomeowner.penaltyStartTime = null;
-        updatedHomeowner.status = "Active";
-        updatedHomeowner.penaltyStatus = "None";
-        await updatedHomeowner.save();
-        return;
-      }
-
-      const level = updatedHomeowner.penaltyLevel;
-      updatedHomeowner.status = PENALTY_STATUSES[level];
-      updatedHomeowner.penaltyStatus = "Active";
-      await updatedHomeowner.save();
-
-      if (level < 3) {
-        // Wait before starting next level
-        await startPenalty(homeownerId);
-      }
-    }, BASE_PENALTY_DURATION);
-
-    return {
-      message: `Status will change to ${PENALTY_STATUSES[nextLevel]} in 5 seconds`,
-      dueTime: new Date(Date.now() + BASE_PENALTY_DURATION),
-      penaltyLevel: nextLevel,
-      duration: 5,
-    };
-  } catch (error) {
-    throw new Error(`Error starting penalty: ${error.message}`);
+// Clear existing timeouts for a homeowner
+const clearHomeownerTimeouts = (homeownerId) => {
+  if (activeTimeouts.has(homeownerId)) {
+    clearTimeout(activeTimeouts.get(homeownerId));
+    activeTimeouts.delete(homeownerId);
   }
 };
 
-const applyPendingPenalty = async (homeownerId) => {
-  try {
-    const homeowner = await Homeowner.findById(homeownerId);
-    if (!homeowner || !homeowner.pendingPenaltyLevel) {
-      return null;
-    }
-
-    const elapsedTime = Date.now() - homeowner.penaltyStartTime.getTime();
-    const requiredDuration =
-      BASE_PENALTY_DURATION * homeowner.pendingPenaltyLevel;
-
-    if (elapsedTime >= requiredDuration) {
-      // Apply the penalty
-      homeowner.penaltyLevel = homeowner.pendingPenaltyLevel;
-      homeowner.status = PENALTY_STATUSES[homeowner.pendingPenaltyLevel];
-      homeowner.penaltyStatus = "Active";
-
-      if (!homeowner.penaltyRecords) {
-        homeowner.penaltyRecords = [];
-      }
-
-      homeowner.penaltyRecords.push({
-        level: homeowner.pendingPenaltyLevel,
-        description: PENALTY_DESCRIPTIONS[homeowner.pendingPenaltyLevel],
-        appliedAt: new Date(),
-        duration: requiredDuration / 60000, // in minutes
-      });
-
-      homeowner.pendingPenaltyLevel = null;
-
-      return await homeowner.save();
-    }
-
-    return null;
-  } catch (error) {
-    throw new Error(`Error applying penalty: ${error.message}`);
-  }
-};
-
-const checkAndUpdatePenalty = async (homeownerId) => {
+// Start automatic penalty cycle for a new homeowner
+const startAutomaticPenaltyCycle = async (homeownerId) => {
   try {
     const homeowner = await Homeowner.findById(homeownerId);
     if (!homeowner) {
       throw new Error("Homeowner not found");
     }
 
-    if (homeowner.penaltyLevel && homeowner.penaltyStartTime) {
-      const currentTime = new Date();
-      const elapsedTime = currentTime - homeowner.penaltyStartTime;
+    // Clear any existing timeouts
+    clearHomeownerTimeouts(homeownerId);
 
-      if (elapsedTime >= BASE_PENALTY_DURATION) {
-        const billing = await Billing.findOne({ homeownerId });
+    // Start with Warning status after 5 seconds
+    const warningTimeout = setTimeout(async () => {
+      await updateHomeownerStatus(homeownerId, STATUS_ENUM.WARNING, 1);
+    }, PENALTY_INTERVAL);
 
-        if (!billing || billing.dueAmount === 0) {
-          homeowner.penaltyLevel = 0;
-          homeowner.penaltyStartTime = null;
-          homeowner.status = "Active";
-          homeowner.penaltyStatus = "None";
-          await homeowner.save();
-        }
-      }
-    }
-
-    return homeowner;
+    activeTimeouts.set(homeownerId, warningTimeout);
+    return warningTimeout;
   } catch (error) {
-    throw new Error(`Error checking penalty: ${error.message}`);
+    console.error("Error starting automatic penalty cycle:", error);
+    throw error;
   }
 };
 
-const getCurrentPenaltyStatus = (penaltyLevel) => {
-  return PENALTY_STATUSES[penaltyLevel] || "Active";
+// Update homeowner status and schedule next penalty
+const updateHomeownerStatus = async (homeownerId, status, penaltyLevel) => {
+  try {
+    const homeowner = await Homeowner.findById(homeownerId);
+    if (!homeowner) {
+      throw new Error("Homeowner not found");
+    }
+
+    // Update homeowner status
+    homeowner.status = status;
+    homeowner.penaltyLevel = penaltyLevel;
+    homeowner.penaltyStartTime = new Date();
+    homeowner.penaltyStatus = "Active";
+    await homeowner.save();
+
+    // Schedule next penalty if not at max level
+    if (penaltyLevel < 5) {
+      const nextLevel = penaltyLevel + 1;
+      const nextStatus = getNextPenaltyStatus(nextLevel);
+      const nextTimeout = setTimeout(
+        () => updateHomeownerStatus(homeownerId, nextStatus, nextLevel),
+        PENALTY_INTERVAL
+      );
+      activeTimeouts.set(homeownerId, nextTimeout);
+    }
+  } catch (error) {
+    console.error("Error updating homeowner status:", error);
+    throw error;
+  }
+};
+
+// Get next penalty status based on level
+const getNextPenaltyStatus = (level) => {
+  switch (level) {
+    case 1:
+      return STATUS_ENUM.WARNING;
+    case 2:
+      return STATUS_ENUM.PENALTY_1;
+    case 3:
+      return STATUS_ENUM.PENALTY_2;
+    case 4:
+      return STATUS_ENUM.PENALTY_3;
+    case 5:
+      return STATUS_ENUM.NO_PARTICIPATION;
+    default:
+      return STATUS_ENUM.ACTIVE;
+  }
+};
+
+// Reset penalty cycle when payment is processed
+const resetPenaltyCycle = async (homeownerId) => {
+  try {
+    const homeowner = await Homeowner.findById(homeownerId);
+    if (!homeowner) {
+      throw new Error("Homeowner not found");
+    }
+
+    // Clear existing timeouts
+    clearHomeownerTimeouts(homeownerId);
+
+    // Reset homeowner status
+    homeowner.status = STATUS_ENUM.ACTIVE;
+    homeowner.penaltyLevel = 0;
+    homeowner.penaltyStartTime = null;
+    homeowner.penaltyStatus = "None";
+    await homeowner.save();
+
+    // Start new penalty cycle
+    return await startAutomaticPenaltyCycle(homeownerId);
+  } catch (error) {
+    console.error("Error resetting penalty cycle:", error);
+    throw error;
+  }
+};
+
+// Start a new penalty cycle
+const startPenaltyCycle = async (homeownerId) => {
+  try {
+    const homeowner = await Homeowner.findById(homeownerId);
+    if (!homeowner) {
+      throw new Error("Homeowner not found");
+    }
+
+    // Clear any existing timeouts
+    clearHomeownerTimeouts(homeownerId);
+
+    // Start with Warning status after 5 seconds
+    const warningTimeout = setTimeout(async () => {
+      await updateHomeownerStatus(homeownerId, STATUS_ENUM.WARNING, 1);
+    }, PENALTY_INTERVAL);
+
+    activeTimeouts.set(homeownerId, warningTimeout);
+    return warningTimeout;
+  } catch (error) {
+    console.error("Error starting penalty cycle:", error);
+    throw error;
+  }
 };
 
 module.exports = {
-  startPenalty,
-  checkAndUpdatePenalty,
-  getCurrentPenaltyStatus,
-  PENALTY_STATUSES,
-  PENALTY_DESCRIPTIONS,
-  BASE_PENALTY_DURATION,
+  startAutomaticPenaltyCycle,
+  resetPenaltyCycle,
+  clearHomeownerTimeouts,
+  updateHomeownerStatus,
+  startPenaltyCycle,
+  STATUS_ENUM,
 };
