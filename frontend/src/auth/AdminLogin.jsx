@@ -20,8 +20,7 @@ import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_URL, getAuthHeaders } from '../utils/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -170,28 +169,33 @@ export default function AdminLog(props) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const decodedToken = jwtDecode(data.token);
-        toast.success("Login Successful!");
-
-        // Store token and handle login
-        login(data.token);
-
-        // Get the correct redirect path based on role
-        const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
-
-        // Use setTimeout to ensure the toast is visible
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1000);
-      } else {
-        toast.error(data.message || "Login failed. Please try again.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed. Please try again.");
       }
+
+      const data = await response.json();
+      
+      if (!data.token) {
+        throw new Error("No token received from server");
+      }
+
+      const decodedToken = jwtDecode(data.token);
+      toast.success("Login Successful!");
+
+      // Store token and handle login
+      login(data.token);
+
+      // Get the correct redirect path based on role
+      const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
+
+      // Use setTimeout to ensure the toast is visible
+      setTimeout(() => {
+        navigate(redirectPath, { replace: true });
+      }, 1000);
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred during login.");
+      console.error("Login error:", error);
+      toast.error(error.message || "An error occurred during login.");
     }
   };
 
