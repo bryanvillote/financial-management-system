@@ -5,7 +5,7 @@
       "destination": "http://localhost:8000/:path*"
     }
   ],
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite"
 } 
