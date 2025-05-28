@@ -33,6 +33,7 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../utils/context/useAuth';
+import { API_URL, getAuthHeaders } from '../../utils/api';
 
 // Theme setup
 const theme = createTheme({
@@ -162,7 +163,10 @@ export default function ReceiptUI() {
 
       // Fetch homeowner data
       const homeownerResponse = await fetch(
-        `http://localhost:8000/homeowners/email/${userEmail}`
+        `${API_URL}/homeowners/email/${userEmail}`,
+        {
+          headers: getAuthHeaders()
+        }
       );
       const homeownerResult = await homeownerResponse.json();
 
@@ -176,7 +180,10 @@ export default function ReceiptUI() {
 
       // Fetch billing data
       const billingResponse = await fetch(
-        `http://localhost:8000/billing/by-email/${userEmail}`
+        `${API_URL}/billing/by-email/${userEmail}`,
+        {
+          headers: getAuthHeaders()
+        }
       );
       const billingResult = await billingResponse.json();
 
