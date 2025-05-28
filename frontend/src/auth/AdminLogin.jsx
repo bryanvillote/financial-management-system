@@ -163,18 +163,27 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
+      console.log('Attempting to login to:', `${API_URL}/auth/login`);
+      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed. Please try again.");
+        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
+        throw new Error(errorData.message || `Login failed with status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => {
+        throw new Error('Failed to parse response data');
+      });
       
       if (!data.token) {
         throw new Error("No token received from server");
@@ -194,7 +203,11 @@ export default function AdminLog(props) {
         navigate(redirectPath, { replace: true });
       }, 1000);
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error details:", {
+        message: error.message,
+        stack: error.stack,
+        API_URL: API_URL
+      });
       toast.error(error.message || "An error occurred during login.");
     }
   };
