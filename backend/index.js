@@ -10,6 +10,14 @@ const cors = require("cors");
 // Create Express app
 const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
+}));
+
 // Connect to MongoDB first
 mongoose
   .connect(process.env.DATABASE_URI)
@@ -17,8 +25,12 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Global middleware
-app.use(cors());
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Import routes
 const authRoutes = require("./routes/auth");
@@ -40,11 +52,11 @@ app.use("/email", emailRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
     success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined
+    message: err.message || "Internal server error",
+    error: process.env.NODE_ENV === "development" ? err.stack : undefined
   });
 });
 
@@ -58,4 +70,8 @@ app.use((req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`CORS enabled for: ${process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:5173'}`);
+});
