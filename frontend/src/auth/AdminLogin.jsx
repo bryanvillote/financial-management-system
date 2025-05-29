@@ -20,7 +20,6 @@ import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
-import { login } from '../utils/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -163,23 +162,34 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
-      const data = await login({ email, password });
-      const decodedToken = jwtDecode(data.token);
-      toast.success("Login Successful!");
+      const response = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Store token and handle login
-      login(data.token);
+      const data = await response.json();
 
-      // Get the correct redirect path based on role
-      const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
+      if (response.ok) {
+        const decodedToken = jwtDecode(data.token);
+        toast.success("Login Successful!");
 
-      // Use setTimeout to ensure the toast is visible
-      setTimeout(() => {
-        navigate(redirectPath, { replace: true });
-      }, 1000);
+        // Store token and handle login
+        login(data.token);
+
+        // Get the correct redirect path based on role
+        const redirectPath = getRoleBasedRedirectPath(decodedToken.role);
+
+        // Use setTimeout to ensure the toast is visible
+        setTimeout(() => {
+          navigate(redirectPath, { replace: true });
+        }, 1000);
+      } else {
+        toast.error(data.message || "Login failed. Please try again.");
+      }
     } catch (error) {
-      console.error("Login error details:", error);
-      toast.error(error.message || "Login failed. Please try again.");
+      console.error("Error:", error);
+      toast.error("An error occurred during login.");
     }
   };
 

@@ -17,16 +17,7 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Global middleware
-app.use(cors({
-  origin: [
-    'https://financial-management-system-three.vercel.app',
-    'http://localhost:5173', // for local development
-    'http://localhost:3000'  // for local development
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 
 // Import routes
@@ -47,11 +38,6 @@ app.use("/homeowners", homeownerRoutes);
 app.use("/penalty", penaltyRoutes);
 app.use("/email", emailRoutes);
 
-// Add a test route
-app.get("/test", (req, res) => {
-  res.json({ message: "Backend is working!" });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -66,8 +52,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: "Route not found",
-    path: req.path
+    message: "Route not found"
   });
 });
 
