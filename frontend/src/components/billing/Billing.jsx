@@ -118,8 +118,6 @@ const rows = [
   createData("Eclair", 262, 16.0, 24, 6.0),
 ];
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 export default function Billing(props) {
   const theme = useTheme();
   const [homeowners, setHomeowners] = useState([]);
@@ -203,8 +201,8 @@ export default function Billing(props) {
 
       // Fetch both homeowners and billing data
       const [homeownersResponse, billingResponse] = await Promise.all([
-        fetch(`${API_URL}/homeowners`),
-        fetch(`${API_URL}/billing`),
+        fetch("http://localhost:8000/homeowners"),
+        fetch("http://localhost:8000/billing"),
       ]);
 
       if (!homeownersResponse.ok) {
@@ -255,7 +253,7 @@ export default function Billing(props) {
 
     try {
       const response = await fetch(
-        `${API_URL}/billing/${selectedHomeowner._id}/update-due`,
+        `http://localhost:8000/billing/${selectedHomeowner._id}/update-due`,
         {
           method: "PUT",
           headers: {
@@ -301,7 +299,7 @@ export default function Billing(props) {
     if (!paymentAmount) return;
 
     try {
-      const response = await fetch(`${API_URL}/billing/payment`, {
+      const response = await fetch("http://localhost:8000/billing/payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -318,7 +316,7 @@ export default function Billing(props) {
       }
 
       // Restart the penalty system for the homeowner
-      const restartResponse = await fetch(`${API_URL}/homeowners/restart-penalty/${selectedHomeowner._id}`, {
+      const restartResponse = await fetch(`http://localhost:8000/homeowners/restart-penalty/${selectedHomeowner._id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -343,7 +341,7 @@ export default function Billing(props) {
 
     try {
       const response = await fetch(
-        `${API_URL}/email/send-payment-reminder`,
+        "http://localhost:8000/email/send-payment-reminder",
         {
           method: "POST",
           headers: {
@@ -431,7 +429,7 @@ export default function Billing(props) {
     try {
       const receiptHtml = receiptRef.current.outerHTML;
 
-      const response = await fetch(`${API_URL}/email/send-receipt`, {
+      const response = await fetch("http://localhost:8000/email/send-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

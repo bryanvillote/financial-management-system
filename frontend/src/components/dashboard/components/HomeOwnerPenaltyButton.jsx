@@ -1,7 +1,6 @@
 import { Button } from "@mui/material";
 import { toast } from "mui-sonner";
 import { useState } from "react";
-import { API_URL, getAuthHeaders } from '../../../utils/api';
 
 export default function HomeOwnerPenaltyButton({ homeowner, onPenaltyApplied }) {
   const [isApplying, setIsApplying] = useState(false);
@@ -11,9 +10,13 @@ export default function HomeOwnerPenaltyButton({ homeowner, onPenaltyApplied }) 
 
     setIsApplying(true);
     try {
-      const response = await fetch(`${API_URL}/penalty/start/${homeowner._id}`, {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:8000/penalty/start/${homeowner._id}`, {
         method: "POST",
-        headers: getAuthHeaders()
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
       });
 
       if (!response.ok) {

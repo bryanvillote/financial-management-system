@@ -33,7 +33,6 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../utils/context/useAuth';
-import { API_URL, getAuthHeaders } from '../../utils/api';
 
 // Theme setup
 const theme = createTheme({
@@ -127,6 +126,9 @@ const qrDialogStyle = {
   textAlign: 'center',
 };
 
+// Add this near the top of the file
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function ReceiptUI() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const receiptRef = React.useRef(null);
@@ -163,10 +165,7 @@ export default function ReceiptUI() {
 
       // Fetch homeowner data
       const homeownerResponse = await fetch(
-        `${API_URL}/homeowners/email/${userEmail}`,
-        {
-          headers: getAuthHeaders()
-        }
+        `${API_URL}/homeowners/email/${userEmail}`
       );
       const homeownerResult = await homeownerResponse.json();
 
@@ -180,10 +179,7 @@ export default function ReceiptUI() {
 
       // Fetch billing data
       const billingResponse = await fetch(
-        `${API_URL}/billing/by-email/${userEmail}`,
-        {
-          headers: getAuthHeaders()
-        }
+        `${API_URL}/billing/by-email/${userEmail}`
       );
       const billingResult = await billingResponse.json();
 
@@ -241,14 +237,11 @@ export default function ReceiptUI() {
   const handleSendEmail = async () => {
     if (!receiptRef.current || !homeownerData) return;
 
-    // Create a unique ID for the loading toast so we can dismiss it later
     const loadingToastId = toast.loading("Sending receipt to your email...");
 
     try {
-      // Use a simple message for the email body
       const simpleMessage = `<p>Attached is my proof of payment for Block ${homeownerData.blockNo}, Lot ${homeownerData.lotNo}.</p><p>Thank you,</p><p>Homeowner</p>`;
 
-      // Create FormData to handle file upload
       const formData = new FormData();
       formData.append('html', simpleMessage);
       formData.append('email', homeownerData.email);
@@ -259,8 +252,7 @@ export default function ReceiptUI() {
         formData.append('receiptImage', receiptImage);
       }
 
-      // Send to backend
-      const response = await fetch("http://localhost:8000/email/send-receipt", {
+      const response = await fetch(`${API_URL}/email/send-receipt`, {
         method: "POST",
         body: formData,
       });
@@ -271,12 +263,10 @@ export default function ReceiptUI() {
         throw new Error(data.message || "Failed to send email");
       }
 
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success("Receipt sent to your email successfully");
     } catch (error) {
       console.error("Error sending email:", error);
-      // Dismiss loading toast and show error
       toast.dismiss(loadingToastId);
       toast.error("Failed to send receipt: " + error.message);
     }

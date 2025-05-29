@@ -5,7 +5,7 @@ console.log('Email Password:', process.env.EMAIL_PASS ? 'Password is set' : 'Pas
 
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+import cors from 'cors';
 
 // Create Express app
 const app = express();
@@ -19,15 +19,13 @@ mongoose
 // Global middleware
 app.use(cors({
   origin: [
-    'https://financial-management-system-eta.vercel.app',
-    /^https:\/\/financial-management-system-.*\.vercel\.app$/,  // Allow all Vercel preview URLs
-    'http://localhost:5173'
+    'https://financial-management-system-three.vercel.app',
+    'http://localhost:5173', // for local development
+    'http://localhost:3000'  // for local development
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  credentials: true
 }));
 app.use(express.json());
 

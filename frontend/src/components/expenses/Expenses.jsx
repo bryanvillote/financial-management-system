@@ -35,7 +35,6 @@ import {
 } from "../dashboard/theme/customizations";
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import { API_URL, getAuthHeaders } from '../../utils/api';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -105,12 +104,15 @@ export default function Expenses(props) {
 
   useEffect(() => {
     const fetchExpenses = async () => {
+      const token = localStorage.getItem("authToken");
       try {
-        const response = await fetch(`${API_URL}/expenses`, {
-          headers: getAuthHeaders()
+        const response = await axios.get("http://localhost:8000/expenses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        const data = await response.json();
-        setExpenses(data);
+        console.log("Fetched expenses:", response.data);
+        setExpenses(response.data);
       } catch (error) {
         console.error("Error fetching expenses:", error);
       }
@@ -120,37 +122,53 @@ export default function Expenses(props) {
 
   const addExpense = async () => {
     const newExpense = { expenseName, expenseAmount };
+    const token = localStorage.getItem("authToken");
     try {
-      const response = await fetch(`${API_URL}/expenses`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newExpense)
-      });
-      const data = await response.json();
-      setExpenses((prevExpenses) => [...prevExpenses, data]);
+      const response = await axios.post(
+        "http://localhost:8000/expenses",
+        newExpense,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setExpenses((prevExpenses) => [...prevExpenses, response.data]);
       resetForm();
     } catch (error) {
-      console.error("Error adding expense:", error);
+      console.error(
+        "Error adding expense:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
   const updateExpense = async () => {
     const updatedExpense = { expenseName, expenseAmount };
+    const token = localStorage.getItem("authToken");
+
     try {
-      const response = await fetch(`${API_URL}/expenses/${editingExpenseId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(updatedExpense)
-      });
-      const data = await response.json();
+      const response = await axios.put(
+        `http://localhost:8000/expenses/${editingExpenseId}`,
+        updatedExpense,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       setExpenses((prevExpenses) =>
         prevExpenses.map((expense) =>
-          expense._id === editingExpenseId ? data : expense
+          expense._id === editingExpenseId ? response.data : expense
         )
       );
       resetForm();
     } catch (error) {
-      console.error("Error updating expense:", error);
+      console.error(
+        "Error updating expense:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
@@ -161,12 +179,17 @@ export default function Expenses(props) {
 
   const handleDeleteConfirm = async () => {
     if (!expenseToDelete) return;
+    const token = localStorage.getItem("authToken");
 
     try {
-      await fetch(`${API_URL}/expenses/${expenseToDelete._id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      await axios.delete(
+        `http://localhost:8000/expenses/${expenseToDelete._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setExpenses((prevExpenses) =>
         prevExpenses.filter((expense) => expense._id !== expenseToDelete._id)

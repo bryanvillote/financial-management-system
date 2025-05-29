@@ -16,7 +16,6 @@ import { DataGrid } from "@mui/x-data-grid";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_URL, getAuthHeaders } from '../../../utils/api';
 
 export default function HomeOwnerGrid() {
   const navigate = useNavigate();
@@ -116,9 +115,7 @@ export default function HomeOwnerGrid() {
 
   const fetchHomeowners = async () => {
     try {
-      const response = await fetch(`${API_URL}/homeowners`, {
-        headers: getAuthHeaders()
-      });
+      const response = await fetch("http://localhost:8000/homeowners");
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {

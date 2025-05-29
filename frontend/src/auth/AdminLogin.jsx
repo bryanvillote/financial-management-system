@@ -20,7 +20,7 @@ import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
-import { API_URL, getAuthHeaders } from '../utils/api';
+import { login } from '../utils/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -92,7 +92,7 @@ export default function AdminLog(props) {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch(`${API_URL}/auth/verify`, {
+      const response = await fetch("http://localhost:8000/auth/verify", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -163,32 +163,7 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
-      console.log('Attempting to login to:', `${API_URL}/auth/login`);
-      
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
-        throw new Error(errorData.message || `Login failed with status: ${response.status}`);
-      }
-
-      const data = await response.json().catch(() => {
-        throw new Error('Failed to parse response data');
-      });
-      
-      if (!data.token) {
-        throw new Error("No token received from server");
-      }
-
+      const data = await login({ email, password });
       const decodedToken = jwtDecode(data.token);
       toast.success("Login Successful!");
 
@@ -203,12 +178,8 @@ export default function AdminLog(props) {
         navigate(redirectPath, { replace: true });
       }, 1000);
     } catch (error) {
-      console.error("Login error details:", {
-        message: error.message,
-        stack: error.stack,
-        API_URL: API_URL
-      });
-      toast.error(error.message || "An error occurred during login.");
+      console.error("Login error details:", error);
+      toast.error(error.message || "Login failed. Please try again.");
     }
   };
 
