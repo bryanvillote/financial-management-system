@@ -20,12 +20,14 @@ mongoose
 app.use(cors({
   origin: [
     'https://financial-management-system-eta.vercel.app',
-    'https://financial-management-system-f9r3ja968-maxines-projects-caef2fc7.vercel.app',
+    /^https:\/\/financial-management-system-.*\.vercel\.app$/,  // Allow all Vercel preview URLs
     'http://localhost:5173'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 app.use(express.json());
 
