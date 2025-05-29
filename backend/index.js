@@ -18,7 +18,11 @@ mongoose
 
 // Global middleware
 app.use(cors({
-  origin: ['https://financial-management-system-eta.vercel.app', 'http://localhost:5173'],
+  origin: [
+    'https://financial-management-system-eta.vercel.app',
+    'https://financial-management-system-f9r3ja968-maxines-projects-caef2fc7.vercel.app',
+    'http://localhost:5173'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
