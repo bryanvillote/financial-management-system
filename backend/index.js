@@ -5,7 +5,7 @@ console.log('Email Password:', process.env.EMAIL_PASS ? 'Password is set' : 'Pas
 
 const express = require("express");
 const mongoose = require("mongoose");
-import cors from 'cors';
+const cors = require("cors");
 
 // Create Express app
 const app = express();
@@ -47,6 +47,11 @@ app.use("/homeowners", homeownerRoutes);
 app.use("/penalty", penaltyRoutes);
 app.use("/email", emailRoutes);
 
+// Add a test route
+app.get("/test", (req, res) => {
+  res.json({ message: "Backend is working!" });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -61,7 +66,8 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: "Route not found"
+    message: "Route not found",
+    path: req.path
   });
 });
 
