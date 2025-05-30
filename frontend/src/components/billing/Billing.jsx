@@ -315,18 +315,6 @@ export default function Billing(props) {
         throw new Error(data.message || "Payment processing failed");
       }
 
-      // Restart the penalty system for the homeowner
-      const restartResponse = await fetch(`http://localhost:8000/homeowners/restart-penalty/${selectedHomeowner._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!restartResponse.ok) {
-        console.error("Failed to restart penalty system");
-      }
-
       setPaymentAmount("");
       setSelectedHomeowner(null);
       await fetchHomeowners();
