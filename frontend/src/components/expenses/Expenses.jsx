@@ -67,17 +67,17 @@ const columns = [
     cellPadding: "16px 24px"
   },
   {
-    width: 100,
+    width: 300,
     label: "Expense Amount",
     dataKey: "expenseAmount",
-    align: "right",
-    headerAlign: "right",
+    align: "center",
+    headerAlign: "center",
     padding: "16px 24px",
     cellPadding: "16px 24px",
     formatValue: (value) => `₱${value}`
   },
   {
-    width: 100,
+    width: 300,
     label: "Actions",
     dataKey: "actions",
     align: "center",
@@ -279,7 +279,7 @@ export default function Expenses(props) {
                 maxWidth: "1200px",
                 mx: "auto",
                 mt: 2,
-                ml: { xs: 0, md: 55 }
+                ml: { xs: 0, md: 25},
               }}
             >
               <Paper 
@@ -288,7 +288,7 @@ export default function Expenses(props) {
                   borderRadius: "20px", 
                   padding: 4,
                   width: "100%",
-                  maxWidth: "1000px",
+                  maxWidth: "1200px",
                   backgroundColor: "#ffffff"
                 }}
               >
@@ -361,14 +361,17 @@ export default function Expenses(props) {
                             key={column.dataKey}
                             align={column.align}
                             style={{ width: column.width }}
-                            sx={{ 
+                            sx={{
+                              width: column.width,
+                              maxWidth: column.width,
+                              minWidth: column.width,
                               padding: column.cellPadding,
                               height: "52px",
                               borderBottom: "1px solid",
                               borderColor: "divider",
                               ...(column.dataKey === "expenseAmount" && {
-                                fontFamily: "monospace"
-                              })
+                                fontFamily: "monospace",
+                              }),
                             }}
                           >
                             {column.dataKey === "actions" ? (
@@ -377,8 +380,7 @@ export default function Expenses(props) {
                                 justifyContent: 'center', 
                                 alignItems: 'center',
                                 gap: 1,
-                                width: '100%',
-                                height: '100%'
+                              
                               }}>
                                 <Button 
                                   onClick={() => {

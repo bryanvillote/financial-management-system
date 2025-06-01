@@ -25,7 +25,7 @@ exports.processPayment = async (req, res) => {
     await payment.save();
 
     // Update billing
-    const billing = await Billing.findOne({ homeownerId });
+    const billing = await Billing.findOne({ homeownerId });   
     if (billing) {
       billing.dueAmount = Math.max(0, billing.dueAmount - amount);
       billing.lastPaymentDate = new Date();

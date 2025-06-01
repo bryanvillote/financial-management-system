@@ -24,7 +24,9 @@ export default function ReportGrid() {
     totalPayments: 0,
     totalExpenses: 0,
     paidHomeowners: [],
-    pendingHomeowners: []
+    pendingHomeowners: [],
+    expenseBreakdown: [],
+    recentExpenses: []
   });
 
   useEffect(() => {
@@ -54,10 +56,34 @@ export default function ReportGrid() {
         0
       );
       
+      // Process expenses data
       const totalExpenses = expensesData.reduce(
         (sum, expense) => sum + (parseFloat(expense.expenseAmount) || 0), 
         0
       );
+
+      // Get expense breakdown by category
+      const expenseBreakdown = expensesData.reduce((acc, expense) => {
+        const category = expense.expenseName || 'Uncategorized';
+        const amount = parseFloat(expense.expenseAmount) || 0;
+        acc[category] = (acc[category] || 0) + amount;
+        return acc;
+      }, {});
+
+      // Convert to array and sort by amount
+      const expenseBreakdownArray = Object.entries(expenseBreakdown)
+        .map(([name, amount]) => ({ name, amount }))
+        .sort((a, b) => b.amount - a.amount);
+
+      // Get recent expenses (last 5)
+      const recentExpenses = [...expensesData]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5)
+        .map(expense => ({
+          name: expense.expenseName,
+          amount: parseFloat(expense.expenseAmount) || 0,
+          date: new Date(expense.createdAt).toLocaleDateString()
+        }));
       
       // Get homeowners who paid this month
       const paidHomeowners = paymentsData
@@ -76,7 +102,9 @@ export default function ReportGrid() {
         totalPayments,
         totalExpenses,
         paidHomeowners,
-        pendingHomeowners
+        pendingHomeowners,
+        expenseBreakdown: expenseBreakdownArray,
+        recentExpenses
       });
     } catch (error) {
       console.error("Error fetching report data:", error);
@@ -211,150 +239,195 @@ export default function ReportGrid() {
         </Button>
       </Stack>
 
-      {/* Financial Summary Card */}
-      <Card 
-        sx={{ 
-          mb: 3,
-          borderRadius: "15px",
-          boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-        }}
-      >
-        <CardContent>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: "medium", color: "primary.main" }}>
-            Monthly Financial Summary for {reportData.month}
-          </Typography>
-          
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {/* Financial Overview */}
-            <Grid xs={12} md={6}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 2, 
-                  backgroundColor: "rgba(59, 30, 84, 0.04)",
-                  borderRadius: "10px"
-                }}
-              >
-                <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                  Financial Overview
-                </Typography>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Total Payments Received
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                      {reportData.totalPayments.toLocaleString('en-PH', { 
-                        style: 'currency', 
-                        currency: 'PHP' 
-                      })}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Total Expenses Incurred
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                      {reportData.totalExpenses.toLocaleString('en-PH', { 
-                        style: 'currency', 
-                        currency: 'PHP' 
-                      })}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Grid>
+      <Grid container spacing={3}>
+        {/* Financial Summary Card */}
+        <Grid xs={12} md={6}>
+          <Card 
+            sx={{ 
+              borderRadius: "15px",
+              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
+              height: "100%"
+            }}
+          >
+            <CardContent>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: "medium", color: "primary.main" }}>
+                Monthly Financial Summary for {reportData.month}
+              </Typography>
+              
+              <Stack spacing={3} sx={{ mt: 2 }}>
+                {/* Financial Overview */}
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2, 
+                    backgroundColor: "rgba(59, 30, 84, 0.04)",
+                    borderRadius: "10px"
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+                    Financial Overview
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Total Payments Received
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: "medium" }}>
+                        {reportData.totalPayments.toLocaleString('en-PH', { 
+                          style: 'currency', 
+                          currency: 'PHP' 
+                        })}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Total Expenses Incurred
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: "medium" }}>
+                        {reportData.totalExpenses.toLocaleString('en-PH', { 
+                          style: 'currency', 
+                          currency: 'PHP' 
+                        })}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
 
-            {/* Homeowners Status */}
-            <Grid xs={12} md={6}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 2, 
-                  backgroundColor: "rgba(59, 30, 84, 0.04)",
-                  borderRadius: "10px",
-                  height: "100%"
-                }}
-              >
-                <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                  Homeowners Status
-                </Typography>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Homeowners Who Paid ({reportData.paidHomeowners.length})
-                    </Typography>
-                    <List dense sx={{ 
-                      maxHeight: "150px", 
-                      overflow: "auto",
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
-                      borderRadius: "5px",
-                      p: 1
-                    }}>
-                      {reportData.paidHomeowners.length > 0 ? (
-                        reportData.paidHomeowners.map((homeowner, index) => (
-                          <ListItem key={index} sx={{ py: 0.5 }}>
-                            <ListItemText 
-                              primary={`${index + 1}. ${homeowner}`}
-                              primaryTypographyProps={{ variant: "body2" }}
-                            />
+                {/* Recent Expenses */}
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2, 
+                    backgroundColor: "rgba(59, 30, 84, 0.04)",
+                    borderRadius: "10px"
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+                    Recent Expenses
+                  </Typography>
+                  <List dense>
+                    {reportData.recentExpenses.map((expense, index) => (
+                      <ListItem key={index} sx={{ px: 0 }}>
+                        <ListItemText
+                          primary={expense.name}
+                          secondary={expense.date}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                          {expense.amount.toLocaleString('en-PH', {
+                            style: 'currency',
+                            currency: 'PHP'
+                          })}
+                        </Typography>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Expense Breakdown Card */}
+        <Grid xs={12} md={6}>
+          <Card 
+            sx={{ 
+              borderRadius: "15px",
+              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
+              height: "100%"
+            }}
+          >
+            <CardContent>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: "medium", color: "primary.main" }}>
+                Expense Breakdown
+              </Typography>
+              
+              <Stack spacing={3} sx={{ mt: 2 }}>
+                {/* Expense Categories */}
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2, 
+                    backgroundColor: "rgba(59, 30, 84, 0.04)",
+                    borderRadius: "10px"
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+                    Expense Categories
+                  </Typography>
+                  <List dense>
+                    {reportData.expenseBreakdown.map((category, index) => (
+                      <ListItem key={index} sx={{ px: 0 }}>
+                        <ListItemText
+                          primary={category.name}
+                          secondary={`${((category.amount / reportData.totalExpenses) * 100).toFixed(1)}% of total`}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+                          {category.amount.toLocaleString('en-PH', {
+                            style: 'currency',
+                            currency: 'PHP'
+                          })}
+                        </Typography>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+
+                {/* Homeowners Status */}
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2, 
+                    backgroundColor: "rgba(59, 30, 84, 0.04)",
+                    borderRadius: "10px"
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+                    Homeowners Status
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Homeowners Who Paid ({reportData.paidHomeowners.length})
+                      </Typography>
+                      <List dense sx={{ 
+                        maxHeight: "150px", 
+                        overflow: "auto",
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        borderRadius: "5px",
+                        p: 1
+                      }}>
+                        {reportData.paidHomeowners.map((name, index) => (
+                          <ListItem key={index} dense>
+                            <ListItemText primary={name} />
                           </ListItem>
-                        ))
-                      ) : (
-                        <ListItem>
-                          <ListItemText 
-                            primary="No homeowners have made payments this month"
-                            primaryTypographyProps={{ 
-                              variant: "body2",
-                              color: "text.secondary",
-                              fontStyle: "italic"
-                            }}
-                          />
-                        </ListItem>
-                      )}
-                    </List>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Homeowners With Pending Dues ({reportData.pendingHomeowners.length})
-                    </Typography>
-                    <List dense sx={{ 
-                      maxHeight: "150px", 
-                      overflow: "auto",
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
-                      borderRadius: "5px",
-                      p: 1
-                    }}>
-                      {reportData.pendingHomeowners.length > 0 ? (
-                        reportData.pendingHomeowners.map((homeowner, index) => (
-                          <ListItem key={index} sx={{ py: 0.5 }}>
-                            <ListItemText 
-                              primary={`${index + 1}. ${homeowner}`}
-                              primaryTypographyProps={{ variant: "body2" }}
-                            />
+                        ))}
+                      </List>
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Pending Payments ({reportData.pendingHomeowners.length})
+                      </Typography>
+                      <List dense sx={{ 
+                        maxHeight: "150px", 
+                        overflow: "auto",
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        borderRadius: "5px",
+                        p: 1
+                      }}>
+                        {reportData.pendingHomeowners.map((name, index) => (
+                          <ListItem key={index} dense>
+                            <ListItemText primary={name} />
                           </ListItem>
-                        ))
-                      ) : (
-                        <ListItem>
-                          <ListItemText 
-                            primary="All homeowners have paid their dues for this month"
-                            primaryTypographyProps={{ 
-                              variant: "body2",
-                              color: "text.secondary",
-                              fontStyle: "italic"
-                            }}
-                          />
-                        </ListItem>
-                      )}
-                    </List>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+                        ))}
+                      </List>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       <Grid
         container

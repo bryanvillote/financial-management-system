@@ -67,15 +67,7 @@ export default function HomeOwnerGrid() {
           color={
             params.value === "Active"
               ? "success"
-              : params.value === "Warning"
-              ? "warning"
-              : params.value === "Penalty 1"
-              ? "error"
-              : params.value === "Penalty 2"
-              ? "error"
-              : params.value === "Penalty 3"
-              ? "error"
-              : params.value === "No Participation"
+              : ["Warning", "Penalty 1", "Penalty 2", "Penalty 3", "No Participation"].includes(params.value)
               ? "error"
               : "default"
           }
@@ -90,7 +82,6 @@ export default function HomeOwnerGrid() {
         />
       ),
     },
-    // Only show actions column if user is not a Treasurer
     ...(userRole !== "Treasurer"
       ? [
           {
@@ -99,7 +90,7 @@ export default function HomeOwnerGrid() {
             flex: 0.8,
             minWidth: 200,
             renderCell: (params) => (
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" width="100%">
                 <Button
                   variant="contained"
                   color="primary"
@@ -159,8 +150,7 @@ export default function HomeOwnerGrid() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchHomeowners();
-    }, 5000); // Update every 5 seconds instead of 30 seconds
-
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -173,7 +163,6 @@ export default function HomeOwnerGrid() {
   }, []);
 
   const handleEdit = (homeowner) => {
-    // Include phoneNo in the homeowner data being passed
     navigate("/app/registration", {
       state: {
         isEditing: true,
@@ -195,20 +184,11 @@ export default function HomeOwnerGrid() {
 
   const handleDeleteConfirm = async () => {
     if (!homeownerToDelete) return;
-
     try {
-      const response = await fetch(
-        `http://localhost:8000/homeowners/${homeownerToDelete._id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete homeowner");
-      }
-
-      // Refresh the homeowners list
+      const response = await fetch(`http://localhost:8000/homeowners/${homeownerToDelete._id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete homeowner");
       fetchHomeowners();
     } catch (error) {
       console.error("Error deleting homeowner:", error);
@@ -219,31 +199,26 @@ export default function HomeOwnerGrid() {
   };
 
   return (
-    <Box 
-      sx={{ 
-        width: "calc(90% + 60px)",  // Increased from calc(90% + 40px) to calc(90% + 60px)
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: "1400px",
         mx: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        px: { xs: 0, md: 15 }
+        px: 2,
       }}
     >
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ 
-          mb: 3,
-          width: "100%",
-          maxWidth: "100%",
-          ml: { xs: 0, md: 15 }
-        }}
+        sx={{ mb: 3, width: "100%" }}
       >
         <Typography variant="h5" fontWeight="medium">
           Homeowners List
         </Typography>
-        {/* Only show Add Homeowner button if user is not a Treasurer */}
         {userRole !== "Treasurer" && (
           <Button
             variant="contained"
@@ -266,48 +241,27 @@ export default function HomeOwnerGrid() {
         )}
       </Stack>
 
-      <Grid 
-        container 
-        spacing={3}
-        sx={{ 
-          width: "100%",
-          maxWidth: "100%", // Changed from 1400px to 100%
-          justifyContent: "center",
-          ml: { xs: 0, md: 15 }
-        }}
-      >
+      <Grid container spacing={3} sx={{ width: "100%", justifyContent: "center" }}>
         <Grid xs={12}>
           <DataGrid
             rows={homeowners}
             getRowId={(row) => row._id}
             columns={columns}
             initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
-              sorting: {
-                sortModel: [{ field: 'name', sort: 'asc' }],
-              },
-              filter: {
-                filterModel: {
-                  items: [],
-                },
-              },
+              pagination: { paginationModel: { page: 0, pageSize: 10 } },
+              sorting: { sortModel: [{ field: 'name', sort: 'asc' }] },
+              filter: { filterModel: { items: [] } },
             }}
             pageSizeOptions={[10, 25, 50]}
             onRowSelectionModelChange={(newSelection) => {
-              const selected = homeowners.find(
-                (h) => h._id === newSelection[0]
-              );
+              const selected = homeowners.find(h => h._id === newSelection[0]);
               setSelectedHomeowner(selected);
             }}
-            sx={{ 
+            sx={{
               width: "100%",
               boxShadow: "0px 0px 10px 0px rgba(182, 182, 182, 0.52)",
               borderRadius: "20px",
-              '& .MuiDataGrid-cell': {
-                borderColor: 'divider'
-              },
+              '& .MuiDataGrid-cell': { borderColor: 'divider' },
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'background.paper',
                 borderBottom: '2px solid',
@@ -319,15 +273,7 @@ export default function HomeOwnerGrid() {
             filterMode="server"
             disableRowSelectionOnClick
             checkboxSelection
-            disableColumnFilter={false}
-            disableColumnSelector={false}
-            disableColumnMenu={false}
-            columnVisibilityModel={{
-              // You can control initial column visibility here if needed
-            }}
-            slots={{
-              toolbar: GridToolbar,
-            }}
+            slots={{ toolbar: GridToolbar }}
             slotProps={{
               toolbar: {
                 showQuickFilter: true,
@@ -338,7 +284,6 @@ export default function HomeOwnerGrid() {
         </Grid>
       </Grid>
 
-      {/* Add Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
@@ -350,9 +295,7 @@ export default function HomeOwnerGrid() {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-homeowner-dialog-description">
-            Are you sure you want to delete the homeowner{" "}
-            <strong>{homeownerToDelete?.email}</strong> with Block{" "}
-            {homeownerToDelete?.blockNo}, Lot {homeownerToDelete?.lotNo}?
+            Are you sure you want to delete the homeowner <strong>{homeownerToDelete?.email}</strong> with Block {homeownerToDelete?.blockNo}, Lot {homeownerToDelete?.lotNo}?
             <br />
             This action cannot be undone.
           </DialogContentText>
@@ -366,7 +309,7 @@ export default function HomeOwnerGrid() {
             variant="outlined"
             color="error"
             autoFocus
-            sx={{ 
+            sx={{
               borderRadius: "15px",
               borderColor: "#d32f2f",
               color: "#d32f2f",

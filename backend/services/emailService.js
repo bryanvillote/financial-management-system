@@ -78,7 +78,7 @@ const emailService = {
   async sendPaymentReminder(email, name, dueAmount, blockNo, lotNo) {
     try {
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: "Centro De San Lorenzo HOA",
         to: email,
         subject: 'HOA Payment Reminder',
         html: `

@@ -469,7 +469,7 @@ export default function Billing(props) {
             width: "100%",
             maxWidth: "100%",
             overflow: "hidden",
-            ml: { xs: 0, md: 35 }
+            pl: {md: "280px"}
           }}
         >
           <Header />
@@ -480,7 +480,6 @@ export default function Billing(props) {
               mx: 'auto',
               display: 'flex',
               alignItems: 'center',
-              ml: { xs: 0, md: 10 }
             }}
           >
             <Box
@@ -494,7 +493,7 @@ export default function Billing(props) {
                 width: "100%",
                 maxWidth: "1200px",
                 overflow: "hidden",
-                ml: { xs: 0, md: 20 }
+
               }}
             >
               {/* Table Container */}
