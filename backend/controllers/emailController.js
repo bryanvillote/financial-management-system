@@ -3,17 +3,36 @@ const { emailService, upload } = require('../services/emailService');
 // Send receipt with optional image attachment
 exports.sendReceipt = async (req, res) => {
   try {
-    const { html, email, blockNo, lotNo } = req.body;
-    const receiptImage = req.file; // Get the entire file object
+    const { 
+      email, 
+      receiptHtml, 
+      subject,
+      homeownerName,
+      blockNo,
+      lotNo,
+      dueAmount,
+      paymentDate,
+      referenceNumber
+    } = req.body;
 
-    if (!html || !email || !blockNo || !lotNo) {
+    if (!email || !receiptHtml) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields'
       });
     }
 
-    await emailService.sendReceipt(email, html, blockNo, lotNo, receiptImage);
+    await emailService.sendReceipt({
+      email,
+      receiptHtml,
+      subject,
+      homeownerName,
+      blockNo,
+      lotNo,
+      dueAmount,
+      paymentDate,
+      referenceNumber
+    });
 
     res.status(200).json({
       success: true,

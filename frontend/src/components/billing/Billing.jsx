@@ -218,7 +218,7 @@ export default function Billing(props) {
         return acc;
       }, {});
 
-      // Combine homeowner and billing data
+      // Combine homeowner and billing data (removed status information)
       const combinedData = homeownersData.map((homeowner) => ({
         ...homeowner,
         dueAmount: billingMap[homeowner._id]?.dueAmount ?? 0,
@@ -299,18 +299,7 @@ export default function Billing(props) {
     if (!paymentAmount) return;
 
     try {
-      // Validate payment amount
-      const amount = parseFloat(paymentAmount);
-      if (isNaN(amount) || amount <= 0) {
-        setNotificationStatus({
-          show: true,
-          severity: "error",
-          message: "Please enter a valid payment amount",
-        });
-        return;
-      }
-
-      // First, process the payment
+      // Process the payment
       const paymentResponse = await fetch("http://localhost:8000/billing/payment", {
         method: "POST",
         headers: {
@@ -318,72 +307,46 @@ export default function Billing(props) {
         },
         body: JSON.stringify({
           homeownerId: selectedHomeowner._id,
-          amount: amount,
+          amount: parseFloat(paymentAmount),
+          referenceNumber: `PAY-${Date.now()}`,
         }),
       });
 
-      const paymentResult = await paymentResponse.json();
-
       if (!paymentResponse.ok) {
-        throw new Error(paymentResult.message || "Payment processing failed");
+        const data = await paymentResponse.json();
+        throw new Error(data.message || "Payment processing failed");
       }
 
-      // Then, update the homeowner's status
-      const homeownerResponse = await fetch(
-        `http://localhost:8000/homeowners/${selectedHomeowner._id}/update-status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: "Active",
-            lastPaymentDate: new Date().toISOString(),
-            lastPaymentAmount: amount,
-          }),
-        }
-      );
-
-      if (!homeownerResponse.ok) {
-        // If homeowner status update fails, we should handle the payment reversal
-        await fetch(`http://localhost:8000/billing/payment/reverse/${paymentResult.paymentId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        throw new Error("Failed to update homeowner status");
-      }
-
-      // Show success notification
-      setNotificationStatus({
-        show: true,
-        severity: "success",
-        message: "Payment processed successfully",
+      // Start the automatic penalty cycle
+      const penaltyResponse = await fetch(`http://localhost:8000/homeowners/${selectedHomeowner._id}/start-penalty-cycle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      // Clear form and refresh data
+      if (!penaltyResponse.ok) {
+        console.warn("Failed to start penalty cycle, but payment was processed");
+      }
+
+      // Show success message
+      toast.success("Payment processed successfully");
+
+      // Reset form and refresh data
       setPaymentAmount("");
       setSelectedHomeowner(null);
       await fetchHomeowners();
-
-      // Hide the success message after 5 seconds
-      setTimeout(() => {
-        setNotificationStatus((prev) => ({ ...prev, show: false }));
-      }, 5000);
-
     } catch (error) {
+      setError(error.message);
       console.error("Error processing payment:", error);
-      setNotificationStatus({
-        show: true,
-        severity: "error",
-        message: error.message || "Failed to process payment",
-      });
+      toast.error(error.message || "Failed to process payment");
     }
   };
 
   const handleSendNotification = async () => {
     if (!selectedHomeowner) return;
+
+    const loadingToastId = toast.loading("Preparing to send payment reminder...");
 
     try {
       const response = await fetch(
@@ -409,23 +372,19 @@ export default function Billing(props) {
         throw new Error(data.message || "Failed to send notification");
       }
 
-      setNotificationStatus({
-        show: true,
-        severity: "success",
-        message: "Payment reminder sent successfully",
+      // Show success message with more details
+      toast.success("Payment reminder sent successfully!", {
+        description: `Reminder has been sent to ${selectedHomeowner.email}`,
+        duration: 5000,
       });
-
-      // Hide the success message after 5 seconds
-      setTimeout(() => {
-        setNotificationStatus((prev) => ({ ...prev, show: false }));
-      }, 5000);
     } catch (error) {
       console.error("Error sending notification:", error);
-      setNotificationStatus({
-        show: true,
-        severity: "error",
-        message: error.message || "Failed to send notification",
+      toast.error("Failed to send payment reminder", {
+        description: error.message || "Please try again later",
+        duration: 5000,
       });
+    } finally {
+      toast.dismiss(loadingToastId);
     }
   };
 
@@ -470,32 +429,56 @@ export default function Billing(props) {
   const handleSendEmail = async () => {
     if (!receiptRef.current || !currentReceipt) return;
 
-    const loadingToastId = toast.loading("Sending receipt to email...");
+    const loadingToastId = toast.loading("Preparing to send receipt...");
 
     try {
+      // Get the receipt HTML content
       const receiptHtml = receiptRef.current.outerHTML;
 
+      // Prepare the email data
+      const emailData = {
+        email: "Centro De San Lorenzo HOA",
+        subject: "Your HOA Payment Receipt",
+        receiptHtml: receiptHtml,
+        homeownerName: currentReceipt.name,
+        blockNo: currentReceipt.blockNo,
+        lotNo: currentReceipt.lotNo,
+        dueAmount: currentReceipt.dueAmount,
+        paymentDate: new Date().toLocaleDateString(),
+        referenceNumber: `PAY-${Date.now()}`
+      };
+
+      // Update loading message
+      toast.loading("Sending receipt to email...", { id: loadingToastId });
+
+      // Send the email
       const response = await fetch("http://localhost:8000/email/send-receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: currentReceipt.email,
-          receiptHtml: receiptHtml,
-          subject: "Your HOA Payment Receipt",
-        }),
+        body: JSON.stringify(emailData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to send email");
+        throw new Error(data.message || "Failed to send email");
       }
 
-      toast.success("Receipt sent successfully!");
+      // Show success message with more details
+      toast.success("Receipt sent successfully!", {
+        description: `Receipt has been sent to ${currentReceipt.email}`,
+        duration: 5000,
+      });
+      
       setReceiptDialogOpen(false);
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error("Failed to send email");
+      toast.error("Failed to send email", {
+        description: error.message || "Please try again later",
+        duration: 5000,
+      });
     } finally {
       toast.dismiss(loadingToastId);
     }

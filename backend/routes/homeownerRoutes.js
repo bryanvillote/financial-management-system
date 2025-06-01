@@ -28,5 +28,6 @@ router.get("/", async (req, res) => {
 router.put("/:id", homeownerController.updateHomeowner);
 router.delete("/:id", homeownerController.deleteHomeowner);
 router.get("/email/:email", homeownerController.getHomeownerByEmail);
+router.post("/:id/start-penalty-cycle", homeownerController.startPenaltyCycle);
 
 module.exports = router;

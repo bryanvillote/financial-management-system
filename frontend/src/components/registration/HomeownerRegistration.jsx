@@ -210,13 +210,14 @@ export default function HomeownerRegistration() {
           display: "flex",
           flexDirection: "column",
           gap: 4,
+          marginLeft: { xs: 0, md: 35 },
           backgroundColor: "#ffffff",
           padding: 4,
           maxWidth: "1200px",
           width: "100%",
-          marginLeft: { xs: 0, md: "280px" },
-          marginRight: "auto",
-          boxSizing: "border-box"
+          ml: { xs: 0, md: "280px" },
+          mr: { xs: 2, md: 4 },
+          mt: { xs: 8, md: 2 }
         }}
       >
         {/* Form Card */}
@@ -227,9 +228,10 @@ export default function HomeownerRegistration() {
             mx: "auto",
             borderRadius: 4,
             boxShadow: "0px 8px 40px hsla(220, 60%, 2%, 0.12)",
+            mt: 2
           }}
         >
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
             <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 600 }}>
               {isEditing ? "Edit Homeowner" : "Register New Homeowner"}
             </Typography>

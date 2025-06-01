@@ -1,9 +1,9 @@
 const { Homeowner, Billing } = require("../models");
 const User = require("../models/User");
-const { startAutomaticPenaltyCycle } = require("../services/penaltyService");
+const { startAutomaticPenaltyCycle, clearHomeownerTimeouts } = require("../services/penaltyService");
 
 // Create
-exports.registerHomeowner = async (req, res) => {
+const registerHomeowner = async (req, res) => {
   try {
     const { blockNo, lotNo, phoneNo, email, name } = req.body;
 
@@ -76,7 +76,7 @@ exports.registerHomeowner = async (req, res) => {
 };
 
 // Read (all)
-exports.getAllHomeowners = async (req, res) => {
+const getAllHomeowners = async (req, res) => {
   try {
     const homeowners = await Homeowner.find().sort({ createdAt: -1 });
     res.status(200).json(homeowners);
@@ -90,20 +90,43 @@ exports.getAllHomeowners = async (req, res) => {
 };
 
 // Read (single)
-exports.getHomeownerById = async (req, res) => {
+const getHomeownerById = async (req, res) => {
   try {
     const homeowner = await Homeowner.findById(req.params.id);
     if (!homeowner) {
-      return res.status(404).json({ message: "Homeowner not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Homeowner not found" 
+      });
     }
-    res.status(200).json(homeowner);
+
+    // Return complete homeowner data including status information
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: homeowner._id,
+        name: homeowner.name,
+        email: homeowner.email,
+        blockNo: homeowner.blockNo,
+        lotNo: homeowner.lotNo,
+        phoneNo: homeowner.phoneNo,
+        status: homeowner.status || "Active",
+        penaltyLevel: homeowner.penaltyLevel,
+        penaltyStatus: homeowner.penaltyStatus,
+        createdAt: homeowner.createdAt,
+        updatedAt: homeowner.updatedAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 // Update
-exports.updateHomeowner = async (req, res) => {
+const updateHomeowner = async (req, res) => {
   try {
     const { blockNo, lotNo, phoneNo, email } = req.body;
 
@@ -143,7 +166,7 @@ exports.updateHomeowner = async (req, res) => {
 };
 
 // Delete
-exports.deleteHomeowner = async (req, res) => {
+const deleteHomeowner = async (req, res) => {
   try {
     // First find the homeowner to get their email
     const homeowner = await Homeowner.findById(req.params.id);
@@ -178,8 +201,8 @@ exports.deleteHomeowner = async (req, res) => {
   }
 };
 
-// Add this new controller method
-exports.getHomeownerByEmail = async (req, res) => {
+// Get homeowner by email
+const getHomeownerByEmail = async (req, res) => {
   try {
     const email = req.params.email;
     const homeowner = await Homeowner.findOne({ email });
@@ -213,4 +236,54 @@ exports.getHomeownerByEmail = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+// Start penalty cycle
+const startPenaltyCycle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const homeowner = await Homeowner.findById(id);
+
+    if (!homeowner) {
+      return res.status(404).json({
+        success: false,
+        message: "Homeowner not found",
+      });
+    }
+
+    // Clear any existing timeouts
+    clearHomeownerTimeouts(id);
+
+    // Start the automatic penalty cycle
+    await startAutomaticPenaltyCycle(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Penalty cycle started successfully",
+      data: {
+        homeownerId: id,
+        status: homeowner.status,
+        penaltyLevel: homeowner.penaltyLevel,
+        penaltyStatus: homeowner.penaltyStatus
+      }
+    });
+  } catch (error) {
+    console.error("Error starting penalty cycle:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to start penalty cycle",
+      error: error.message,
+    });
+  }
+};
+
+// Export all controller functions
+module.exports = {
+  registerHomeowner,
+  getAllHomeowners,
+  getHomeownerById,
+  updateHomeowner,
+  deleteHomeowner,
+  getHomeownerByEmail,
+  startPenaltyCycle
 };

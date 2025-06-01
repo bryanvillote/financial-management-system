@@ -1,5 +1,5 @@
 const { Homeowner, Billing } = require("../models");
-const { clearHomeownerTimeouts, resetPenaltyCycle, startPenaltyCycle } = require("../services/penaltyService");
+const { startAutomaticPenaltyCycle, clearHomeownerTimeouts } = require("../services/penaltyService");
 const { STATUS_ENUM } = require("../models/schemas/homeowner.schema");
 
 exports.processPayment = async (req, res) => {
@@ -32,28 +32,19 @@ exports.processPayment = async (req, res) => {
     billing.lastPaymentAmount = parseFloat(amount);
     await billing.save();
 
-    // Clear any existing penalty timeouts
-    clearHomeownerTimeouts(homeownerId);
-
-    // Update homeowner status to Active
+    // Reset homeowner status
     homeowner.status = STATUS_ENUM.ACTIVE;
     homeowner.penaltyLevel = 0;
     homeowner.penaltyStatus = "None";
     homeowner.penaltyStartTime = null;
     await homeowner.save();
 
-    // Reset penalty cycle and start a new one
-    await resetPenaltyCycle(homeownerId);
-    
-    // Start a new penalty cycle
-    const penaltyTimeout = await startPenaltyCycle(homeownerId);
-    
-    // Store the timeout ID in the homeowner document
-    homeowner.penaltyTimeoutId = penaltyTimeout;
-    await homeowner.save();
+    // Restart the automatic penalty cycle
+    clearHomeownerTimeouts(homeownerId);
+    await startAutomaticPenaltyCycle(homeownerId);
 
     res.status(201).json({
-      message: "Payment processed successfully",
+      message: "Payment processed successfully and penalty cycle restarted",
       billing: {
         dueAmount: billing.dueAmount,
         lastPaymentDate: billing.lastPaymentDate,
@@ -62,7 +53,7 @@ exports.processPayment = async (req, res) => {
       },
       homeowner: {
         ...homeowner.toObject(),
-        status: homeowner.status,
+        status: homeowner.status
       },
     });
   } catch (error) {
@@ -76,7 +67,7 @@ exports.getBillingByEmail = async (req, res) => {
   try {
     const { email } = req.params;
     const homeowner = await Homeowner.findOne({ email });
-    
+
     if (!homeowner) {
       return res.status(404).json({
         success: false,
@@ -86,7 +77,6 @@ exports.getBillingByEmail = async (req, res) => {
 
     const billing = await Billing.findOne({ homeownerId: homeowner._id });
 
-    // Return billing data with proper defaults if no billing record exists
     res.json({
       success: true,
       data: {
@@ -104,4 +94,4 @@ exports.getBillingByEmail = async (req, res) => {
       message: error.message,
     });
   }
-}; 
+};

@@ -16,7 +16,9 @@ const upload = multer({ storage: storage });
 
 // Create reusable transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -24,48 +26,40 @@ const transporter = nodemailer.createTransport({
 });
 
 const emailService = {
-  // Send receipt with optional image attachment
-  async sendReceipt(email, html, blockNo, lotNo, receiptImage = null) {
+  // Send receipt with all payment details
+  async sendReceipt({
+    email,
+    receiptHtml,
+    subject,
+    homeownerName,
+    blockNo,
+    lotNo,
+    dueAmount,
+    paymentDate,
+    referenceNumber
+  }) {
     try {
-      const simpleMessage = `
-        <p>Attached is my proof of payment for Block ${blockNo}, Lot ${lotNo}.</p>
-        <p>Thank you,</p>
-        <p>HOA Management</p>
-      `;
+      const mailOptions = {
+        from: {
+          name: 'Centro De San Lorenzo HOA',
+          address: "Centro De San Lorenzo HOA <centrodesanlorenzohoa@gmail.com>"
+        },
+        to: email,
+        subject: subject || `HOA Payment Receipt - Block ${blockNo}, Lot ${lotNo}`,
+        html: receiptHtml,
+        attachments: []
+      };
 
       // Send to homeowner
-      const homeownerMailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: `HOA Payment Receipt - Block ${blockNo}, Lot ${lotNo}`,
-        html: simpleMessage,
-        attachments: receiptImage ? [
-          {
-            filename: receiptImage.originalname,
-            path: receiptImage.path
-          }
-        ] : []
-      };
+      await transporter.sendMail(mailOptions);
 
-      // Send to system email
+      // Send system copy
       const systemMailOptions = {
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER, // Send to system's email
-        subject: `[System Copy] HOA Payment Receipt - Block ${blockNo}, Lot ${lotNo}`,
-        html: simpleMessage,
-        attachments: receiptImage ? [
-          {
-            filename: receiptImage.originalname,
-            path: receiptImage.path
-          }
-        ] : []
+        ...mailOptions,
+        to: process.env.EMAIL_USER,
+        subject: `[System Copy] ${mailOptions.subject}`
       };
-
-      // Send both emails
-      await Promise.all([
-        transporter.sendMail(homeownerMailOptions),
-        transporter.sendMail(systemMailOptions)
-      ]);
+      await transporter.sendMail(systemMailOptions);
 
       return { success: true };
     } catch (error) {
@@ -78,7 +72,10 @@ const emailService = {
   async sendPaymentReminder(email, name, dueAmount, blockNo, lotNo) {
     try {
       const mailOptions = {
-        from: "Centro De San Lorenzo HOA",
+        from: {
+          name: 'Centro De San Lorenzo HOA',
+          address: process.env.EMAIL_USER
+        },
         to: email,
         subject: 'HOA Payment Reminder',
         html: `
@@ -89,7 +86,7 @@ const emailService = {
           <p>Lot: ${lotNo}</p>
           <p>Please make the payment as soon as possible to avoid any penalties.</p>
           <p>Thank you,</p>
-          <p>HOA Management</p>
+          <p>Centro De San Lorenzo HOA</p>
         `
       };
 
