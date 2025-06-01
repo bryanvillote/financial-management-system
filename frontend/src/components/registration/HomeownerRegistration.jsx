@@ -210,27 +210,32 @@ export default function HomeownerRegistration() {
           display: "flex",
           flexDirection: "column",
           gap: 4,
-          marginLeft: 80,
+          marginLeft: { xs: 0, md: 35 },
           backgroundColor: "#ffffff",
-          padding: 3,
+          padding: 4,
+          maxWidth: "1200px",
+          width: "100%",
+          ml: { xs: 0, md: 70 }
         }}
       >
         {/* Form Card */}
         <Card
           sx={{
             width: "100%",
+            maxWidth: "800px",
+            mx: "auto",
             borderRadius: 4,
             boxShadow: "0px 8px 40px hsla(220, 60%, 2%, 0.12)",
           }}
         >
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 600 }}>
               {isEditing ? "Edit Homeowner" : "Register New Homeowner"}
             </Typography>
             <Box
               component="form"
               onSubmit={handleSubmit}
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+              sx={{ display: "flex", flexDirection: "column", gap: 3 }}
             >
               <TextField
                 required
@@ -285,12 +290,12 @@ export default function HomeownerRegistration() {
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
               )}
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={3} sx={{ mt: 2 }}>
                 <Button
                   variant="contained"
                   type="submit"
                   size="large"
-                  sx={{ borderRadius: "10px", flex: 1 }}
+                  sx={{ borderRadius: "15px", flex: 1, py: 1.5, backgroundColor: "#09036e", "&:hover": { backgroundColor: "#000000" }, fontSize: "20px" }}
                 >
                   {isEditing ? "Update" : "Register"}
                 </Button>
@@ -298,7 +303,7 @@ export default function HomeownerRegistration() {
                   variant="outlined"
                   size="large"
                   onClick={() => navigate("/app/homeowners")}
-                  sx={{ borderRadius: "10px", flex: 1 }}
+                  sx={{ borderRadius: "15px", flex: 1, py: 1.5, fontSize: "20px", borderColor: "#09036e", }}
                 >
                   Cancel
                 </Button>

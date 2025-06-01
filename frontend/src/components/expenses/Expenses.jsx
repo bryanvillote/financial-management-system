@@ -61,16 +61,29 @@ const columns = [
     width: 200,
     label: "Expense Name",
     dataKey: "expenseName",
+    align: "left",
+    headerAlign: "left",
+    padding: "16px 24px",
+    cellPadding: "16px 24px"
   },
   {
     width: 100,
     label: "Expense Amount",
     dataKey: "expenseAmount",
+    align: "right",
+    headerAlign: "right",
+    padding: "16px 24px",
+    cellPadding: "16px 24px",
+    formatValue: (value) => `₱${value}`
   },
   {
     width: 100,
     label: "Actions",
     dataKey: "actions",
+    align: "center",
+    headerAlign: "center",
+    padding: "16px 24px",
+    cellPadding: "16px 24px"
   },
 ];
 
@@ -260,17 +273,32 @@ export default function Expenses(props) {
                 gap: 3,
                 padding: 4,
                 minHeight: 600,
-                alignItems: "stretch",
-                marginLeft: 30,
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                maxWidth: "1200px",
+                mx: "auto",
+                mt: 2,
+                ml: { xs: 0, md: 55 }
               }}
             >
-              <Paper sx={{ flex: 1, borderRadius: "20px", padding: 4 }}>
+              <Paper 
+                sx={{ 
+                  flex: 1, 
+                  borderRadius: "20px", 
+                  padding: 4,
+                  width: "100%",
+                  maxWidth: "1000px",
+                  backgroundColor: "#ffffff"
+                }}
+              >
                 <Box sx={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center', 
                   mb: 3,
-                  px: 2 
+                  px: 2,
+                  backgroundColor: "#ffffff"
                 }}>
                   <h2>Homeowners Association Expenses</h2>
                   <Button
@@ -279,8 +307,13 @@ export default function Expenses(props) {
                     startIcon={<AddIcon />}
                     onClick={handleOpenExpenseModal}
                     sx={{ 
-                      borderRadius: "10px",
-                      ml: 4 
+                      borderRadius: "15px",
+                      ml: 4,
+                      boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.83)",
+                      "&:hover": {
+                        backgroundColor: "#000000",
+                        color: "#FFFFFF"
+                      }
                     }}
                   >
                     Add Expense
@@ -290,25 +323,30 @@ export default function Expenses(props) {
                   style={{ 
                     height: 550, 
                     width: "100%",
-                    overflow: "hidden"
+                    overflow: "hidden",
+                    backgroundColor: "#ffffff"
                   }}
                   elevation={0}
                 >
                   <TableVirtuoso
                     data={expenses}
                     components={VirtuosoTableComponents}
-                    style={{ height: "100%" }}
+                    style={{ height: "100%", backgroundColor: "#ffffff" }}
                     fixedHeaderContent={() => (
                       <TableRow>
                         {columns.map((column) => (
                           <TableCell
                             key={column.dataKey}
                             variant="head"
-                            align={column.numeric || false ? "right" : "left"}
+                            align={column.headerAlign}
                             style={{ width: column.width }}
                             sx={{ 
-                              backgroundColor: "background.paper",
-                              fontWeight: "bold"
+                              backgroundColor: "#ffffff",
+                              fontWeight: "bold",
+                              padding: column.padding,
+                              height: "52px",
+                              borderBottom: "2px solid",
+                              borderColor: "divider"
                             }}
                           >
                             {column.label}
@@ -321,16 +359,35 @@ export default function Expenses(props) {
                         {columns.map((column) => (
                           <TableCell
                             key={column.dataKey}
-                            align={column.numeric || false ? "right" : "left"}
+                            align={column.align}
+                            style={{ width: column.width }}
+                            sx={{ 
+                              padding: column.cellPadding,
+                              height: "52px",
+                              borderBottom: "1px solid",
+                              borderColor: "divider",
+                              ...(column.dataKey === "expenseAmount" && {
+                                fontFamily: "monospace"
+                              })
+                            }}
                           >
                             {column.dataKey === "actions" ? (
-                              <>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                alignItems: 'center',
+                                gap: 1,
+                                width: '100%',
+                                height: '100%'
+                              }}>
                                 <Button 
                                   onClick={() => {
                                     editExpense(row);
                                     setExpenseModalOpen(true);
                                   }}
                                   size="small"
+                                  variant="outlined"
+                                  color="primary"
                                   sx={{ mr: 1 }}
                                 >
                                   Edit
@@ -339,10 +396,13 @@ export default function Expenses(props) {
                                   onClick={() => handleDeleteClick(row)}
                                   size="small"
                                   color="error"
+                                  variant="outlined"
                                 >
                                   Delete
                                 </Button>
-                              </>
+                              </Box>
+                            ) : column.dataKey === "expenseAmount" ? (
+                              column.formatValue(row[column.dataKey])
                             ) : (
                               row[column.dataKey]
                             )}
@@ -363,6 +423,12 @@ export default function Expenses(props) {
           onClose={handleCloseExpenseModal}
           maxWidth="sm"
           fullWidth
+          sx={{
+            "& .MuiDialog-paper": {
+              borderRadius: "15px",
+              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)"
+            }
+          }}
         >
           <DialogTitle>
             {editingExpenseId ? "Edit Expense" : "Add New Expense"}

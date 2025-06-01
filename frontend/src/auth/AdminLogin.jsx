@@ -24,16 +24,18 @@ import ForgotPassword from "./ForgotPassword";
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
-  alignSelf: "flex-start",
+  alignSelf: "center",
   width: "100%",
+  marginTop : "15rem",
+  borderRadius: "20px",
   padding: theme.spacing(4),
-  gap: theme.spacing(2),
-  marginTop: "6rem",
+  gap: theme.spacing(3),
   [theme.breakpoints.up("sm")]: {
-    maxWidth: "400px",
+    maxWidth: "500px",
+    height: "400px",
   },
   boxShadow:
-    "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
+    "hsla(231, 67.30%, 9.60%, 0.84) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
 }));
 
 const LoginContainer = styled(Stack)(({ theme }) => ({
@@ -222,7 +224,7 @@ export default function AdminLog(props) {
             variant="h4"
             sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
           >
-            Log in
+            Log In
           </Typography>
           <Box
             component="form"
@@ -267,9 +269,21 @@ export default function AdminLog(props) {
               type="submit"
               fullWidth
               variant="contained"
+              size="large"
               onClick={handleLogin}
+              sx={{
+                backgroundColor: "#020140",
+                marginTop: 2,
+                borderRadius: "10px",
+                padding: "12px 0",
+                fontSize: "1.1rem",
+                fontWeight: "500",
+                '&:hover': {
+                  backgroundColor: "#0A0A6B",
+                }
+              }}
             >
-              Log in
+              Login
             </Button>
           </Box>
         </Card>
