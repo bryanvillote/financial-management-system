@@ -688,9 +688,11 @@ export default function Billing(props) {
                       <Button
                         fullWidth
                         variant="contained"
+                        color="primary"
                         onClick={handlePayment}
+                        disabled={!selectedHomeowner || !paymentAmount || parseFloat(paymentAmount) !== selectedHomeowner.dueAmount}
                         sx={{
-                          mt: 1,
+                          mt: 2,
                           borderRadius: "10px",
                           textTransform: "none",
                         }}
