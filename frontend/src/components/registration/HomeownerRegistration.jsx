@@ -210,12 +210,13 @@ export default function HomeownerRegistration() {
           display: "flex",
           flexDirection: "column",
           gap: 4,
-          marginLeft: { xs: 0, md: 35 },
           backgroundColor: "#ffffff",
           padding: 4,
           maxWidth: "1200px",
           width: "100%",
-          ml: { xs: 0, md: 70 }
+          marginLeft: { xs: 0, md: "280px" },
+          marginRight: "auto",
+          boxSizing: "border-box"
         }}
       >
         {/* Form Card */}

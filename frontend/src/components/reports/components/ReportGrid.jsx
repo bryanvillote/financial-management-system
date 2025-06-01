@@ -1,22 +1,15 @@
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import PageViewsBarChart from "../../dashboard/components/PageViewsBarChart";
-import SessionsChart from "../../dashboard/components/SessionsChart";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import Chip from "@mui/material/Chip";
 
 export default function ReportGrid() {
   const [reportData, setReportData] = useState({
@@ -26,43 +19,111 @@ export default function ReportGrid() {
     paidHomeowners: [],
     pendingHomeowners: [],
     expenseBreakdown: [],
-    recentExpenses: []
+    recentExpenses: [],
+    paymentTrend: {
+      dates: [],
+      payments: [],
+      totalAmount: 0,
+      trend: 0
+    },
+    homeowners: []
   });
 
   useEffect(() => {
     fetchReportData();
+    const interval = setInterval(fetchReportData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchReportData = async () => {
     try {
-      // Format date for API request (YYYY-MM)
-      const formattedDate = format(new Date(), "yyyy-MM");
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      console.log("Fetching report data...");
       
-      // Fetch payments data
-      const paymentsResponse = await fetch(`http://localhost:8000/billing`);
-      const paymentsData = await paymentsResponse.json();
-      
-      // Fetch expenses data
-      const expensesResponse = await fetch(`http://localhost:8000/expenses`);
-      const expensesData = await expensesResponse.json();
-      
-      // Fetch homeowners data
-      const homeownersResponse = await fetch(`http://localhost:8000/homeowners`);
-      const homeownersData = await homeownersResponse.json();
-      
-      // Process data
+      // Fetch all required data
+      const [paymentsResponse, expensesResponse, homeownersResponse] = await Promise.all([
+        fetch(`http://localhost:8000/billing`),
+        fetch(`http://localhost:8000/expenses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }),
+        fetch(`http://localhost:8000/homeowners`)
+      ]);
+
+      if (!expensesResponse.ok) {
+        throw new Error(`Failed to fetch expenses: ${expensesResponse.status}`);
+      }
+
+      const [paymentsData, expensesData, homeownersData] = await Promise.all([
+        paymentsResponse.json(),
+        expensesResponse.json(),
+        homeownersResponse.json()
+      ]);
+
+      console.log("Raw payments data:", paymentsData);
+
+      // Process payment trends data (matching dashboard implementation)
+      const last30Days = Array(30).fill(0);
+      const dates = Array(30)
+        .fill(0)
+        .map((_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (29 - i));
+          return d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        });
+
+      let totalAmount = 0;
+      paymentsData.forEach((billing) => {
+        console.log("Processing billing:", billing);
+        if (billing.lastPaymentDate) {
+          const dayIndex = 29 - Math.floor(
+            (Date.now() - new Date(billing.lastPaymentDate).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          console.log("Day index:", dayIndex, "Payment amount:", billing.lastPaymentAmount);
+          if (dayIndex >= 0 && dayIndex < 30) {
+            const paymentAmount = parseFloat(billing.lastPaymentAmount) || 0;
+            last30Days[dayIndex] += paymentAmount;
+            totalAmount += paymentAmount;
+            console.log("Updated day total:", last30Days[dayIndex], "New total amount:", totalAmount);
+          }
+        }
+      });
+
+      console.log("Last 30 days array:", last30Days);
+      console.log("Total amount calculated:", totalAmount);
+
+      // Calculate trend (compare last 15 days with previous 15 days)
+      const recentSum = last30Days.slice(15).reduce((a, b) => a + b, 0);
+      const previousSum = last30Days.slice(0, 15).reduce((a, b) => a + b, 0);
+      const trend = previousSum !== 0 ? ((recentSum - previousSum) / previousSum) * 100 : 0;
+
+      console.log("Trend calculation:", {
+        recentSum,
+        previousSum,
+        trend
+      });
+
+      // Process other data
       const totalPayments = paymentsData.reduce(
         (sum, payment) => sum + (parseFloat(payment.lastPaymentAmount) || 0), 
         0
       );
       
-      // Process expenses data
       const totalExpenses = expensesData.reduce(
         (sum, expense) => sum + (parseFloat(expense.expenseAmount) || 0), 
         0
       );
-
-      // Get expense breakdown by category
+      
+      // Get expense breakdown
       const expenseBreakdown = expensesData.reduce((acc, expense) => {
         const category = expense.expenseName || 'Uncategorized';
         const amount = parseFloat(expense.expenseAmount) || 0;
@@ -70,42 +131,120 @@ export default function ReportGrid() {
         return acc;
       }, {});
 
-      // Convert to array and sort by amount
       const expenseBreakdownArray = Object.entries(expenseBreakdown)
         .map(([name, amount]) => ({ name, amount }))
         .sort((a, b) => b.amount - a.amount);
 
-      // Get recent expenses (last 5)
-      const recentExpenses = [...expensesData]
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5)
-        .map(expense => ({
-          name: expense.expenseName,
-          amount: parseFloat(expense.expenseAmount) || 0,
-          date: new Date(expense.createdAt).toLocaleDateString()
-        }));
+      // Get homeowners status
+      const currentMonth = format(new Date(), "yyyy-MM");
+      console.log("Current month for filtering:", currentMonth);
       
-      // Get homeowners who paid this month
+      // Get only homeowners who paid in the current month
       const paidHomeowners = paymentsData
         .filter(payment => {
+          console.log("Processing payment:", payment);
+          if (!payment.lastPaymentDate) {
+            console.log("No lastPaymentDate for:", payment.homeownerName);
+            return false;
+          }
+          try {
           const paymentDate = new Date(payment.lastPaymentDate);
-          return format(paymentDate, "yyyy-MM") === formattedDate;
+            const paymentMonth = format(paymentDate, "yyyy-MM");
+            console.log("Payment date:", payment.lastPaymentDate, "Formatted month:", paymentMonth);
+            const isCurrentMonth = paymentMonth === currentMonth;
+            const hasName = Boolean(payment.homeownerName);
+            console.log("Is current month:", isCurrentMonth, "Has name:", hasName);
+            return isCurrentMonth && hasName;
+          } catch (error) {
+            console.error("Error processing payment date:", payment.lastPaymentDate, error);
+            return false;
+          }
         })
-        .map(payment => payment.homeownerName);
-      
-      // Get homeowners with pending dues
-      const allHomeowners = homeownersData.map(homeowner => homeowner.name);
-      const pendingHomeowners = allHomeowners.filter(name => !paidHomeowners.includes(name));
-      
-      setReportData({
+        .map(payment => {
+          console.log("Adding paid homeowner:", payment.homeownerName);
+          return payment.homeownerName;
+        })
+        .filter(name => {
+          const isValid = Boolean(name);
+          if (!isValid) {
+            console.log("Filtered out invalid name");
+          }
+          return isValid;
+        });
+
+      console.log("Final paid homeowners list:", paidHomeowners);
+
+      // Get all homeowners and their statuses
+      const allHomeowners = homeownersData.map(homeowner => ({
+        name: homeowner.name,
+        status: homeowner.status
+      }));
+
+      // Only include homeowners with Warning or No Participation status in pending list
+      const pendingHomeowners = allHomeowners
+        .filter(homeowner => 
+          ["Warning", "No Participation"].includes(homeowner.status)
+        )
+        .map(homeowner => ({
+          name: homeowner.name,
+          status: homeowner.status
+        }));
+
+      // Get recent expenses with proper date formatting
+      const recentExpenses = [...expensesData]
+        .sort((a, b) => {
+          try {
+            const dateA = parseISO(a.createdAt);
+            const dateB = parseISO(b.createdAt);
+            return dateB - dateA;
+          } catch (error) {
+            console.error("Invalid expense date:", a.createdAt, b.createdAt);
+            return 0;
+          }
+        })
+        .slice(0, 5)
+        .map(expense => {
+          let formattedDate = "Invalid Date";
+          try {
+            const date = parseISO(expense.createdAt);
+            if (!isNaN(date.getTime())) {
+              formattedDate = format(date, "MMM dd, yyyy");
+            }
+          } catch (error) {
+            console.error("Error formatting expense date:", expense.createdAt);
+          }
+          return {
+            name: expense.expenseName || "Unnamed Expense",
+            amount: parseFloat(expense.expenseAmount) || 0,
+            date: formattedDate
+          };
+        });
+
+      const updatedData = {
         month: format(new Date(), "MMMM yyyy"),
         totalPayments,
         totalExpenses,
         paidHomeowners,
-        pendingHomeowners,
+        pendingHomeowners: pendingHomeowners.map(h => h.name),
+        pendingHomeownersWithStatus: pendingHomeowners,
         expenseBreakdown: expenseBreakdownArray,
-        recentExpenses
+        recentExpenses,
+        paymentTrend: {
+          dates,
+          payments: last30Days,
+          totalAmount,
+          trend
+        },
+        homeowners: homeownersData
+      };
+
+      console.log("Updated report data:", {
+        paidHomeowners: updatedData.paidHomeowners,
+        currentMonth: updatedData.month
       });
+
+      setReportData(updatedData);
+
     } catch (error) {
       console.error("Error fetching report data:", error);
     }
@@ -113,7 +252,6 @@ export default function ReportGrid() {
 
   const handleExportPDF = async () => {
     try {
-      // Create a new PDF document
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Add title
@@ -125,85 +263,85 @@ export default function ReportGrid() {
       const currentDate = new Date().toLocaleDateString();
       pdf.text(`Generated on: ${currentDate}`, 105, 30, { align: 'center' });
       
-      // Add financial summary
-      pdf.setFontSize(16);
-      pdf.text(`Monthly Financial Summary for ${reportData.month}`, 20, 45);
-      
+      // Add report content
       pdf.setFontSize(12);
-      let yOffset = 55;
+      let yOffset = 45;
       
-      // Add financial details
-      pdf.text(`Total Payments Received: ${reportData.totalPayments.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 20, yOffset);
+      // Payment Trends
+      pdf.text(`Payment Trends:`, 20, yOffset);
       yOffset += 10;
-      
-      pdf.text(`Total Expenses Incurred: ${reportData.totalExpenses.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 20, yOffset);
+      pdf.text(`The total payment trends for the last 30 days is ${reportData.paymentTrend.trend.toFixed(1)}% ${reportData.paymentTrend.trend >= 0 ? 'increase' : 'decrease'} from the previous period.`, 25, yOffset);
+      yOffset += 15;
+
+      // Financial Summary
+      pdf.text(`Financial Summary for ${reportData.month}:`, 20, yOffset);
+      yOffset += 10;
+      pdf.text(`Total Payments Received: ${reportData.totalPayments.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 25, yOffset);
+      yOffset += 10;
+      pdf.text(`Total Expenses Incurred: ${reportData.totalExpenses.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 25, yOffset);
       yOffset += 15;
       
-      // Add homeowners who paid
-      pdf.text('Homeowners Who Paid:', 20, yOffset);
+      // Expense Breakdown
+      pdf.text('Expense Breakdown:', 20, yOffset);
       yOffset += 10;
-      
-      if (reportData.paidHomeowners.length > 0) {
-        reportData.paidHomeowners.forEach((homeowner, index) => {
-          if (yOffset > 250) { // Check if we need a new page
-            pdf.addPage();
-            yOffset = 20;
-          }
-          pdf.text(`${index + 1}. ${homeowner}`, 25, yOffset);
-          yOffset += 7;
-        });
-      } else {
-        pdf.text('No homeowners have made payments this month.', 25, yOffset);
-        yOffset += 7;
-      }
-      
-      yOffset += 10;
-      
-      // Add homeowners with pending dues
-      pdf.text('Homeowners With Pending Dues:', 20, yOffset);
-      yOffset += 10;
-      
-      if (reportData.pendingHomeowners.length > 0) {
-        reportData.pendingHomeowners.forEach((homeowner, index) => {
-          if (yOffset > 250) { // Check if we need a new page
-            pdf.addPage();
-            yOffset = 20;
-          }
-          pdf.text(`${index + 1}. ${homeowner}`, 25, yOffset);
-          yOffset += 7;
-        });
-      } else {
-        pdf.text('All homeowners have paid their dues for this month.', 25, yOffset);
-        yOffset += 7;
-      }
-      
-      // Add charts on a new page
-      pdf.addPage();
-      const charts = document.querySelectorAll('.chart-container');
-      
-      yOffset = 20;
-      
-      // Convert each chart to canvas and add to PDF
-      for (let i = 0; i < charts.length; i++) {
-        const chart = charts[i];
-        const canvas = await html2canvas(chart);
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Calculate dimensions to maintain aspect ratio
-        const imgWidth = 190; // Max width for A4
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // Add new page if needed
-        if (yOffset + imgHeight > 270) {
+      reportData.expenseBreakdown.forEach((category, index) => {
+        if (yOffset > 250) {
           pdf.addPage();
           yOffset = 20;
         }
-        
-        pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, imgHeight);
-        yOffset += imgHeight + 10;
+        const percentage = ((category.amount / reportData.totalExpenses) * 100).toFixed(1);
+        pdf.text(`${category.name}: ${category.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} (${percentage}% of total)`, 25, yOffset);
+        yOffset += 10;
+      });
+      yOffset += 10;
+      
+      // Recent Expenses
+      pdf.text('Recent Expenses:', 20, yOffset);
+      yOffset += 10;
+      if (reportData.recentExpenses.length > 0) {
+        reportData.recentExpenses.forEach((expense, index) => {
+          if (yOffset > 250) {
+            pdf.addPage();
+            yOffset = 20;
+          }
+          const dateStr = expense.date !== "Invalid Date" ? ` (${expense.date})` : "";
+          pdf.text(`${expense.name} - ${expense.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}${dateStr}`, 25, yOffset);
+          yOffset += 10;
+        });
+      } else {
+        pdf.text("No recent expenses recorded", 25, yOffset);
+        yOffset += 10;
+      }
+      yOffset += 10;
+      
+      // Homeowners Status
+      pdf.text('Homeowners Status:', 20, yOffset);
+      yOffset += 10;
+      pdf.text(`Recently Paid Homeowners (${reportData.paidHomeowners.length}):`, 25, yOffset);
+      yOffset += 10;
+      if (reportData.paidHomeowners.length > 0) {
+        reportData.paidHomeowners.forEach((name, index) => (
+          <Typography key={index} variant="body1" paragraph sx={{ pl: 2 }}>
+            {index + 1}. {name}
+          </Typography>
+        ));
+      } else {
+        pdf.text(`No homeowners have paid for the current month`, 25, yOffset);
       }
       
-      // Save the PDF
+      pdf.text(`Pending Payments (${reportData.pendingHomeowners.length}):`, 25, yOffset);
+      yOffset += 10;
+      if (reportData.pendingHomeowners.length > 0) {
+        reportData.pendingHomeowners.forEach((name, index) => {
+          const homeowner = reportData.homeowners.find(h => h.name === name);
+          const status = homeowner?.status || "Active";
+          pdf.text(`${index + 1}. ${name} (${status})`, 30, yOffset);
+          yOffset += 10;
+        });
+      } else {
+        pdf.text(`No homeowners with pending status`, 25, yOffset);
+      }
+
       pdf.save('financial-report.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -216,10 +354,10 @@ export default function ReportGrid() {
         direction="row" 
         justifyContent="space-between" 
         alignItems="center" 
-        sx={{ mb: 2 }}
+        sx={{ mb: 3 }}
       >
         <Typography component="h2" variant="h6">
-          Overview
+          Financial Report
         </Typography>
         <Button
           variant="contained"
@@ -239,213 +377,211 @@ export default function ReportGrid() {
         </Button>
       </Stack>
 
-      <Grid container spacing={3}>
-        {/* Financial Summary Card */}
-        <Grid xs={12} md={6}>
-          <Card 
-            sx={{ 
-              borderRadius: "15px",
-              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-              height: "100%"
-            }}
-          >
-            <CardContent>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: "medium", color: "primary.main" }}>
-                Monthly Financial Summary for {reportData.month}
-              </Typography>
-              
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                {/* Financial Overview */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 2, 
-                    backgroundColor: "rgba(59, 30, 84, 0.04)",
-                    borderRadius: "10px"
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                    Financial Overview
-                  </Typography>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Total Payments Received
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                        {reportData.totalPayments.toLocaleString('en-PH', { 
-                          style: 'currency', 
-                          currency: 'PHP' 
-                        })}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Total Expenses Incurred
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                        {reportData.totalExpenses.toLocaleString('en-PH', { 
-                          style: 'currency', 
-                          currency: 'PHP' 
-                        })}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
-
-                {/* Recent Expenses */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 2, 
-                    backgroundColor: "rgba(59, 30, 84, 0.04)",
-                    borderRadius: "10px"
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                    Recent Expenses
-                  </Typography>
-                  <List dense>
-                    {reportData.recentExpenses.map((expense, index) => (
-                      <ListItem key={index} sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={expense.name}
-                          secondary={expense.date}
-                        />
-                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                          {expense.amount.toLocaleString('en-PH', {
-                            style: 'currency',
-                            currency: 'PHP'
-                          })}
-                        </Typography>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Paper>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Expense Breakdown Card */}
-        <Grid xs={12} md={6}>
-          <Card 
-            sx={{ 
-              borderRadius: "15px",
-              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-              height: "100%"
-            }}
-          >
-            <CardContent>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: "medium", color: "primary.main" }}>
-                Expense Breakdown
-              </Typography>
-              
-              <Stack spacing={3} sx={{ mt: 2 }}>
-                {/* Expense Categories */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 2, 
-                    backgroundColor: "rgba(59, 30, 84, 0.04)",
-                    borderRadius: "10px"
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                    Expense Categories
-                  </Typography>
-                  <List dense>
-                    {reportData.expenseBreakdown.map((category, index) => (
-                      <ListItem key={index} sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={category.name}
-                          secondary={`${((category.amount / reportData.totalExpenses) * 100).toFixed(1)}% of total`}
-                        />
-                        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                          {category.amount.toLocaleString('en-PH', {
-                            style: 'currency',
-                            currency: 'PHP'
-                          })}
-                        </Typography>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Paper>
-
-                {/* Homeowners Status */}
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 2, 
-                    backgroundColor: "rgba(59, 30, 84, 0.04)",
-                    borderRadius: "10px"
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
-                    Homeowners Status
-                  </Typography>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Homeowners Who Paid ({reportData.paidHomeowners.length})
-                      </Typography>
-                      <List dense sx={{ 
-                        maxHeight: "150px", 
-                        overflow: "auto",
-                        backgroundColor: "rgba(255, 255, 255, 0.7)",
-                        borderRadius: "5px",
-                        p: 1
-                      }}>
-                        {reportData.paidHomeowners.map((name, index) => (
-                          <ListItem key={index} dense>
-                            <ListItemText primary={name} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Pending Payments ({reportData.pendingHomeowners.length})
-                      </Typography>
-                      <List dense sx={{ 
-                        maxHeight: "150px", 
-                        overflow: "auto",
-                        backgroundColor: "rgba(255, 255, 255, 0.7)",
-                        borderRadius: "5px",
-                        p: 1
-                      }}>
-                        {reportData.pendingHomeowners.map((name, index) => (
-                          <ListItem key={index} dense>
-                            <ListItemText primary={name} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </Box>
-                  </Stack>
-                </Paper>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid
-        container
-        spacing={2}
-        columns={12}
-        sx={{ mb: (theme) => theme.spacing(2) }}
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: 3, 
+          backgroundColor: "rgba(59, 30, 84, 0.04)",
+          borderRadius: "15px"
+        }}
       >
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Box className="chart-container">
-            <SessionsChart />
+        <Stack spacing={3}>
+          {/* Payment Trends */}
+          <Box>
+            <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+              Payment Trends
+            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h4" component="p">
+                {reportData.paymentTrend.totalAmount.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+          </Typography>
+              <Chip
+                size="small"
+                color={reportData.paymentTrend.trend > 0 ? "success" : "error"}
+                label={`${reportData.paymentTrend.trend.toFixed(1)}%`}
+              />
+            </Stack>
+          
           </Box>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Box className="chart-container">
-            <PageViewsBarChart />
+
+          <Divider />
+
+          {/* Financial Summary */}
+          <Box>
+            <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+              Financial Summary for {reportData.month}
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Total Payments Received: {reportData.totalPayments.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Total Expenses Incurred: {reportData.totalExpenses.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+            </Typography>
           </Box>
-        </Grid>
-      </Grid>
+
+          <Divider />
+
+          {/* Expense Breakdown */}
+          <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+              Expense Breakdown
+            </Typography>
+            <Box sx={{ 
+              maxHeight: "200px", 
+              overflowY: "auto",
+              pr: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#555',
+                },
+              },
+            }}>
+              {reportData.expenseBreakdown.map((category, index) => (
+                <Typography key={index} variant="body1" paragraph>
+                  {category.name}: {category.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} 
+                  ({(category.amount / reportData.totalExpenses * 100).toFixed(1)}% of total)
+                </Typography>
+              ))}
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Recent Expenses */}
+                  <Box>
+            <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+              Recent Expenses
+            </Typography>
+            <Box sx={{ 
+              maxHeight: "200px", 
+              overflowY: "auto",
+              pr: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#555',
+                },
+              },
+            }}>
+              {reportData.recentExpenses.length > 0 ? (
+                reportData.recentExpenses.map((expense, index) => (
+                  <Typography key={index} variant="body1" paragraph>
+                    {expense.name} - {expense.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} 
+                    {expense.date !== "Invalid Date" && ` (${expense.date})`}
+                    </Typography>
+                ))
+              ) : (
+                <Typography variant="body1" paragraph sx={{ color: 'text.secondary' }}>
+                  No recent expenses recorded
+                    </Typography>
+              )}
+                  </Box>
+                  </Box>
+
+          <Divider />
+
+            {/* Homeowners Status */}
+          <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+                  Homeowners Status
+                </Typography>
+            <Typography variant="subtitle1" gutterBottom>
+              Recently Paid Homeowners ({reportData.paidHomeowners.length}):
+                    </Typography>
+            <Box sx={{ 
+              maxHeight: "200px", 
+              overflowY: "auto",
+              pr: 2,
+              mb: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#555',
+                },
+              },
+                    }}>
+                      {reportData.paidHomeowners.length > 0 ? (
+                reportData.paidHomeowners.map((name, index) => (
+                  <Typography key={index} variant="body1" paragraph sx={{ pl: 2 }}>
+                    {index + 1}. {name}
+                  </Typography>
+                        ))
+                      ) : (
+                <Typography variant="body1" paragraph sx={{ pl: 2, color: 'text.secondary' }}>
+                  No homeowners have paid for the current month
+                </Typography>
+              )}
+                  </Box>
+            
+            <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+              Pending Payments ({reportData.pendingHomeowners.length}):
+            </Typography>
+            <Box sx={{ 
+              maxHeight: "200px", 
+              overflowY: "auto",
+              pr: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#555',
+                },
+              },
+            }}>
+              {reportData.pendingHomeowners.length > 0 ? (
+                reportData.pendingHomeowners.map((name, index) => {
+                  const homeowner = reportData.homeowners.find(h => h.name === name);
+                  const status = homeowner?.status || "Active";
+                  return (
+                    <Typography key={index} variant="body1" paragraph sx={{ pl: 2 }}>
+                      {index + 1}. {name} ({status})
+                    </Typography>
+                  );
+                })
+              ) : (
+                <Typography variant="body1" paragraph sx={{ pl: 2, color: 'text.secondary' }}>
+                  No homeowners with pending status
+                </Typography>
+              )}
+            </Box>
+                  </Box>
+                </Stack>
+              </Paper>
     </Box>
   );
 }

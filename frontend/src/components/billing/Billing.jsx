@@ -299,28 +299,86 @@ export default function Billing(props) {
     if (!paymentAmount) return;
 
     try {
-      const response = await fetch("http://localhost:8000/billing/payment", {
+      // Validate payment amount
+      const amount = parseFloat(paymentAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setNotificationStatus({
+          show: true,
+          severity: "error",
+          message: "Please enter a valid payment amount",
+        });
+        return;
+      }
+
+      // First, process the payment
+      const paymentResponse = await fetch("http://localhost:8000/billing/payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           homeownerId: selectedHomeowner._id,
-          amount: parseFloat(paymentAmount),
+          amount: amount,
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Payment processing failed");
+      const paymentResult = await paymentResponse.json();
+
+      if (!paymentResponse.ok) {
+        throw new Error(paymentResult.message || "Payment processing failed");
       }
 
+      // Then, update the homeowner's status
+      const homeownerResponse = await fetch(
+        `http://localhost:8000/homeowners/${selectedHomeowner._id}/update-status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "Active",
+            lastPaymentDate: new Date().toISOString(),
+            lastPaymentAmount: amount,
+          }),
+        }
+      );
+
+      if (!homeownerResponse.ok) {
+        // If homeowner status update fails, we should handle the payment reversal
+        await fetch(`http://localhost:8000/billing/payment/reverse/${paymentResult.paymentId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        throw new Error("Failed to update homeowner status");
+      }
+
+      // Show success notification
+      setNotificationStatus({
+        show: true,
+        severity: "success",
+        message: "Payment processed successfully",
+      });
+
+      // Clear form and refresh data
       setPaymentAmount("");
       setSelectedHomeowner(null);
       await fetchHomeowners();
+
+      // Hide the success message after 5 seconds
+      setTimeout(() => {
+        setNotificationStatus((prev) => ({ ...prev, show: false }));
+      }, 5000);
+
     } catch (error) {
-      setError(error.message);
       console.error("Error processing payment:", error);
+      setNotificationStatus({
+        show: true,
+        severity: "error",
+        message: error.message || "Failed to process payment",
+      });
     }
   };
 
