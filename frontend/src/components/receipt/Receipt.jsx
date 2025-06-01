@@ -38,7 +38,7 @@ import { useAuth } from '../../utils/context/useAuth';
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#0d0869",
+      main: "#3B1E54",
     },
     secondary: {
       main: "#F0A8D0",
@@ -53,19 +53,19 @@ const CustomCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: theme.spacing(2),
   boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-  background: "#ffffff",
+  background: "#fff",
   "& .MuiTableCell-root": {
     padding: theme.spacing(2),
-    border: "none",
+    border: "1px solid #e0e0e0",
   },
   "& .MuiTableHead-root .MuiTableCell-root": {
-    backgroundColor: "#0d0869",
+    backgroundColor: "#3B1E54",
     color: "white",
     fontWeight: "bold",
     fontSize: "0.95rem",
   },
   "& .MuiTableRow-root:hover": {
-    backgroundColor: "rgba(13, 8, 105, 0.04)",
+    backgroundColor: "rgba(59, 30, 84, 0.04)",
   },
 }));
 
@@ -328,7 +328,7 @@ export default function ReceiptUI() {
               onClick={logout}
               startIcon={<LogoutIcon />}
               sx={{
-                borderRadius: '15px',
+                borderRadius: 3,
                 boxShadow: 2,
                 fontWeight: 600,
                 px: 3,
@@ -542,11 +542,11 @@ export default function ReceiptUI() {
                   startIcon={<QrCode2Icon />}
                   onClick={handleOpenQrDialog}
                   sx={{
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
+                    backgroundColor: '#3B1E54',
+                    '&:hover': { backgroundColor: '#2a1640' },
                     px: isMobile ? 2 : 4,
                     py: isMobile ? 1 : 1.5,
-                    borderRadius: '15px',
+                    borderRadius: 2,
                     textTransform: 'none',
                     fontSize: isMobile ? '1rem' : '1.1rem',
                   }}
@@ -620,16 +620,7 @@ export default function ReceiptUI() {
                 <Button
                   onClick={handleCloseQrDialog}
                   variant="outlined"
-                  sx={{ 
-                    minWidth: 120,
-                    borderColor: '#0d0869',
-                    color: '#0d0869',
-                    borderRadius: '15px',
-                    '&:hover': { 
-                      borderColor: '#0a0652',
-                      backgroundColor: 'rgba(13, 8, 105, 0.04)'
-                    }
-                  }}
+                  sx={{ minWidth: 120 }}
                 >
                   Close
                 </Button>
@@ -698,13 +689,7 @@ export default function ReceiptUI() {
                   variant="contained"
                   onClick={handleSaveAsPDF}
                   disabled={loading}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150, 
-                    mb: isMobile ? 1 : 0,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
+                  sx={{ minWidth: isMobile ? 100 : 150, mb: isMobile ? 1 : 0 }}
                 >
                   Save as PDF
                 </Button>
@@ -720,13 +705,7 @@ export default function ReceiptUI() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
                   startIcon={<AttachFileIcon />}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150, 
-                    mb: isMobile ? 1 : 0,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
+                  sx={{ minWidth: isMobile ? 100 : 150, mb: isMobile ? 1 : 0 }}
                 >
                   Upload Screenshot
                 </Button>
@@ -734,12 +713,7 @@ export default function ReceiptUI() {
                   variant="contained"
                   onClick={handleSendEmail}
                   disabled={loading}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
+                  sx={{ minWidth: isMobile ? 100 : 150 }}
                 >
                   Send to Email
                 </Button>
@@ -945,12 +919,7 @@ export default function ReceiptUI() {
               The receipt has been sent to your email address.
             </Typography>
             <Button
-              sx={{ 
-                mt: 2,
-                backgroundColor: '#0d0869',
-                '&:hover': { backgroundColor: '#0a0652' },
-                borderRadius: '15px'
-              }}
+              sx={{ mt: 2 }}
               variant="contained"
               onClick={() => setModalOpen(false)}
             >

@@ -10,7 +10,6 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import MenuContent from "./MenuContent";
 import OptionsMenu from "./OptionsMenu";
-import logo from "../../../logo.png";
 
 const drawerWidth = 240;
 
@@ -84,47 +83,23 @@ export default function SideMenu() {
         },
       }}
     >
-      <Box
+      {/* <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          py: 3,
-          px: 2,
-          borderBottom: "1px solid",
-          borderColor: "divider",
+          mt: "calc(var(--template-frame-height, 0px) + 4px)",
+          p: 1.5,
         }}
       >
-        <Box
-          component="img"
-          src={logo}
-          alt="logo"
-          sx={{
-            width: 120,
-            height: 120,
-            objectFit: "contain",
-            mb: 1
-          }}
-        />
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            color: "#09036e",
-            textAlign: "center"
-          }}
-        >
-          Information Management System
-        </Typography>
-      </Box>
+        <SelectContent />
+      </Box> */}
       <Divider />
       <MenuContent />
       {/* <CardAlert /> */}
       <Stack
         direction="row"
         sx={{
-          p: 4,
-          gap: 2,
+          p: 2,
+          gap: 1,
           alignItems: "center",
           borderTop: "1px solid",
           borderColor: "divider",

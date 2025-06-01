@@ -456,7 +456,7 @@ export default function AdminReg(props) {
             </FormControl>
             {/* this forgot passowrd is disabled for now... */}
             {/* <ForgotPassword open={open} handleClose={handleClose} /> */}
-            <Button type="submit" fullWidth variant="contained" sx={{ borderRadius: "15px", flex: 1, py: 1.5, fontSize: "20px", backgroundColor: "#09036e", "&:hover": { backgroundColor: "#000000" } }}>
+            <Button type="submit" fullWidth variant="contained">
               Register Admin
             </Button>
           </Box>
@@ -470,13 +470,12 @@ export default function AdminReg(props) {
               sx={{
                 maxHeight: "60vh",
                 overflow: "auto",
-                borderRadius: "15px",
               }}
             >
               {users.map((user) => (
                 <ListItem
                   key={user._id}
-                  sx={{ mb: 1, border: "1px solid #ccc", borderRadius: "15px" }}
+                  sx={{ mb: 1, border: "1px solid #ccc", borderRadius: "4px" }}
                 >
                   <ListItemText
                     primary={`Email: ${user.email}`}

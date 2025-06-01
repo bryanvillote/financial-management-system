@@ -463,26 +463,16 @@ export default function Billing(props) {
           spacing={2}
           sx={{
             alignItems: "center",
-            mx: "auto",
+            mx: 3,
             pb: 5,
             mt: { xs: 8, md: 0 },
             width: "100%",
             maxWidth: "100%",
-            overflow: "hidden",
-            ml: { xs: 0, md: 35 }
+            overflow: "hidden"
           }}
         >
           <Header />
-          <Stack 
-            sx={{ 
-              width: "100%", 
-              maxWidth: '1200px', 
-              mx: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              ml: { xs: 0, md: 10 }
-            }}
-          >
+          <Stack sx={{ width: "100%", maxWidth: '1200px', mx: 'auto',  }}>
             <Box
               sx={{
                 display: "flex",
@@ -490,52 +480,40 @@ export default function Billing(props) {
                 gap: 3,
                 padding: 4,
                 minHeight: 600,
-                alignItems: "center",
+                alignItems: "flex-start",
+                marginLeft: { xs: 0, md: 35 },
                 width: "100%",
-                maxWidth: "1200px",
-                overflow: "hidden",
-                ml: { xs: 0, md: 20 }
+                overflow: "hidden"
               }}
             >
               {/* Table Container */}
               <Paper
                 sx={{
-                  borderRadius: "20px",
                   width: "100%",
                   padding: { xs: 1, md: 4 },
                   height: "fit-content",
-                  overflow: "visible",
-                  maxWidth: "856px",
-                  mx: "auto",
-                  boxShadow: "0px 0px 10px 0px rgba(168, 168, 168, 0.69)",
-                  backgroundColor: "#ffffff"
+                  overflow: "visible"
                 }}
               >
                 <Box sx={{ width: '100%', overflowX: 'auto' }}>
-                  <DataGrid
-                    rows={homeowners}
-                    columns={columns}
-                    getRowId={(row) => row._id}
-                    autoHeight
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
-                    disableSelectionOnClick
-                    sx={{
-                      "& .MuiDataGrid-cell": {
-                        fontSize: "0.875rem",
-                        backgroundColor: "#ffffff"
-                      },
-                      "& .MuiDataGrid-columnHeader": {
-                        backgroundColor: "#ffffff",
-                      },
-                      "& .MuiDataGrid-footerContainer": {
-                        backgroundColor: "#ffffff"
-                      },
-                      width: "100%",
-                      minWidth: "100%",
-                      borderColor: "#ffffff"
-                    }}
-                  />
+                <DataGrid
+                  rows={homeowners}
+                  columns={columns}
+                  getRowId={(row) => row._id}
+                  autoHeight
+                  pageSize={10}
+                  rowsPerPageOptions={[10]}
+                  disableSelectionOnClick
+                  sx={{
+                    "& .MuiDataGrid-cell": {
+                      fontSize: "0.875rem",
+                    },
+                    "& .MuiDataGrid-columnHeader": {
+                      backgroundColor: "rgba(59, 30, 84, 0.08)",
+                    },
+                      width: "max-content"
+                  }}
+                />
                 </Box>
               </Paper>
 
@@ -545,10 +523,7 @@ export default function Billing(props) {
                   borderRadius: "20px",
                   padding: 4,
                   width: "100%",
-                  maxWidth: "855px",
-                  mx: "auto",
-                  boxShadow: "0px 0px 10px 0px rgba(168, 168, 168, 0.69)",
-                  backgroundColor: "#ffffff"
+                  maxWidth: "850px"
                 }}
               >
                 <Typography

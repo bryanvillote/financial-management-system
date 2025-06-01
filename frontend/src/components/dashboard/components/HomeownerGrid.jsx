@@ -12,7 +12,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid2";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,38 +29,32 @@ export default function HomeOwnerGrid() {
     {
       field: "name",
       headerName: "Name",
-      flex: 1,
-      minWidth: 200,
+      width: 200,
     },
     {
       field: "blockNo",
       headerName: "Block No",
-      flex: 0.5,
-      minWidth: 100,
+      width: 100,
     },
     {
       field: "lotNo",
       headerName: "Lot No",
-      flex: 0.5,
-      minWidth: 100,
+      width: 100,
     },
     {
       field: "phoneNo",
       headerName: "Phone No",
-      flex: 0.8,
-      minWidth: 150,
+      width: 150,
     },
     {
       field: "email",
       headerName: "Email",
-      flex: 1,
-      minWidth: 200,
+      width: 200,
     },
     {
       field: "status",
       headerName: "Status",
-      flex: 0.8,
-      minWidth: 150,
+      width: 150,
       renderCell: (params) => (
         <Chip
           label={params.value}
@@ -76,16 +70,13 @@ export default function HomeOwnerGrid() {
               : params.value === "Penalty 3"
               ? "error"
               : params.value === "No Participation"
-              ? "error"
+              ? "default"
               : "default"
           }
           sx={{
-            backgroundColor: params.value === "No Participation" ? "#d32f2f" : undefined,
-            color: params.value === "No Participation" ? "#ffffff" : undefined,
-            fontWeight: params.value === "No Participation" ? "medium" : undefined,
-            '& .MuiChip-label': {
-              color: params.value === "No Participation" ? "#ffffff" : undefined
-            }
+            backgroundColor:
+              params.value === "No Participation" ? "#d32f2f" : undefined,
+            color: params.value === "No Participation" ? "white" : undefined,
           }}
         />
       ),
@@ -96,8 +87,7 @@ export default function HomeOwnerGrid() {
           {
             field: "actions",
             headerName: "Actions",
-            flex: 0.8,
-            minWidth: 200,
+            width: 200,
             renderCell: (params) => (
               <Stack direction="row" spacing={1}>
                 <Button
@@ -105,33 +95,14 @@ export default function HomeOwnerGrid() {
                   color="primary"
                   size="small"
                   onClick={() => handleEdit(params.row)}
-                  sx={{ 
-                    minWidth: '60px',
-                    borderRadius: "15px",
-                    boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-                    backgroundColor: "#3B1E54",
-                    "&:hover": {
-                      backgroundColor: "#3B1E54",
-                    }
-                  }}
                 >
                   Edit
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="error"
                   size="small"
                   onClick={() => handleDeleteClick(params.row)}
-                  sx={{ 
-                    minWidth: '80px',
-                    borderRadius: "15px",
-                    borderColor: "#d32f2f",
-                    color: "#d32f2f",
-                    "&:hover": {
-                      borderColor: "#d32f2f",
-                      backgroundColor: "rgba(211, 47, 47, 0.04)"
-                    }
-                  }}
                 >
                   Delete
                 </Button>
@@ -219,46 +190,25 @@ export default function HomeOwnerGrid() {
   };
 
   return (
-    <Box 
-      sx={{ 
-        width: "calc(90% + 60px)",  // Increased from calc(90% + 40px) to calc(90% + 60px)
-        mx: "auto",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        px: { xs: 0, md: 15 }
-      }}
-    >
+    <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ 
-          mb: 3,
-          width: "100%",
-          maxWidth: "100%",
-          ml: { xs: 0, md: 15 }
-        }}
+        sx={{ mb: 3 }}
       >
         <Typography variant="h5" fontWeight="medium">
-          Homeowners List
+          Home Owners
         </Typography>
         {/* Only show Add Homeowner button if user is not a Treasurer */}
         {userRole !== "Treasurer" && (
           <Button
             variant="contained"
-            color="primary"
             startIcon={<AddIcon />}
             onClick={() => navigate("/app/registration")}
             sx={{
-              borderRadius: "15px",
+              borderRadius: "10px",
               textTransform: "none",
-              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-              ml: 1,
-              backgroundColor: "#3B1E54",
-              "&:hover": {
-                backgroundColor: "#3B1E54",
-              }
             }}
           >
             Add Homeowner
@@ -266,16 +216,7 @@ export default function HomeOwnerGrid() {
         )}
       </Stack>
 
-      <Grid 
-        container 
-        spacing={3}
-        sx={{ 
-          width: "100%",
-          maxWidth: "100%", // Changed from 1400px to 100%
-          justifyContent: "center",
-          ml: { xs: 0, md: 15 }
-        }}
-      >
+      <Grid container spacing={3}>
         <Grid xs={12}>
           <DataGrid
             rows={homeowners}
@@ -285,55 +226,15 @@ export default function HomeOwnerGrid() {
               pagination: {
                 paginationModel: { page: 0, pageSize: 10 },
               },
-              sorting: {
-                sortModel: [{ field: 'name', sort: 'asc' }],
-              },
-              filter: {
-                filterModel: {
-                  items: [],
-                },
-              },
             }}
-            pageSizeOptions={[10, 25, 50]}
+            pageSizeOptions={[10]}
             onRowSelectionModelChange={(newSelection) => {
               const selected = homeowners.find(
                 (h) => h._id === newSelection[0]
               );
               setSelectedHomeowner(selected);
             }}
-            sx={{ 
-              width: "100%",
-              boxShadow: "0px 0px 10px 0px rgba(182, 182, 182, 0.52)",
-              borderRadius: "20px",
-              '& .MuiDataGrid-cell': {
-                borderColor: 'divider'
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'background.paper',
-                borderBottom: '2px solid',
-                borderColor: 'divider'
-              }
-            }}
-            autoHeight
-            sortingMode="server"
-            filterMode="server"
-            disableRowSelectionOnClick
-            checkboxSelection
-            disableColumnFilter={false}
-            disableColumnSelector={false}
-            disableColumnMenu={false}
-            columnVisibilityModel={{
-              // You can control initial column visibility here if needed
-            }}
-            slots={{
-              toolbar: GridToolbar,
-            }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-              },
-            }}
+            sx={{ minWidth: 800 }}
           />
         </Grid>
       </Grid>
@@ -358,23 +259,14 @@ export default function HomeOwnerGrid() {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
             Cancel
           </Button>
           <Button
             onClick={handleDeleteConfirm}
-            variant="outlined"
+            variant="contained"
             color="error"
             autoFocus
-            sx={{ 
-              borderRadius: "15px",
-              borderColor: "#d32f2f",
-              color: "#d32f2f",
-              "&:hover": {
-                borderColor: "#d32f2f",
-                backgroundColor: "rgba(211, 47, 47, 0.04)"
-              }
-            }}
           >
             Delete
           </Button>
