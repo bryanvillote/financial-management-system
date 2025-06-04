@@ -10,6 +10,7 @@ import html2canvas from "html2canvas";
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import Chip from "@mui/material/Chip";
+import autoTable from 'jspdf-autotable';
 
 export default function ReportGrid() {
   const [reportData, setReportData] = useState({
@@ -66,9 +67,7 @@ export default function ReportGrid() {
         homeownersResponse.json()
       ]);
 
-      console.log("Raw payments data:", paymentsData);
-
-      // Process payment trends data (matching dashboard implementation)
+      // Process payment trends data
       const last30Days = Array(30).fill(0);
       const dates = Array(30)
         .fill(0)
@@ -83,34 +82,26 @@ export default function ReportGrid() {
 
       let totalAmount = 0;
       paymentsData.forEach((billing) => {
-        console.log("Processing billing:", billing);
         if (billing.lastPaymentDate) {
-          const dayIndex = 29 - Math.floor(
-            (Date.now() - new Date(billing.lastPaymentDate).getTime()) / (1000 * 60 * 60 * 24)
-          );
-          console.log("Day index:", dayIndex, "Payment amount:", billing.lastPaymentAmount);
-          if (dayIndex >= 0 && dayIndex < 30) {
-            const paymentAmount = parseFloat(billing.lastPaymentAmount) || 0;
-            last30Days[dayIndex] += paymentAmount;
-            totalAmount += paymentAmount;
-            console.log("Updated day total:", last30Days[dayIndex], "New total amount:", totalAmount);
+          try {
+            const dayIndex = 29 - Math.floor(
+              (Date.now() - new Date(billing.lastPaymentDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (dayIndex >= 0 && dayIndex < 30) {
+              const paymentAmount = parseFloat(billing.lastPaymentAmount) || 0;
+              last30Days[dayIndex] += paymentAmount;
+              totalAmount += paymentAmount;
+            }
+          } catch (error) {
+            console.error("Error processing payment date:", billing.lastPaymentDate);
           }
         }
       });
 
-      console.log("Last 30 days array:", last30Days);
-      console.log("Total amount calculated:", totalAmount);
-
-      // Calculate trend (compare last 15 days with previous 15 days)
+      // Calculate trend
       const recentSum = last30Days.slice(15).reduce((a, b) => a + b, 0);
       const previousSum = last30Days.slice(0, 15).reduce((a, b) => a + b, 0);
       const trend = previousSum !== 0 ? ((recentSum - previousSum) / previousSum) * 100 : 0;
-
-      console.log("Trend calculation:", {
-        recentSum,
-        previousSum,
-        trend
-      });
 
       // Process other data
       const totalPayments = paymentsData.reduce(
@@ -137,42 +128,22 @@ export default function ReportGrid() {
 
       // Get homeowners status
       const currentMonth = format(new Date(), "yyyy-MM");
-      console.log("Current month for filtering:", currentMonth);
       
       // Get only homeowners who paid in the current month
       const paidHomeowners = paymentsData
         .filter(payment => {
-          console.log("Processing payment:", payment);
-          if (!payment.lastPaymentDate) {
-            console.log("No lastPaymentDate for:", payment.homeownerName);
-            return false;
-          }
+          if (!payment.lastPaymentDate) return false;
           try {
-          const paymentDate = new Date(payment.lastPaymentDate);
+            const paymentDate = new Date(payment.lastPaymentDate);
             const paymentMonth = format(paymentDate, "yyyy-MM");
-            console.log("Payment date:", payment.lastPaymentDate, "Formatted month:", paymentMonth);
-            const isCurrentMonth = paymentMonth === currentMonth;
-            const hasName = Boolean(payment.homeownerName);
-            console.log("Is current month:", isCurrentMonth, "Has name:", hasName);
-            return isCurrentMonth && hasName;
+            return paymentMonth === currentMonth && Boolean(payment.homeownerName);
           } catch (error) {
-            console.error("Error processing payment date:", payment.lastPaymentDate, error);
+            console.error("Error processing payment date:", payment.lastPaymentDate);
             return false;
           }
         })
-        .map(payment => {
-          console.log("Adding paid homeowner:", payment.homeownerName);
-          return payment.homeownerName;
-        })
-        .filter(name => {
-          const isValid = Boolean(name);
-          if (!isValid) {
-            console.log("Filtered out invalid name");
-          }
-          return isValid;
-        });
-
-      console.log("Final paid homeowners list:", paidHomeowners);
+        .map(payment => payment.homeownerName)
+        .filter(Boolean);
 
       // Get all homeowners and their statuses
       const allHomeowners = homeownersData.map(homeowner => ({
@@ -193,25 +164,22 @@ export default function ReportGrid() {
       // Get recent expenses with proper date formatting
       const recentExpenses = [...expensesData]
         .sort((a, b) => {
-          try {
-            const dateA = parseISO(a.createdAt);
-            const dateB = parseISO(b.createdAt);
-            return dateB - dateA;
-          } catch (error) {
-            console.error("Invalid expense date:", a.createdAt, b.createdAt);
-            return 0;
-          }
+          const dateA = a.date ? new Date(a.date) : new Date(0);
+          const dateB = b.date ? new Date(b.date) : new Date(0);
+          return dateB - dateA;
         })
         .slice(0, 5)
         .map(expense => {
-          let formattedDate = "Invalid Date";
-          try {
-            const date = parseISO(expense.createdAt);
-            if (!isNaN(date.getTime())) {
-              formattedDate = format(date, "MMM dd, yyyy");
+          let formattedDate = "N/A";
+          if (expense.date) {
+            try {
+              const date = new Date(expense.date);
+              if (!isNaN(date.getTime())) {
+                formattedDate = format(date, "MMM dd, yyyy");
+              }
+            } catch (error) {
+              console.error("Error formatting expense date:", expense.date);
             }
-          } catch (error) {
-            console.error("Error formatting expense date:", expense.createdAt);
           }
           return {
             name: expense.expenseName || "Unnamed Expense",
@@ -238,11 +206,6 @@ export default function ReportGrid() {
         homeowners: homeownersData
       };
 
-      console.log("Updated report data:", {
-        paidHomeowners: updatedData.paidHomeowners,
-        currentMonth: updatedData.month
-      });
-
       setReportData(updatedData);
 
     } catch (error) {
@@ -252,97 +215,214 @@ export default function ReportGrid() {
 
   const handleExportPDF = async () => {
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF();
+      
+      // Add logo
+      const logo = new Image();
+      logo.src = '/src/logo.png';
+      
+      await new Promise((resolve) => {
+        logo.onload = () => {
+          // Calculate aspect ratio to maintain image proportions
+          const imgWidth = 40;
+          const imgHeight = (logo.height * imgWidth) / logo.width;
+          
+          // Add logo to PDF
+          pdf.addImage(logo, 'PNG', 20, 10, imgWidth, imgHeight);
+          resolve();
+        };
+      });
+      
+      // Add header text (adjusted position to account for logo)
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('CENTRO DE SAN LORENZO', 190, 25, { align: 'right' });
+      pdf.setFontSize(16);
+      pdf.text('Homeowners\' Association', 190, 35, { align: 'right' });
       
       // Add title
-      pdf.setFontSize(20);
-      pdf.text('Financial Report', 105, 20, { align: 'center' });
+      pdf.setFontSize(18);
+      pdf.text('MONTHLY REPORT', 105, 50, { align: 'center' });
       
-      // Add date
+      // Add date generated
       pdf.setFontSize(12);
-      const currentDate = new Date().toLocaleDateString();
-      pdf.text(`Generated on: ${currentDate}`, 105, 30, { align: 'center' });
-      
-      // Add report content
-      pdf.setFontSize(12);
-      let yOffset = 45;
-      
-      // Payment Trends
-      pdf.text(`Payment Trends:`, 20, yOffset);
-      yOffset += 10;
-      pdf.text(`The total payment trends for the last 30 days is ${reportData.paymentTrend.trend.toFixed(1)}% ${reportData.paymentTrend.trend >= 0 ? 'increase' : 'decrease'} from the previous period.`, 25, yOffset);
-      yOffset += 15;
-
-      // Financial Summary
-      pdf.text(`Financial Summary for ${reportData.month}:`, 20, yOffset);
-      yOffset += 10;
-      pdf.text(`Total Payments Received: ${reportData.totalPayments.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 25, yOffset);
-      yOffset += 10;
-      pdf.text(`Total Expenses Incurred: ${reportData.totalExpenses.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}`, 25, yOffset);
-      yOffset += 15;
-      
-      // Expense Breakdown
-      pdf.text('Expense Breakdown:', 20, yOffset);
-      yOffset += 10;
-      reportData.expenseBreakdown.forEach((category, index) => {
-        if (yOffset > 250) {
-          pdf.addPage();
-          yOffset = 20;
-        }
-        const percentage = ((category.amount / reportData.totalExpenses) * 100).toFixed(1);
-        pdf.text(`${category.name}: ${category.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} (${percentage}% of total)`, 25, yOffset);
-        yOffset += 10;
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
-      yOffset += 10;
+      pdf.text(`Date Generated: ${currentDate}`, 20, 60);
       
-      // Recent Expenses
-      pdf.text('Recent Expenses:', 20, yOffset);
-      yOffset += 10;
-      if (reportData.recentExpenses.length > 0) {
-        reportData.recentExpenses.forEach((expense, index) => {
-          if (yOffset > 250) {
-            pdf.addPage();
-            yOffset = 20;
-          }
-          const dateStr = expense.date !== "Invalid Date" ? ` (${expense.date})` : "";
-          pdf.text(`${expense.name} - ${expense.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}${dateStr}`, 25, yOffset);
-          yOffset += 10;
-        });
-      } else {
-        pdf.text("No recent expenses recorded", 25, yOffset);
-        yOffset += 10;
-      }
-      yOffset += 10;
-      
-      // Homeowners Status
-      pdf.text('Homeowners Status:', 20, yOffset);
-      yOffset += 10;
-      pdf.text(`Recently Paid Homeowners (${reportData.paidHomeowners.length}):`, 25, yOffset);
-      yOffset += 10;
-      if (reportData.paidHomeowners.length > 0) {
-        reportData.paidHomeowners.forEach((name, index) => (
-          <Typography key={index} variant="body1" paragraph sx={{ pl: 2 }}>
-            {index + 1}. {name}
-          </Typography>
-        ));
-      } else {
-        pdf.text(`No homeowners have paid for the current month`, 25, yOffset);
-      }
-      
-      pdf.text(`Pending Payments (${reportData.pendingHomeowners.length}):`, 25, yOffset);
-      yOffset += 10;
-      if (reportData.pendingHomeowners.length > 0) {
-        reportData.pendingHomeowners.forEach((name, index) => {
-          const homeowner = reportData.homeowners.find(h => h.name === name);
-          const status = homeowner?.status || "Active";
-          pdf.text(`${index + 1}. ${name} (${status})`, 30, yOffset);
-          yOffset += 10;
-        });
-      } else {
-        pdf.text(`No homeowners with pending status`, 25, yOffset);
-      }
+      let yOffset = 70;
 
-      pdf.save('financial-report.pdf');
+      // Payment Trends Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Payment Trends – Last 30 Days', 20, yOffset);
+      yOffset += 10;
+
+      // Create payment trends table
+      const paymentTrendsData = reportData.paymentTrend.dates.map((date, index) => [
+        date,
+        reportData.paymentTrend.payments[index] > 0 ? '1' : '0',
+        reportData.paymentTrend.payments[index].toLocaleString('en-PH', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }),
+        reportData.paymentTrend.payments[index] > 0 ? 'Payment received' : 'No payment'
+      ]);
+
+      autoTable(pdf, {
+        startY: yOffset,
+        head: [['Date', 'Number of Payments', 'Total Collected', 'Notes']],
+        body: paymentTrendsData,
+        theme: 'grid',
+        styles: { 
+          fontSize: 10,
+          cellPadding: 5,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.1
+        },
+        headStyles: { 
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      yOffset = pdf.lastAutoTable.finalY + 15;
+
+      // Expense Breakdown Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Expense Breakdown', 20, yOffset);
+      yOffset += 10;
+
+      // Create expense breakdown table
+      const expenseData = reportData.expenseBreakdown.map(expense => [
+        expense.name,
+        expense.amount.toLocaleString('en-PH', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }),
+        `${((expense.amount / reportData.totalExpenses) * 100).toFixed(1)}% of total`
+      ]);
+
+      autoTable(pdf, {
+        startY: yOffset,
+        head: [['Item/Description', 'Amount', 'Notes']],
+        body: expenseData,
+        theme: 'grid',
+        styles: { 
+          fontSize: 10,
+          cellPadding: 5,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.1
+        },
+        headStyles: { 
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      yOffset = pdf.lastAutoTable.finalY + 15;
+
+      // Total Payments Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Total Payments Collected', 20, yOffset);
+      yOffset += 10;
+      pdf.setFontSize(16);
+      pdf.text(reportData.totalPayments.toLocaleString('en-PH', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }), 20, yOffset);
+      yOffset += 20;
+
+      // Paid Homeowners Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('List of Homeowners Who Paid', 20, yOffset);
+      yOffset += 10;
+
+      // Create paid homeowners table
+      const paidHomeownersData = reportData.paidHomeowners.map((name, index) => {
+        const homeowner = reportData.homeowners.find(h => h.name === name);
+        return [
+          name,
+          homeowner?.blockLot || 'N/A',
+          '2,000.00', // Assuming standard payment amount
+          new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        ];
+      });
+
+      autoTable(pdf, {
+        startY: yOffset,
+        head: [['Homeowner Name', 'Block/Lot', 'Amount Paid', 'Date Paid']],
+        body: paidHomeownersData,
+        theme: 'grid',
+        styles: { 
+          fontSize: 10,
+          cellPadding: 5,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.1
+        },
+        headStyles: { 
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      yOffset = pdf.lastAutoTable.finalY + 15;
+
+      // Pending Homeowners Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('List of Homeowners with Pending Dues', 20, yOffset);
+      yOffset += 10;
+
+      // Create pending homeowners table
+      const pendingHomeownersData = reportData.pendingHomeownersWithStatus.map(homeowner => [
+        homeowner.name,
+        'N/A', // Block/Lot
+        '2,000.00', // Amount Due
+        '200.00', // Penalty
+        `${homeowner.status} status`
+      ]);
+
+      autoTable(pdf, {
+        startY: yOffset,
+        head: [['Homeowner Name', 'Block/Lot', 'Amount Due', 'Penalty', 'Notes']],
+        body: pendingHomeownersData,
+        theme: 'grid',
+        styles: { 
+          fontSize: 10,
+          cellPadding: 5,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.1
+        },
+        headStyles: { 
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      pdf.save('monthly-financial-report.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
     }
@@ -487,7 +567,7 @@ export default function ReportGrid() {
                 reportData.recentExpenses.map((expense, index) => (
                   <Typography key={index} variant="body1" paragraph>
                     {expense.name} - {expense.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} 
-                    {expense.date !== "Invalid Date" && ` (${expense.date})`}
+                    {expense.date !== "N/A" && ` (${expense.date})`}
                     </Typography>
                 ))
               ) : (
