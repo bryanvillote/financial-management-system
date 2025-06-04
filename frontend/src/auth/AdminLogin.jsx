@@ -26,13 +26,14 @@ const Card = styled(MuiCard)(({ theme }) => ({
   flexDirection: "column",
   alignSelf: "center",
   width: "100%",
-  marginTop : "15rem",
+  marginTop: "10rem",
   borderRadius: "20px",
   padding: theme.spacing(4),
   gap: theme.spacing(3),
   [theme.breakpoints.up("sm")]: {
     maxWidth: "500px",
-    height: "400px",
+    height: "auto",
+    minHeight: "430px",
   },
   boxShadow:
     "hsla(231, 67.30%, 9.60%, 0.84) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
@@ -80,6 +81,7 @@ const getRoleBasedRedirectPath = (role) => {
 export default function AdminLog(props) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -195,6 +197,14 @@ export default function AdminLog(props) {
     }
   };
 
+  const handleForgotPasswordOpen = () => {
+    setForgotPasswordOpen(true);
+  };
+
+  const handleForgotPasswordClose = () => {
+    setForgotPasswordOpen(false);
+  };
+
   if (loading) {
     return (
       <Box
@@ -264,7 +274,27 @@ export default function AdminLog(props) {
               />
             </FormControl>
 
-            <ForgotPassword />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -1 }}>
+              <Button
+                onClick={handleForgotPasswordOpen}
+                sx={{
+                  textTransform: 'none',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    textDecoration: 'underline',
+                  }
+                }}
+              >
+                Forgot Password?
+              </Button>
+            </Box>
+
+            <ForgotPassword 
+              open={forgotPasswordOpen} 
+              handleClose={handleForgotPasswordClose} 
+            />
+
             <Button
               type="submit"
               fullWidth
@@ -273,7 +303,7 @@ export default function AdminLog(props) {
               onClick={handleLogin}
               sx={{
                 backgroundColor: "#020140",
-                marginTop: 2,
+                marginTop: 1,
                 borderRadius: "10px",
                 padding: "12px 0",
                 fontSize: "1.1rem",

@@ -345,23 +345,15 @@ export default function ReceiptUI() {
         <Box ref={receiptRef} sx={{ p: isMobile ? 1 : 4, maxWidth: isMobile ? '100%' : 1200, marginLeft: isMobile ? 0 : 50 }}>
           {/* Header */}
           <Typography variant={isMobile ? "h6" : "h4"} align="center" gutterBottom sx={{ mb: isMobile ? 2 : 4 }}>
-            Homeowner Record
+            Centro de San Lorenzo
           </Typography>
 
           {/* Main Content Grid */}
-          <Box sx={{ 
-            display: "flex", 
-            flexDirection: isMobile ? "column" : "row", 
-            gap: isMobile ? 1 : 3, 
-            mb: isMobile ? 1 : 3,
-            '& > *': {
-              flex: 1
-            }
-          }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: isMobile ? 1 : 3, mb: isMobile ? 1 : 3 }}>
             {/* Combined Information Table */}
             <CustomCard sx={{ p: isMobile ? 1 : 3 }}>
               <Typography variant={isMobile ? "subtitle1" : "h6"} gutterBottom sx={{ color: "#3B1E54", mb: isMobile ? 1 : 2 }}>
-                Homeowner Details
+                Receipt Information
               </Typography>
               <TableContainer sx={{ maxHeight: isMobile ? 300 : 600, overflowX: 'auto' }}>
                 <Table stickyHeader size={isMobile ? "small" : "medium"}>
@@ -435,74 +427,60 @@ export default function ReceiptUI() {
                     )}
 
                     {/* Billing Information Section */}
-                    {billingData?.dueAmount > 0 && (
-                      <>
-                        <TableRow>
-                          <TableCell colSpan={2} sx={{ 
-                            backgroundColor: 'rgba(59, 30, 84, 0.08)',
-                            fontWeight: 'bold',
-                            fontSize: '1rem'
-                          }}>
-                            Billing Information
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Due Amount</TableCell>
-                          <TableCell>{formatCurrency(billingData?.dueAmount)}</TableCell>
-                        </TableRow>
-                        {/*
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Tax ({(TAX_RATE * 100).toFixed(0)}%)</TableCell>
-                          <TableCell>{formatCurrency(billingData?.dueAmount * TAX_RATE)}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Total Amount Due</TableCell>
-                          <TableCell sx={{ fontWeight: "bold", color: "primary.main" }}>
-                            {formatCurrency((billingData?.dueAmount || 0) * (1 + TAX_RATE))}
-                          </TableCell>
-                        </TableRow>
-                        */}
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Payment Status</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={billingData?.isPaid ? "PAID" : "UNPAID"}
-                              color={billingData?.isPaid ? "success" : "error"}
-                              size="small"
-                              sx={{ fontWeight: "bold" }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                        {billingData?.lastPaymentDate && (
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Last Payment</TableCell>
-                            <TableCell>
-                              {formatCurrency(billingData.lastPaymentAmount)} on{" "}
-                              {new Date(billingData.lastPaymentDate).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CustomCard>
-
-            {/* Payment History Card */}
-            <CustomCard sx={{ p: isMobile ? 1 : 3 }}>
-              <Typography variant={isMobile ? "subtitle1" : "h6"} gutterBottom sx={{ color: "#3B1E54", mb: isMobile ? 1 : 2 }}>
-                Payment History (Last 12 Months)
-              </Typography>
-              <TableContainer sx={{ maxHeight: isMobile ? 300 : 600, overflowX: 'auto' }}>
-                <Table stickyHeader size={isMobile ? "small" : "medium"}>
-                  <TableHead>
                     <TableRow>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Details</TableCell>
+                      <TableCell colSpan={2} sx={{ 
+                        backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                        fontWeight: 'bold',
+                        fontSize: '1rem'
+                      }}>
+                        Billing Information
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Due Amount</TableCell>
+                      <TableCell>{formatCurrency(billingData?.dueAmount)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Tax ({(TAX_RATE * 100).toFixed(0)}%)</TableCell>
+                      <TableCell>{formatCurrency(billingData?.dueAmount * TAX_RATE)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Total Amount Due</TableCell>
+                      <TableCell sx={{ fontWeight: "bold", color: "primary.main" }}>
+                        {formatCurrency((billingData?.dueAmount || 0) * (1 + TAX_RATE))}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Payment Status</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={billingData?.isPaid ? "PAID" : "UNPAID"}
+                          color={billingData?.isPaid ? "success" : "error"}
+                          size="small"
+                          sx={{ fontWeight: "bold" }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    {billingData?.lastPaymentDate && (
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "bold" }}>Last Payment</TableCell>
+                        <TableCell>
+                          {formatCurrency(billingData.lastPaymentAmount)} on{" "}
+                          {new Date(billingData.lastPaymentDate).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {/* Payment History Section */}
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ 
+                        backgroundColor: 'rgba(59, 30, 84, 0.08)',
+                        fontWeight: 'bold',
+                        fontSize: '1rem'
+                      }}>
+                        Payment History (Last 12 Months)
+                      </TableCell>
+                    </TableRow>
                     {billingData?.paymentHistory?.length > 0 ? (
                       billingData.paymentHistory
                         .filter(payment => {
@@ -516,20 +494,20 @@ export default function ReceiptUI() {
                           <TableRow key={index} hover>
                             <TableCell>
                               {new Date(payment.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
+                      </TableCell>
+                      <TableCell>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Typography>{formatCurrency(payment.amount)}</Typography>
                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                   <Chip
                                     label={payment.status}
-                                    color={
+                          color={
                                       payment.status === "Completed" 
                                         ? "success" 
                                         : payment.status === "Pending" 
                                         ? "warning" 
                                         : "error"
-                                    }
+                          }
                                     size="small"
                                     sx={{ fontWeight: "medium" }}
                                   />
@@ -546,118 +524,118 @@ export default function ReceiptUI() {
                         <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
                           <Typography color="text.secondary">
                             No payment history available
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
             </CustomCard>
-          </Box>
 
-          {/* Payment Button */}
-          {!billingData?.isPaid && (
-            <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'center', mt: isMobile ? 1 : 2, gap: isMobile ? 1 : 0 }}>
-              <Button
-                variant="contained"
-                size={isMobile ? "medium" : "large"}
-                startIcon={<QrCode2Icon />}
-                onClick={handleOpenQrDialog}
-                sx={{
-                  backgroundColor: '#0d0869',
-                  '&:hover': { backgroundColor: '#0a0652' },
-                  px: isMobile ? 2 : 4,
-                  py: isMobile ? 1 : 1.5,
-                  borderRadius: '15px',
-                  textTransform: 'none',
-                  fontSize: isMobile ? '1rem' : '1.1rem',
-                }}
-              >
-                Pay Due Amount ({formatCurrency(totalAmount)})
-              </Button>
-            </Box>
-          )}
-
-          {/* QR Code Dialog */}
-          <Dialog
-            open={qrDialogOpen}
-            onClose={handleCloseQrDialog}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-              Scan QR Code to Pay
-            </DialogTitle>
-            <DialogContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h6" color="primary" gutterBottom>
-                  Due Amount: {formatCurrency(totalAmount)}
-                </Typography>
-                <Box
-                  component="img"
-                  src="/QRCode.jpg"
-                  alt="Payment QR Code"
+            {/* Payment Button */}
+            {!billingData?.isPaid && (
+              <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'center', mt: isMobile ? 1 : 2, gap: isMobile ? 1 : 0 }}>
+                <Button
+                  variant="contained"
+                  size={isMobile ? "medium" : "large"}
+                  startIcon={<QrCode2Icon />}
+                  onClick={handleOpenQrDialog}
                   sx={{
-                    width: 250,
-                    height: 250,
-                    objectFit: 'contain',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 1,
-                    p: 1,
+                    backgroundColor: '#0d0869',
+                    '&:hover': { backgroundColor: '#0a0652' },
+                    px: isMobile ? 2 : 4,
+                    py: isMobile ? 1 : 1.5,
+                    borderRadius: '15px',
+                    textTransform: 'none',
+                    fontSize: isMobile ? '1rem' : '1.1rem',
                   }}
-                />
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Scan this QR code using your mobile payment app to pay your due amount
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: 0.5,
-                  mt: 1,
-                  p: 2,
-                  bgcolor: 'rgba(59, 30, 84, 0.04)',
-                  borderRadius: 1,
-                  width: '100%'
-                }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#3B1E54' }}>
-                    HOA
+                >
+                  Pay Due Amount ({formatCurrency(totalAmount)})
+                </Button>
+              </Box>
+            )}
+
+            {/* QR Code Dialog */}
+            <Dialog
+              open={qrDialogOpen}
+              onClose={handleCloseQrDialog}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+                Scan QR Code to Pay
+              </DialogTitle>
+              <DialogContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    Due Amount: {formatCurrency(totalAmount)}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
-                    JO**L BR**N V.
+                  <Box
+                    component="img"
+                    src="/QRCode.jpg"
+                    alt="Payment QR Code"
+                    sx={{
+                      width: 250,
+                      height: 250,
+                      objectFit: 'contain',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1,
+                    }}
+                  />
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    Scan this QR code using your mobile payment app to pay your due amount
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
-                    Mobile Number: 099........388
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
-                    User ID: ........70DM95
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    mt: 1,
+                    p: 2,
+                    bgcolor: 'rgba(59, 30, 84, 0.04)',
+                    borderRadius: 1,
+                    width: '100%'
+                  }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#3B1E54' }}>
+                      HOA
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      JO**L BR**N V.
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      Mobile Number: 099........388
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                      User ID: ........70DM95
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" align="center">
+                    Block {homeownerData?.blockNo}, Lot {homeownerData?.lotNo}
                   </Typography>
                 </Box>
-                <Typography variant="caption" color="text.secondary" align="center">
-                  Block {homeownerData?.blockNo}, Lot {homeownerData?.lotNo}
-                </Typography>
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-              <Button
-                onClick={handleCloseQrDialog}
-                variant="outlined"
-                sx={{ 
-                  minWidth: 120,
-                  borderColor: '#0d0869',
-                  color: '#0d0869',
-                  borderRadius: '15px',
-                  '&:hover': { 
-                    borderColor: '#0a0652',
-                    backgroundColor: 'rgba(13, 8, 105, 0.04)'
-                  }
-                }}
-              >
-                Close
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </DialogContent>
+              <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+                <Button
+                  onClick={handleCloseQrDialog}
+                  variant="outlined"
+                  sx={{ 
+                    minWidth: 120,
+                    borderColor: '#0d0869',
+                    color: '#0d0869',
+                    borderRadius: '15px',
+                    '&:hover': { 
+                      borderColor: '#0a0652',
+                      backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                    }
+                  }}
+                >
+                  Close
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
 
           {/* Center Card - Add Penalty Warning if applicable */}
           <CustomCard sx={{ mb: isMobile ? 1 : 3, p: isMobile ? 1 : 3 }}>
@@ -882,7 +860,6 @@ export default function ReceiptUI() {
                       {formatCurrency(billingData?.dueAmount)}
                     </TableCell>
                   </TableRow>
-                  {/*}
                   <TableRow>
                     <TableCell sx={{ border: "none", py: 1 }}>
                       Tax ({(TAX_RATE * 100).toFixed(0)}%):
@@ -905,7 +882,6 @@ export default function ReceiptUI() {
                       )}
                     </TableCell>
                   </TableRow>
-                  */}
                   <TableRow>
                     <TableCell sx={{ border: "none", py: 1 }}>
                       Payment Status:

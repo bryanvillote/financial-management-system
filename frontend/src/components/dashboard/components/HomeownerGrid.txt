@@ -24,7 +24,6 @@ export default function HomeOwnerGrid() {
   const [userRole, setUserRole] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [homeownerToDelete, setHomeownerToDelete] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const columns = [
     {
@@ -136,14 +135,11 @@ export default function HomeOwnerGrid() {
 
   const fetchHomeowners = async () => {
     try {
-      setLoading(true);
       const response = await fetch("http://localhost:8000/homeowners");
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {
       console.error("Error fetching homeowners:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -251,7 +247,6 @@ export default function HomeOwnerGrid() {
             rows={homeowners}
             getRowId={(row) => row._id}
             columns={columns}
-            loading={loading}
             initialState={{
               pagination: { paginationModel: { page: 0, pageSize: 10 } },
               sorting: { sortModel: [{ field: 'name', sort: 'asc' }] },
@@ -271,42 +266,18 @@ export default function HomeOwnerGrid() {
                 backgroundColor: 'background.paper',
                 borderBottom: '2px solid',
                 borderColor: 'divider'
-              },
-              '& .MuiDataGrid-toolbarContainer': {
-                padding: '8px 16px',
-                '& .MuiButton-root': {
-                  color: '#3B1E54',
-                  '&:hover': {
-                    backgroundColor: 'rgba(59, 30, 84, 0.04)'
-                  }
-                }
-              },
-              '& .MuiDataGrid-quickFilterInput': {
-                padding: '4px 8px',
-                borderRadius: '8px',
-                border: '1px solid #e0e0e0',
-                '&:focus': {
-                  borderColor: '#3B1E54',
-                  outline: 'none'
-                }
               }
             }}
             autoHeight
+            sortingMode="server"
+            filterMode="server"
             disableRowSelectionOnClick
             checkboxSelection
             slots={{ toolbar: GridToolbar }}
             slotProps={{
               toolbar: {
                 showQuickFilter: true,
-                quickFilterProps: { 
-                  debounceMs: 500,
-                  placeholder: 'Search homeowners...'
-                },
-                sx: {
-                  '& .MuiButton-root': {
-                    color: '#3B1E54'
-                  }
-                }
+                quickFilterProps: { debounceMs: 500 },
               },
             }}
           />

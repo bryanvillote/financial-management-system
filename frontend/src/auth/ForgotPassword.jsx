@@ -6,24 +6,66 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import PropTypes from 'prop-types';
+import { useState } from 'react';
+import { toast } from 'mui-sonner';
 
 function ForgotPassword({ open, handleClose }) {
+  const [email, setEmail] = useState('');
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const email = formData.get('email');
+
+    try {
+      const response = await fetch('http://localhost:8000/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Password reset link has been sent to your email');
+        handleClose();
+        setEmail('');
+      } else {
+        toast.error(data.message || 'Failed to send reset link. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('An error occurred. Please try again later.');
+    }
+  };
+
   return (
     <Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
         component: 'form',
-        onSubmit: (event) => {
-          event.preventDefault();
-          handleClose();
+        onSubmit: handleSubmit,
+        sx: { 
+          backgroundImage: 'none',
+          borderRadius: '20px',
+          padding: '1rem'
         },
-        sx: { backgroundImage: 'none' },
       }}
     >
-      <DialogTitle>Reset password</DialogTitle>
+      <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+        Reset password
+      </DialogTitle>
       <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 2, 
+          width: '100%',
+          padding: '1rem 0'
+        }}
       >
         <DialogContentText>
           Enter your account&apos;s email address, and we&apos;ll send you a link to
@@ -39,11 +81,33 @@ function ForgotPassword({ open, handleClose }) {
           placeholder="Email address"
           type="email"
           fullWidth
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </DialogContent>
       <DialogActions sx={{ pb: 3, px: 3 }}>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button variant="contained" type="submit">
+        <Button 
+          onClick={handleClose}
+          sx={{
+            color: 'text.secondary',
+            '&:hover': {
+              backgroundColor: 'transparent',
+              textDecoration: 'underline',
+            }
+          }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          variant="contained" 
+          type="submit"
+          sx={{
+            backgroundColor: "#020140",
+            '&:hover': {
+              backgroundColor: "#0A0A6B",
+            }
+          }}
+        >
           Continue
         </Button>
       </DialogActions>

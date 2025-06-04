@@ -19,15 +19,17 @@ import {
   Modal,
   Select,
   Snackbar,
+  TextField,
+  Paper,
+  Box,
+  Typography,
 } from "@mui/material";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import SideMenu from "../components/dashboard/components/SideMenu";
 import AppTheme from "../utils/share-theme/AppTheme";
+import SearchIcon from "@mui/icons-material/Search";
 
 export default function AdminReg(props) {
   const [email, setEmail] = useState("");
@@ -44,6 +46,7 @@ export default function AdminReg(props) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editData, setEditData] = useState({
     email: "",
     role: "",
@@ -374,136 +377,208 @@ export default function AdminReg(props) {
     }
   };
 
+  // Add this new function for filtering users
+  const filteredUsers = users.filter(user => 
+    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SideMenu />
-      <Grid container spacing={2} sx={{ padding: 2, paddingLeft: 70 }}>
-        <Grid item xs={12} md={6}>
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{
-              fontSize: "clamp(2rem, 5vw, 2.15rem)",
-              textAlign: "center",
-              mb: 2,
-            }}
-          >
-            User Roles
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              maxWidth: "450px",
-              margin: "auto",
-            }}
-          >
-            <FormControl>
-              <InputLabel>Email</InputLabel>
+      <Box sx={{ p: 3, pl: 35 }}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{
+            fontSize: "clamp(2rem, 5vw, 2.15rem)",
+            textAlign: "center",
+            mb: 4,
+          }}
+        >
+          User Management
+        </Typography>
+        
+        <Grid container spacing={3}>
+          {/* Admin Registration Form */}
+          <Grid item xs={12} md={5}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: "15px",
+                backgroundColor: "#ffffff",
+                height: "100%"
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 3, color: "#09036e" }}>
+                Register New Admin
+              </Typography>
+              <Box
+                component="form"
+                onSubmit={handleSubmit}
+                noValidate
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+              >
+                <FormControl>
+                  <InputLabel>Email</InputLabel>
+                  <TextField
+                    id="email"
+                    name="email"
+                    type="email"
+                    fullWidth
+                    variant="outlined"
+                    error={!!emailError}
+                    helperText={emailError}
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl>
+                  <InputLabel>Password</InputLabel>
+                  <TextField
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    fullWidth
+                    variant="outlined"
+                    error={!!passwordError}
+                    helperText={passwordError}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={togglePasswordVisibility} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </FormControl>
+                <FormControl required fullWidth>
+                  <InputLabel>Role</InputLabel>
+                  <Select value={role} onChange={handleRoleChange} displayEmpty>
+                    <MenuItem value="" disabled>
+                      Select Role
+                    </MenuItem>
+                    {roleOptions.map((roleOption) => (
+                      <MenuItem key={roleOption} value={roleOption}>
+                        {roleOption}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button 
+                  type="submit" 
+                  fullWidth 
+                  variant="contained" 
+                  sx={{ 
+                    borderRadius: "15px", 
+                    py: 1.5, 
+                    fontSize: "1.1rem", 
+                    backgroundColor: "#09036e", 
+                    "&:hover": { backgroundColor: "#000000" } 
+                  }}
+                >
+                  Register Admin
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Registered Users List */}
+          <Grid item xs={12} md={7}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: "15px",
+                backgroundColor: "#ffffff",
+                height: "100%"
+              }}
+            >
+              <Typography variant="h5" sx={{ mb: 3, color: "#09036e" }}>
+                Registered Users
+              </Typography>
+              
+              {/* Search Bar */}
               <TextField
-                id="email"
-                name="email"
-                type="email"
                 fullWidth
                 variant="outlined"
-                error={!!emailError}
-                helperText={emailError}
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </FormControl>
-            <FormControl>
-              <InputLabel>Password</InputLabel>
-              <TextField
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                fullWidth
-                variant="outlined"
-                error={!!passwordError}
-                helperText={passwordError}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Search users by email or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mb: 3 }}
                 InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={togglePasswordVisibility} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
                     </InputAdornment>
                   ),
                 }}
               />
-            </FormControl>
-            <FormControl required fullWidth>
-              <Select value={role} onChange={handleRoleChange} displayEmpty>
-                <MenuItem value="" disabled>
-                  Select Role
-                </MenuItem>
-                {roleOptions.map((roleOption) => (
-                  <MenuItem key={roleOption} value={roleOption}>
-                    {roleOption}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {/* this forgot passowrd is disabled for now... */}
-            {/* <ForgotPassword open={open} handleClose={handleClose} /> */}
-            <Button type="submit" fullWidth variant="contained" sx={{ borderRadius: "15px", flex: 1, py: 1.5, fontSize: "20px", backgroundColor: "#09036e", "&:hover": { backgroundColor: "#000000" } }}>
-              Register Admin
-            </Button>
-          </Box>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mt: 4, width: "500px", margin: "auto" }}>
-            <Typography variant="h5" sx={{ mb: 2 }}>
-              Registered Users
-            </Typography>
-            <List
-              sx={{
-                maxHeight: "60vh",
-                overflow: "auto",
-                borderRadius: "15px",
-              }}
-            >
-              {users.map((user) => (
-                <ListItem
-                  key={user._id}
-                  sx={{ mb: 1, border: "1px solid #ccc", borderRadius: "15px" }}
-                >
-                  <ListItemText
-                    primary={`Email: ${user.email}`}
-                    secondary={`Role: ${user.role}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Button
-                      onClick={() => handleEditClick(user)}
-                      sx={{ mr: 1 }}
-                    >
-                      Update
-                    </Button>
-                    {user.role !== "President" && (
+
+              <List
+                sx={{
+                  maxHeight: "60vh",
+                  overflow: "auto",
+                  borderRadius: "15px",
+                }}
+              >
+                {filteredUsers.map((user) => (
+                  <ListItem
+                    key={user._id}
+                    sx={{ 
+                      mb: 1, 
+                      border: "1px solid #ccc", 
+                      borderRadius: "15px",
+                      "&:hover": {
+                        backgroundColor: "rgba(9, 3, 110, 0.04)"
+                      }
+                    }}
+                  >
+                    <ListItemText
+                      primary={`Email: ${user.email}`}
+                      secondary={`Role: ${user.role}`}
+                    />
+                    <ListItemSecondaryAction>
                       <Button
-                        onClick={() => handleDeleteClick(user)}
-                        color="error"
+                        onClick={() => handleEditClick(user)}
+                        sx={{ 
+                          mr: 1,
+                          color: "#09036e",
+                          "&:hover": {
+                            backgroundColor: "rgba(9, 3, 110, 0.08)"
+                          }
+                        }}
                       >
-                        Delete
+                        Update
                       </Button>
-                    )}
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
+                      {user.role !== "President" && (
+                        <Button
+                          onClick={() => handleDeleteClick(user)}
+                          color="error"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
       <Modal open={open} onClose={() => setOpen(false)}>
         <Box sx={{ p: 4, backgroundColor: "white", margin: "auto", mt: 10 }}>
           <Typography variant="h6">Edit User</Typography>
