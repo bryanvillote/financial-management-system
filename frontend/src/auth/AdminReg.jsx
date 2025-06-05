@@ -425,8 +425,10 @@ export default function AdminReg(props) {
                   gap: 2,
                 }}
               >
-                <FormControl>
-                  <InputLabel>Email</InputLabel>
+                <FormControl fullWidth>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                    Email
+                  </Typography>
                   <TextField
                     id="email"
                     name="email"
@@ -438,10 +440,19 @@ export default function AdminReg(props) {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    sx={{ 
+                      '& .MuiOutlinedInput-root': {
+                        height: '56px',
+                        borderRadius: "15px",
+                        fontSize: '1.1rem'
+                      }
+                    }}
                   />
                 </FormControl>
-                <FormControl>
-                  <InputLabel>Password</InputLabel>
+                <FormControl fullWidth>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                    Password
+                  </Typography>
                   <TextField
                     id="password"
                     name="password"
@@ -453,6 +464,13 @@ export default function AdminReg(props) {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    sx={{ 
+                      '& .MuiOutlinedInput-root': {
+                        height: '56px',
+                        borderRadius: "15px",
+                        fontSize: '1.1rem'
+                      }
+                    }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -465,8 +483,19 @@ export default function AdminReg(props) {
                   />
                 </FormControl>
                 <FormControl required fullWidth>
-                  <InputLabel>Role</InputLabel>
-                  <Select value={role} onChange={handleRoleChange} displayEmpty>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                    Role
+                  </Typography>
+                  <Select 
+                    value={role} 
+                    onChange={handleRoleChange} 
+                    displayEmpty
+                    sx={{ 
+                      height: '56px',
+                      borderRadius: "15px",
+                      fontSize: '1.1rem'
+                    }}
+                  >
                     <MenuItem value="" disabled>
                       Select Role
                     </MenuItem>
@@ -483,8 +512,8 @@ export default function AdminReg(props) {
                   variant="contained" 
                   sx={{ 
                     borderRadius: "15px", 
-                    py: 1.5, 
-                    fontSize: "1.1rem", 
+                    py: 2.5, 
+                    fontSize: "1.3rem", 
                     backgroundColor: "#09036e", 
                     "&:hover": { backgroundColor: "#000000" } 
                   }}
@@ -517,7 +546,13 @@ export default function AdminReg(props) {
                 placeholder="Search users by email or role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    height: '56px',
+                    fontSize: '1.1rem'
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -657,9 +692,17 @@ export default function AdminReg(props) {
               }
               margin="normal"
               type="email"
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  height: '56px',
+                  fontSize: '1.1rem'
+                }
+              }}
             />
             <FormControl fullWidth margin="normal">
-              <InputLabel id="edit-role-label">Role</InputLabel>
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500 }}>
+                Role
+              </Typography>
               <Select
                 labelId="edit-role-label"
                 value={editData.role}
@@ -667,6 +710,10 @@ export default function AdminReg(props) {
                 onChange={(e) =>
                   setEditData({ ...editData, role: e.target.value })
                 }
+                sx={{ 
+                  height: '56px',
+                  fontSize: '1.1rem'
+                }}
               >
                 <MenuItem value="President">President</MenuItem>
                 <MenuItem value="Vice President">Vice President</MenuItem>
@@ -683,6 +730,12 @@ export default function AdminReg(props) {
                 setEditData({ ...editData, currentPassword: e.target.value })
               }
               margin="normal"
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  height: '56px',
+                  fontSize: '1.1rem'
+                }
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -707,6 +760,12 @@ export default function AdminReg(props) {
                 setEditData({ ...editData, newPassword: e.target.value })
               }
               margin="normal"
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  height: '56px',
+                  fontSize: '1.1rem'
+                }
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">

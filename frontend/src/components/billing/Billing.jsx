@@ -125,6 +125,7 @@ export default function Billing(props) {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [notificationStatus, setNotificationStatus] = useState({
     show: false,
     severity: "success",
@@ -141,27 +142,27 @@ export default function Billing(props) {
     {
       field: "name",
       headerName: "Name",
-      width: 150,
+      width: 250,
     },
     {
       field: "email",
       headerName: "Email",
-      width: 180,
+      width: 300,
     },
     {
       field: "blockNo",
       headerName: "Block",
-      width: 70,
+      width: 100,
     },
     {
       field: "lotNo",
       headerName: "Lot",
-      width: 70,
+      width: 100,
     },
     {
       field: "dueAmount",
       headerName: "Due Amount",
-      width: 120,
+      width: 150,
       renderCell: (params) => {
         const amount = params.row.dueAmount ?? 0;
         return formatCurrency(amount);
@@ -170,7 +171,7 @@ export default function Billing(props) {
     {
       field: "actions",
       headerName: "Actions",
-      width: 200,
+      width: 250,
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
           <Button
@@ -506,7 +507,7 @@ export default function Billing(props) {
             alignItems: "center",
             mx: "auto",
             pb: 5,
-            mt: { xs: 8, md: 0 },
+            mt: { xs: 8, md: 5 },
             width: "100%",
             maxWidth: "100%",
             overflow: "hidden",
@@ -517,12 +518,13 @@ export default function Billing(props) {
           <Stack 
             sx={{ 
               width: "100%", 
-              maxWidth: '1200px', 
+              maxWidth: '2500px', 
               mx: 'auto',
               display: 'flex',
               alignItems: 'center',
             }}
           >
+            <h2>Homeowner Billings and Payments</h2>
             <Box
               sx={{
                 display: "flex",
@@ -532,9 +534,8 @@ export default function Billing(props) {
                 minHeight: 600,
                 alignItems: "center",
                 width: "100%",
-                maxWidth: "1200px",
+                maxWidth: "2500px",
                 overflow: "hidden",
-
               }}
             >
               {/* Table Container */}
@@ -545,15 +546,32 @@ export default function Billing(props) {
                   padding: { xs: 1, md: 4 },
                   height: "fit-content",
                   overflow: "visible",
-                  maxWidth: "856px",
+                  maxWidth: "2500px",
                   mx: "auto",
                   boxShadow: "0px 0px 10px 0px rgba(168, 168, 168, 0.69)",
                   backgroundColor: "#ffffff"
                 }}
               >
                 <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                    <TextField
+                      size="small"
+                      placeholder="Search by name..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      sx={{
+                        width: '300px',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '10px',
+                          backgroundColor: '#ffffff',
+                        },
+                      }}
+                    />
+                  </Box>
                   <DataGrid
-                    rows={homeowners}
+                    rows={homeowners.filter(homeowner => 
+                      homeowner.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    )}
                     columns={columns}
                     getRowId={(row) => row._id}
                     autoHeight
@@ -585,7 +603,7 @@ export default function Billing(props) {
                   borderRadius: "20px",
                   padding: 4,
                   width: "100%",
-                  maxWidth: "855px",
+                  maxWidth: "2500px",
                   mx: "auto",
                   boxShadow: "0px 0px 10px 0px rgba(168, 168, 168, 0.69)",
                   backgroundColor: "#ffffff"

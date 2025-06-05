@@ -287,7 +287,7 @@ export default function Expenses(props) {
             alignItems: "center",
             mx: 3,
             pb: 5,
-            mt: { xs: 8, md: 0 },
+            mt: { xs: 8, md: 5 },
           }}
         >
           <Header />

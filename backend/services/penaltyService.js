@@ -1,8 +1,8 @@
 const { Homeowner, Billing } = require("../models");
 const { STATUS_ENUM } = require("../models/schemas/homeowner.schema");
 
-// Penalty durations in milliseconds (5 seconds = 5000ms)
-const PENALTY_INTERVAL = 5000; // 5 seconds for each level
+// Penalty durations in milliseconds (30 days = 2,592,000,000ms)
+const PENALTY_INTERVAL = 2592000000; // 30 days for each level
 
 // Map to store active timeouts
 const activeTimeouts = new Map();

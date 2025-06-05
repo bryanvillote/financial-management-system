@@ -22,6 +22,7 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  TextField,
 } from "@mui/material";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -135,7 +136,11 @@ export default function ReceiptUI() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [gcashDialogOpen, setGcashDialogOpen] = useState(false);
+  const [mayaDialogOpen, setMayaDialogOpen] = useState(false);
   const [receiptImage, setReceiptImage] = useState(null);
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const fileInputRef = React.useRef(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -234,21 +239,37 @@ export default function ReceiptUI() {
   const handleSendEmail = async () => {
     if (!receiptRef.current || !homeownerData) return;
 
+    // Validate required fields only for GCash and Maya
+    if (selectedPaymentMethod === 'GCash' || selectedPaymentMethod === 'Maya') {
+      if (!receiptImage) {
+        toast.error("Please upload a payment screenshot first");
+        return;
+      }
+
+      if (!referenceNumber.trim()) {
+        toast.error("Please enter a reference number");
+        return;
+      }
+    }
+
     // Create a unique ID for the loading toast so we can dismiss it later
     const loadingToastId = toast.loading("Sending receipt to your email...");
 
     try {
-      // Use a simple message for the email body
-      const simpleMessage = `<p>Attached is my proof of payment for Block ${homeownerData.blockNo}, Lot ${homeownerData.lotNo}.</p><p>Thank you,</p><p>Homeowner</p>`;
-
       // Create FormData to handle file upload
       const formData = new FormData();
-      formData.append('html', simpleMessage);
+      
+      // Add all required fields
       formData.append('email', homeownerData.email);
+      formData.append('name', homeownerData.name);
       formData.append('blockNo', homeownerData.blockNo);
       formData.append('lotNo', homeownerData.lotNo);
+      formData.append('amount', totalAmount);
+      formData.append('paymentMethod', selectedPaymentMethod);
       
-      if (receiptImage) {
+      // Only append these fields for GCash and Maya
+      if (selectedPaymentMethod === 'GCash' || selectedPaymentMethod === 'Maya') {
+        formData.append('referenceNumber', referenceNumber);
         formData.append('receiptImage', receiptImage);
       }
 
@@ -267,6 +288,14 @@ export default function ReceiptUI() {
       // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success("Receipt sent to your email successfully");
+      
+      // Reset form
+      setReceiptImage(null);
+      setReferenceNumber('');
+      setSelectedPaymentMethod(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error("Error sending email:", error);
       // Dismiss loading toast and show error
@@ -579,7 +608,7 @@ export default function ReceiptUI() {
             </Box>
           )}
 
-          {/* QR Code Dialog */}
+          {/* Payment Options Dialog */}
           <Dialog
             open={qrDialogOpen}
             onClose={handleCloseQrDialog}
@@ -587,7 +616,117 @@ export default function ReceiptUI() {
             fullWidth
           >
             <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-              Scan QR Code to Pay
+              Select Payment Method
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h6" color="primary" gutterBottom>
+                  Due Amount: {formatCurrency(totalAmount)}
+                </Typography>
+                
+                {/* Payment Options */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                  {/* Cash Option */}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => {
+                      setSelectedPaymentMethod('Cash');
+                      toast.success("Please proceed to the treasurer's office to pay in cash. Thank you!");
+                      handleCloseQrDialog();
+                    }}
+                    sx={{
+                      py: 2,
+                      borderColor: '#0d0869',
+                      color: '#0d0869',
+                      '&:hover': {
+                        borderColor: '#0a0652',
+                        backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                      }
+                    }}
+                  >
+                    Pay in Cash
+                  </Button>
+
+                  {/* GCash Option */}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => {
+                      setSelectedPaymentMethod('GCash');
+                      setQrDialogOpen(false);
+                      setGcashDialogOpen(true);
+                    }}
+                    sx={{
+                      py: 2,
+                      borderColor: '#0d0869',
+                      color: '#0d0869',
+                      '&:hover': {
+                        borderColor: '#0a0652',
+                        backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                      }
+                    }}
+                  >
+                    Pay with GCash
+                  </Button>
+
+                  {/* Maya Option */}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => {
+                      setSelectedPaymentMethod('Maya');
+                      setQrDialogOpen(false);
+                      setMayaDialogOpen(true);
+                    }}
+                    sx={{
+                      py: 2,
+                      borderColor: '#0d0869',
+                      color: '#0d0869',
+                      '&:hover': {
+                        borderColor: '#0a0652',
+                        backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                      }
+                    }}
+                  >
+                    Pay with Maya
+                  </Button>
+                </Box>
+
+                <Typography variant="caption" color="text.secondary" align="center">
+                  Block {homeownerData?.blockNo}, Lot {homeownerData?.lotNo}
+                </Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+              <Button
+                onClick={handleCloseQrDialog}
+                variant="outlined"
+                sx={{ 
+                  minWidth: 120,
+                  borderColor: '#0d0869',
+                  color: '#0d0869',
+                  borderRadius: '15px',
+                  '&:hover': { 
+                    borderColor: '#0a0652',
+                    backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                  }
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* GCash QR Code Dialog */}
+          <Dialog
+            open={gcashDialogOpen}
+            onClose={() => setGcashDialogOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+              GCash Payment
             </DialogTitle>
             <DialogContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -597,7 +736,7 @@ export default function ReceiptUI() {
                 <Box
                   component="img"
                   src="/QRCode.jpg"
-                  alt="Payment QR Code"
+                  alt="GCash QR Code"
                   sx={{
                     width: 250,
                     height: 250,
@@ -608,7 +747,7 @@ export default function ReceiptUI() {
                   }}
                 />
                 <Typography variant="body2" color="text.secondary" align="center">
-                  Scan this QR code using your mobile payment app to pay your due amount
+                  Scan this QR code using your GCash app to pay your due amount
                 </Typography>
                 <Box sx={{ 
                   display: 'flex', 
@@ -641,7 +780,87 @@ export default function ReceiptUI() {
             </DialogContent>
             <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
               <Button
-                onClick={handleCloseQrDialog}
+                onClick={() => setGcashDialogOpen(false)}
+                variant="outlined"
+                sx={{ 
+                  minWidth: 120,
+                  borderColor: '#0d0869',
+                  color: '#0d0869',
+                  borderRadius: '15px',
+                  '&:hover': { 
+                    borderColor: '#0a0652',
+                    backgroundColor: 'rgba(13, 8, 105, 0.04)'
+                  }
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Maya QR Code Dialog */}
+          <Dialog
+            open={mayaDialogOpen}
+            onClose={() => setMayaDialogOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+              Maya Payment
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h6" color="primary" gutterBottom>
+                  Due Amount: {formatCurrency(totalAmount)}
+                </Typography>
+                <Box
+                  component="img"
+                  src="/QRCode.jpg"
+                  alt="Maya QR Code"
+                  sx={{
+                    width: 250,
+                    height: 250,
+                    objectFit: 'contain',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    p: 1,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" align="center">
+                  Scan this QR code using your Maya app to pay your due amount
+                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: 0.5,
+                  mt: 1,
+                  p: 2,
+                  bgcolor: 'rgba(59, 30, 84, 0.04)',
+                  borderRadius: 1,
+                  width: '100%'
+                }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#3B1E54' }}>
+                    HOA
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                    JO**L BR**N V.
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                    Mobile Number: 099........388
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#3B1E54' }}>
+                    User ID: ........70DM95
+                  </Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary" align="center">
+                  Block {homeownerData?.blockNo}, Lot {homeownerData?.lotNo}
+                </Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+              <Button
+                onClick={() => setMayaDialogOpen(false)}
                 variant="outlined"
                 sx={{ 
                   minWidth: 120,
@@ -675,6 +894,94 @@ export default function ReceiptUI() {
                 )}
               </Typography>
 
+              {/* Add Reference Number Input and Upload Button - Only show for GCash and Maya */}
+              {(selectedPaymentMethod === 'GCash' || selectedPaymentMethod === 'Maya') && (
+                <>
+                  <Box sx={{ mt: 2, px: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Reference Number"
+                      variant="outlined"
+                      value={referenceNumber}
+                      onChange={(e) => setReferenceNumber(e.target.value)}
+                      placeholder="Enter payment reference number"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '15px',
+                          '&:hover fieldset': {
+                            borderColor: '#0d0869',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: '#3B1E54',
+                        },
+                      }}
+                    />
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
+                      justifyContent: "center",
+                      gap: 2,
+                      mt: 2,
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={handleSaveAsPDF}
+                      disabled={loading}
+                      sx={{ 
+                        minWidth: isMobile ? 100 : 150, 
+                        mb: isMobile ? 1 : 0,
+                        backgroundColor: '#0d0869',
+                        '&:hover': { backgroundColor: '#0a0652' },
+                        borderRadius: '15px'
+                      }}
+                    >
+                      Save as PDF
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                      ref={fileInputRef}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={loading}
+                      startIcon={<AttachFileIcon />}
+                      sx={{ 
+                        minWidth: isMobile ? 100 : 150, 
+                        mb: isMobile ? 1 : 0,
+                        backgroundColor: '#0d0869',
+                        '&:hover': { backgroundColor: '#0a0652' },
+                        borderRadius: '15px'
+                      }}
+                    >
+                      Upload Screenshot
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleSendEmail}
+                      disabled={loading}
+                      sx={{ 
+                        minWidth: isMobile ? 100 : 150,
+                        backgroundColor: '#0d0869',
+                        '&:hover': { backgroundColor: '#0a0652' },
+                        borderRadius: '15px'
+                      }}
+                    >
+                      Send to Email
+                    </Button>
+                  </Box>
+                </>
+              )}
+
               {/* Add Penalty Warning */}
               {homeownerData?.penaltyLevel > 0 && (
                 <Typography
@@ -705,67 +1012,6 @@ export default function ReceiptUI() {
                 This is an official receipt from Centro de San Lorenzo. Please
                 keep this for your records.
               </Typography>
-
-              {/* Action Buttons */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: isMobile ? "column" : "row",
-                  justifyContent: "center",
-                  gap: 2,
-                  mt: 2,
-                }}
-              >
-                <Button
-                  variant="contained"
-                  onClick={handleSaveAsPDF}
-                  disabled={loading}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150, 
-                    mb: isMobile ? 1 : 0,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
-                >
-                  Save as PDF
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                  ref={fileInputRef}
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  startIcon={<AttachFileIcon />}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150, 
-                    mb: isMobile ? 1 : 0,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
-                >
-                  Upload Screenshot
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleSendEmail}
-                  disabled={loading}
-                  sx={{ 
-                    minWidth: isMobile ? 100 : 150,
-                    backgroundColor: '#0d0869',
-                    '&:hover': { backgroundColor: '#0a0652' },
-                    borderRadius: '15px'
-                  }}
-                >
-                  Send to Email
-                </Button>
-              </Box>
             </Stack>
           </CustomCard>
         </Box>
