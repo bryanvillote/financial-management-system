@@ -2,10 +2,10 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
-import PageViewsBarChart from "./PageViewsBarChart";
 import SessionsChart from "./SessionsChart";
 import StatCard from "./StatCard";
 import HomeownerStats from "./HomeownerStats";
+import ExpensesPieChart from "./ExpensesPieChart";
 
 export default function MainGrid() {
   const [stats, setStats] = useState({
@@ -195,7 +195,7 @@ export default function MainGrid() {
           <SessionsChart />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <PageViewsBarChart />
+          <ExpensesPieChart />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <HomeownerStats />

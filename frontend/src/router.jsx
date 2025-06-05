@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import AdminLog from "./auth/AdminLogin.jsx";
 import AdminRegister from "./auth/AdminReg.jsx";
 import ForgotPassword from "./auth/ForgotPassword.jsx";
+import ResetPassword from "./auth/ResetPassword.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import Billing from "./components/billing/Billing.jsx";
 import Homeowners from "./components/dashboard/components/Homeowners.jsx";
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/forgot-password", // Forgot Password route
     element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password/:token", // Reset Password route
+    element: <ResetPassword />,
   },
   {
     path: "/app", // Protected app routes

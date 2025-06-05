@@ -11,7 +11,12 @@ export default function PageViewsBarChart() {
   const theme = useTheme();
   const [chartData, setChartData] = useState({
     months: [],
-    expenses: [],
+    expenses: {
+      maintenance: [],
+      utilities: [],
+      security: [],
+      others: []
+    },
     totalAmount: 0,
     trend: 0,
   });
@@ -19,13 +24,11 @@ export default function PageViewsBarChart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get the auth token from localStorage
         const token = localStorage.getItem("authToken");
         if (!token) {
           throw new Error("No authentication token found");
         }
 
-        // Fetch expenses data with authentication
         const response = await fetch("http://localhost:8000/expenses", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,14 +41,17 @@ export default function PageViewsBarChart() {
         }
 
         const data = await response.json();
-        console.log("Raw expenses data:", data); // Debug log
 
         // Get last 6 months
         const last6Months = [];
-        const monthlyExpenses = [];
+        const monthlyExpenses = {
+          maintenance: Array(6).fill(0),
+          utilities: Array(6).fill(0),
+          security: Array(6).fill(0),
+          others: Array(6).fill(0)
+        };
         let totalAmount = 0;
 
-        // Get current date
         const currentDate = new Date();
 
         // Initialize arrays for last 6 months
@@ -59,14 +65,13 @@ export default function PageViewsBarChart() {
             month: "short",
           });
           last6Months.push(monthName);
-          monthlyExpenses[5 - i] = 0; // Initialize with 0
         }
 
         // Process expenses
         if (Array.isArray(data)) {
           data.forEach((expense) => {
-            if (expense.expenseAmount && expense.createdAt) {
-              const expenseDate = new Date(expense.createdAt);
+            if (expense.expenseAmount && expense.date) {
+              const expenseDate = new Date(expense.date);
               const expenseMonth = expenseDate.toLocaleDateString("en-US", {
                 month: "short",
               });
@@ -74,25 +79,34 @@ export default function PageViewsBarChart() {
 
               if (monthIndex !== -1) {
                 const amount = parseFloat(expense.expenseAmount) || 0;
-                monthlyExpenses[monthIndex] += amount;
+                const category = expense.category?.toLowerCase() || 'others';
+                
+                switch(category) {
+                  case 'maintenance':
+                    monthlyExpenses.maintenance[monthIndex] += amount;
+                    break;
+                  case 'utilities':
+                    monthlyExpenses.utilities[monthIndex] += amount;
+                    break;
+                  case 'security':
+                    monthlyExpenses.security[monthIndex] += amount;
+                    break;
+                  default:
+                    monthlyExpenses.others[monthIndex] += amount;
+                }
+                
                 totalAmount += amount;
               }
             }
           });
         }
 
-        console.log("Processed data:", {
-          months: last6Months,
-          expenses: monthlyExpenses,
-          total: totalAmount,
-        }); // Debug log
-
         // Calculate trend
-        const recent3Months = monthlyExpenses
-          .slice(-3)
+        const recent3Months = Object.values(monthlyExpenses)
+          .map(category => category.slice(-3).reduce((a, b) => a + b, 0))
           .reduce((a, b) => a + b, 0);
-        const previous3Months = monthlyExpenses
-          .slice(0, 3)
+        const previous3Months = Object.values(monthlyExpenses)
+          .map(category => category.slice(0, 3).reduce((a, b) => a + b, 0))
           .reduce((a, b) => a + b, 0);
         const trend =
           previous3Months !== 0
@@ -107,7 +121,6 @@ export default function PageViewsBarChart() {
         });
       } catch (error) {
         console.error("Error fetching expense data:", error);
-        // Set default values in case of error
         setChartData({
           months: Array(6)
             .fill("")
@@ -116,7 +129,12 @@ export default function PageViewsBarChart() {
               d.setMonth(d.getMonth() - (5 - i));
               return d.toLocaleDateString("en-US", { month: "short" });
             }),
-          expenses: Array(6).fill(0),
+          expenses: {
+            maintenance: Array(6).fill(0),
+            utilities: Array(6).fill(0),
+            security: Array(6).fill(0),
+            others: Array(6).fill(0)
+          },
           totalAmount: 0,
           trend: 0,
         });
@@ -124,7 +142,7 @@ export default function PageViewsBarChart() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -132,7 +150,7 @@ export default function PageViewsBarChart() {
     <Card variant="outlined" sx={{ width: "100%" }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Monthly Expenses
+          Monthly Expenses by Category
         </Typography>
         <Stack sx={{ justifyContent: "space-between" }}>
           <Stack
@@ -164,7 +182,12 @@ export default function PageViewsBarChart() {
           </Typography>
         </Stack>
         <BarChart
-          colors={[theme.palette.primary.main]}
+          colors={[
+            theme.palette.primary.main,
+            theme.palette.success.main,
+            theme.palette.warning.main,
+            theme.palette.error.main
+          ]}
           xAxis={[
             {
               scaleType: "band",
@@ -174,8 +197,24 @@ export default function PageViewsBarChart() {
           ]}
           series={[
             {
-              data: chartData.expenses,
-              label: "Monthly Expenses",
+              data: chartData.expenses.maintenance,
+              label: "Maintenance",
+              stack: "total",
+            },
+            {
+              data: chartData.expenses.utilities,
+              label: "Utilities",
+              stack: "total",
+            },
+            {
+              data: chartData.expenses.security,
+              label: "Security",
+              stack: "total",
+            },
+            {
+              data: chartData.expenses.others,
+              label: "Others",
+              stack: "total",
             },
           ]}
           height={250}

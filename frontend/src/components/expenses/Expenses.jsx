@@ -25,6 +25,11 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
 } from "@mui/material";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
@@ -59,7 +64,7 @@ const theme = createTheme({
 
 const columns = [
   {
-    width: 200,
+    width: 250,
     label: "Expense Name",
     dataKey: "expenseName",
     align: "left",
@@ -68,21 +73,30 @@ const columns = [
     cellPadding: "16px 24px"
   },
   {
-    width: 300,
+    width: 210,
+    label: "Category",
+    dataKey: "category",
+    align: "left",
+    headerAlign: "left",
+    padding: "16px 24px",
+    cellPadding: "16px 24px"
+  },
+  {
+    width: 210,
     label: "Expense Amount",
     dataKey: "expenseAmount",
     align: "center",
-    headerAlign: "center",
+    headerAlign: "left",
     padding: "16px 24px",
     cellPadding: "16px 24px",
     formatValue: (value) => `₱${value}`
   },
   {
-    width: 300,
+    width: 280,
     label: "Actions",
     dataKey: "actions",
     align: "center",
-    headerAlign: "center",
+    headerAlign: "left",
     padding: "16px 24px",
     cellPadding: "16px 24px"
   },
@@ -111,6 +125,7 @@ export default function Expenses(props) {
   const [expenses, setExpenses] = useState([]);
   const [expenseName, setExpenseName] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState("Others");
   const [editingExpenseId, setEditingExpenseId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -137,7 +152,12 @@ export default function Expenses(props) {
   }, []);
 
   const addExpense = async () => {
-    const newExpense = { expenseName, expenseAmount };
+    const newExpense = { 
+      expenseName, 
+      expenseAmount,
+      category: expenseCategory,
+      date: new Date()
+    };
     const token = localStorage.getItem("authToken");
     try {
       const response = await axios.post(
@@ -160,7 +180,12 @@ export default function Expenses(props) {
   };
 
   const updateExpense = async () => {
-    const updatedExpense = { expenseName, expenseAmount };
+    const updatedExpense = { 
+      expenseName, 
+      expenseAmount,
+      category: expenseCategory,
+      date: new Date()
+    };
     const token = localStorage.getItem("authToken");
 
     try {
@@ -224,12 +249,14 @@ export default function Expenses(props) {
   const editExpense = (expense) => {
     setExpenseName(expense.expenseName);
     setExpenseAmount(expense.expenseAmount);
+    setExpenseCategory(expense.category || "Others");
     setEditingExpenseId(expense._id);
   };
 
   const resetForm = () => {
     setExpenseName("");
     setExpenseAmount("");
+    setExpenseCategory("Others");
     setEditingExpenseId(null);
   };
 
@@ -419,7 +446,6 @@ export default function Expenses(props) {
                                 justifyContent: 'center', 
                                 alignItems: 'center',
                                 gap: 1,
-                              
                               }}>
                                 <Button 
                                   onClick={() => {
@@ -444,6 +470,21 @@ export default function Expenses(props) {
                               </Box>
                             ) : column.dataKey === "expenseAmount" ? (
                               column.formatValue(row[column.dataKey])
+                            ) : column.dataKey === "category" ? (
+                              <Chip 
+                                label={row.category || "Others"} 
+                                color={
+                                  row.category === "Maintenance" ? "primary" :
+                                  row.category === "Utilities" ? "success" :
+                                  row.category === "Security" ? "warning" :
+                                  "default"
+                                }
+                                size="small"
+                                sx={{ 
+                                  minWidth: "100px",
+                                  fontWeight: "medium", 
+                                }}
+                              />
                             ) : (
                               row[column.dataKey]
                             )}
@@ -509,18 +550,29 @@ export default function Expenses(props) {
                   "& .MuiOutlinedInput-root": { borderRadius: "10px" },
                 }}
               />
+              <FormControl fullWidth>
+                <InputLabel id="expense-category-label">Category</InputLabel>
+                <Select
+                  labelId="expense-category-label"
+                  id="expense-category"
+                  value={expenseCategory}
+                  label="Category"
+                  onChange={(e) => setExpenseCategory(e.target.value)}
+                  sx={{
+                    "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                  }}
+                >
+                  <MenuItem value="Maintenance">Maintenance</MenuItem>
+                  <MenuItem value="Utilities">Utilities</MenuItem>
+                  <MenuItem value="Security">Security</MenuItem>
+                  <MenuItem value="Others">Others</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleCloseExpenseModal} color="inherit">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              color="primary"
-              sx={{ borderRadius: "10px" }}
-            >
+          <DialogActions>
+            <Button onClick={handleCloseExpenseModal}>Cancel</Button>
+            <Button onClick={handleSubmit} variant="contained" color="primary">
               {editingExpenseId ? "Update" : "Add"}
             </Button>
           </DialogActions>

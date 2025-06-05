@@ -71,7 +71,7 @@ export default function SessionsChart() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -121,6 +121,10 @@ export default function SessionsChart() {
               area: true,
               showMark: false,
               label: "Payments",
+              curve: "linear",
+              areaStyle: {
+                fill: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.main}20 100%)`,
+              },
             },
           ]}
           height={250}

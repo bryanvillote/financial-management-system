@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       enum: ["President", "Vice President", "Treasurer", "Home Owner"],
     },
+    resetToken: {
+      type: String,
+    },
+    resetTokenExpiry: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

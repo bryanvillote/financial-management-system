@@ -14,6 +14,11 @@ const expenseSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  category: {
+    type: String,
+    enum: ["Maintenance", "Utilities", "Security", "Others"],
+    default: "Others",
+  },
   date: {
     type: Date,
     default: Date.now,

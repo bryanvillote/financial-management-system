@@ -13,7 +13,7 @@ exports.getExpenses = async (req, res) => {
 
 // Create new expense
 exports.createExpense = async (req, res) => {
-  const { expenseName, expenseAmount } = req.body;
+  const { expenseName, expenseAmount, category } = req.body;
 
   if (!expenseName || !expenseAmount) {
     return res.status(400).json({ message: "All fields are required" });
@@ -23,6 +23,7 @@ exports.createExpense = async (req, res) => {
     userId: req.user.id,
     expenseName,
     expenseAmount,
+    category: category || "Others"
   });
 
   try {
@@ -31,7 +32,7 @@ exports.createExpense = async (req, res) => {
     await expenseAuditController.createAuditLog(
       req.user.email,
       'CREATE',
-      `Created expense: ${expenseName} with amount ₱${expenseAmount}`,
+      `Created expense: ${expenseName} with amount ₱${expenseAmount} in category ${category || "Others"}`,
       savedExpense._id
     );
     res.status(201).json(savedExpense);
@@ -42,7 +43,7 @@ exports.createExpense = async (req, res) => {
 
 // Update expense
 exports.updateExpense = async (req, res) => {
-  const { expenseName, expenseAmount } = req.body;
+  const { expenseName, expenseAmount, category } = req.body;
 
   try {
     const expense = await Expense.findById(req.params.id);
@@ -55,6 +56,7 @@ exports.updateExpense = async (req, res) => {
     
     if (expenseName) expense.expenseName = expenseName;
     if (expenseAmount) expense.expenseAmount = expenseAmount;
+    if (category) expense.category = category;
 
     const updatedExpense = await expense.save();
     
@@ -62,7 +64,7 @@ exports.updateExpense = async (req, res) => {
     await expenseAuditController.createAuditLog(
       req.user.email,
       'UPDATE',
-      `Updated expense from: ${oldExpense.expenseName} (₱${oldExpense.expenseAmount}) to: ${expenseName} (₱${expenseAmount})`,
+      `Updated expense from: ${oldExpense.expenseName} (₱${oldExpense.expenseAmount}, ${oldExpense.category}) to: ${expenseName} (₱${expenseAmount}, ${category})`,
       updatedExpense._id
     );
     
