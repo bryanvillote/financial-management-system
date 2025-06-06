@@ -9,6 +9,9 @@ router.get("/", homeownerController.getAllHomeowners);
 // Create a new homeowner
 router.post("/", homeownerController.registerHomeowner);
 
+// Get homeowner by email
+router.get("/email/:email", homeownerController.getHomeownerByEmail);
+
 // Update a homeowner
 router.put("/:id", homeownerController.updateHomeowner);
 

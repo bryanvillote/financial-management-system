@@ -253,27 +253,38 @@ export default function ReceiptUI() {
     }
 
     // Create a unique ID for the loading toast so we can dismiss it later
-    const loadingToastId = toast.loading("Sending receipt to your email...");
+    const loadingToastId = toast.loading("Sending payment confirmation to your email...");
 
     try {
+      // Create a simple HTML message with just the reference number
+      const receiptHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="text-align: center; color: #0d0869;">Payment Confirmation</h2>
+          <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+            <p><strong>Reference Number:</strong> ${referenceNumber}</p>
+            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Payment Method:</strong> ${selectedPaymentMethod}</p>
+            <p><strong>Amount:</strong> ${formatCurrency(totalAmount)}</p>
+          </div>
+          <p style="text-align: center; font-style: italic;">Please find the payment screenshot attached to this email.</p>
+        </div>
+      `;
+
       // Create FormData to handle file upload
       const formData = new FormData();
       
-      // Add all required fields
+      // Add required fields
       formData.append('email', homeownerData.email);
-      formData.append('name', homeownerData.name);
-      formData.append('blockNo', homeownerData.blockNo);
-      formData.append('lotNo', homeownerData.lotNo);
-      formData.append('amount', totalAmount);
-      formData.append('paymentMethod', selectedPaymentMethod);
+      formData.append('receiptHtml', receiptHtml);
+      formData.append('subject', `Payment Confirmation - Block ${homeownerData.blockNo}, Lot ${homeownerData.lotNo}`);
       
-      // Only append these fields for GCash and Maya
-      if (selectedPaymentMethod === 'GCash' || selectedPaymentMethod === 'Maya') {
-        formData.append('referenceNumber', referenceNumber);
+      // Add payment screenshot and reference number
+      if (receiptImage) {
         formData.append('receiptImage', receiptImage);
       }
+      formData.append('referenceNumber', referenceNumber);
 
-      // Send to backend
+      // Send to backend using the existing endpoint
       const response = await fetch("http://localhost:8000/email/send-receipt", {
         method: "POST",
         body: formData,
@@ -287,7 +298,7 @@ export default function ReceiptUI() {
 
       // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
-      toast.success("Receipt sent to your email successfully");
+      toast.success("Payment confirmation sent to your email successfully");
       
       // Reset form
       setReceiptImage(null);
@@ -300,7 +311,7 @@ export default function ReceiptUI() {
       console.error("Error sending email:", error);
       // Dismiss loading toast and show error
       toast.dismiss(loadingToastId);
-      toast.error("Failed to send receipt: " + error.message);
+      toast.error("Failed to send payment confirmation: " + error.message);
     }
   };
 
