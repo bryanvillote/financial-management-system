@@ -149,9 +149,8 @@ export default function ReceiptUI() {
   // Calculate totals based on actual billing data
   const calculateTotals = (dueAmount) => {
     const subtotal = dueAmount || 0;
-    const taxes = subtotal * TAX_RATE;
-    const total = subtotal + taxes;
-    return { subtotal, taxes, total };
+    const total = subtotal;
+    return { subtotal, taxes: 0, total };
   };
 
   const fetchHomeownerData = async () => {
@@ -222,17 +221,43 @@ export default function ReceiptUI() {
       const imgData = canvas.toDataURL("image/png");
 
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`Receipt_${homeownerData?.name || "Homeowner"}.pdf`);
+
+      // Add payment screenshot if available
+      if (receiptImage) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const screenshotData = event.target.result;
+          // Add a new page for the screenshot
+          pdf.addPage();
+          // Add the screenshot with a title
+          pdf.setFontSize(16);
+          pdf.text("Payment Screenshot", 105, 20, { align: "center" });
+          // Add the screenshot image
+          pdf.addImage(screenshotData, "PNG", 20, 30, 170, 170 * (receiptImage.height / receiptImage.width));
+          // Save the PDF
+          pdf.save(`Receipt_${homeownerData?.name || "Homeowner"}.pdf`);
+        };
+        reader.readAsDataURL(receiptImage);
+      } else {
+        // If no screenshot, just save the PDF
+        pdf.save(`Receipt_${homeownerData?.name || "Homeowner"}.pdf`);
+      }
     } catch (error) {
       console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
     }
   };
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setReceiptImage(file);
-      toast.success("Receipt screenshot uploaded successfully");
+      // Create an image object to get dimensions
+      const img = new Image();
+      img.onload = function() {
+        setReceiptImage({ ...file, width: img.width, height: img.height });
+        toast.success("Receipt screenshot uploaded successfully");
+      };
+      img.src = URL.createObjectURL(file);
     }
   };
 
@@ -256,7 +281,10 @@ export default function ReceiptUI() {
     const loadingToastId = toast.loading("Sending payment confirmation to your email...");
 
     try {
-      // Create a simple HTML message with just the reference number
+      // Create a simple HTML message with payment details
+      // Use the 'total' value from calculateTotals which excludes tax
+      const { total } = calculateTotals(billingData?.dueAmount);
+
       const receiptHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="text-align: center; color: #0d0869;">Payment Confirmation</h2>
@@ -264,9 +292,9 @@ export default function ReceiptUI() {
             <p><strong>Reference Number:</strong> ${referenceNumber}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
             <p><strong>Payment Method:</strong> ${selectedPaymentMethod}</p>
-            <p><strong>Amount:</strong> ${formatCurrency(totalAmount)}</p>
+            <p><strong>Amount:</strong> ${formatCurrency(total)}</p>
           </div>
-          <p style="text-align: center; font-style: italic;">Please find the payment screenshot attached to this email.</p>
+          <p style="text-align: center; font-style: italic;">Thank you for your payment. Please find the payment screenshot in the attached PDF.</p>
         </div>
       `;
 
@@ -278,11 +306,13 @@ export default function ReceiptUI() {
       formData.append('receiptHtml', receiptHtml);
       formData.append('subject', `Payment Confirmation - Block ${homeownerData.blockNo}, Lot ${homeownerData.lotNo}`);
       
-      // Add payment screenshot and reference number
+      // Add payment screenshot file (backend will convert to PDF)
       if (receiptImage) {
         formData.append('receiptImage', receiptImage);
       }
       formData.append('referenceNumber', referenceNumber);
+      // Append the total amount without tax for backend reference if needed
+      formData.append('amountPaid', total);
 
       // Send to backend using the existing endpoint
       const response = await fetch("http://localhost:8000/email/send-receipt", {
@@ -353,7 +383,6 @@ export default function ReceiptUI() {
     );
 
   const { subtotal, taxes, total } = calculateTotals(billingData?.dueAmount);
-  const totalAmount = (billingData?.dueAmount || 0) * (1 + TAX_RATE);
 
   return (
     <ThemeProvider theme={theme}>
@@ -488,20 +517,8 @@ export default function ReceiptUI() {
                         </TableRow>
                         <TableRow>
                           <TableCell sx={{ fontWeight: "bold" }}>Due Amount</TableCell>
-                          <TableCell>{formatCurrency(billingData?.dueAmount)}</TableCell>
+                          <TableCell>{formatCurrency(total)}</TableCell>
                         </TableRow>
-                        {/*
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Tax ({(TAX_RATE * 100).toFixed(0)}%)</TableCell>
-                          <TableCell>{formatCurrency(billingData?.dueAmount * TAX_RATE)}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Total Amount Due</TableCell>
-                          <TableCell sx={{ fontWeight: "bold", color: "primary.main" }}>
-                            {formatCurrency((billingData?.dueAmount || 0) * (1 + TAX_RATE))}
-                          </TableCell>
-                        </TableRow>
-                        */}
                         <TableRow>
                           <TableCell sx={{ fontWeight: "bold" }}>Payment Status</TableCell>
                           <TableCell>
@@ -614,7 +631,7 @@ export default function ReceiptUI() {
                   fontSize: isMobile ? '1rem' : '1.1rem',
                 }}
               >
-                Pay Due Amount ({formatCurrency(totalAmount)})
+                Pay Due Amount ({formatCurrency(total)})
               </Button>
             </Box>
           )}
@@ -632,7 +649,7 @@ export default function ReceiptUI() {
             <DialogContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <Typography variant="h6" color="primary" gutterBottom>
-                  Due Amount: {formatCurrency(totalAmount)}
+                  Due Amount: {formatCurrency(total)}
                 </Typography>
                 
                 {/* Payment Options */}
@@ -742,7 +759,7 @@ export default function ReceiptUI() {
             <DialogContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <Typography variant="h6" color="primary" gutterBottom>
-                  Due Amount: {formatCurrency(totalAmount)}
+                  Due Amount: {formatCurrency(total)}
                 </Typography>
                 <Box
                   component="img"
@@ -822,7 +839,7 @@ export default function ReceiptUI() {
             <DialogContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <Typography variant="h6" color="primary" gutterBottom>
-                  Due Amount: {formatCurrency(totalAmount)}
+                  Due Amount: {formatCurrency(total)}
                 </Typography>
                 <Box
                   component="img"
@@ -1136,33 +1153,9 @@ export default function ReceiptUI() {
                       Due Amount:
                     </TableCell>
                     <TableCell sx={{ border: "none", py: 1 }}>
-                      {formatCurrency(billingData?.dueAmount)}
+                      {formatCurrency(total)}
                     </TableCell>
                   </TableRow>
-                  {/*}
-                  <TableRow>
-                    <TableCell sx={{ border: "none", py: 1 }}>
-                      Tax ({(TAX_RATE * 100).toFixed(0)}%):
-                    </TableCell>
-                    <TableCell sx={{ border: "none", py: 1 }}>
-                      {formatCurrency(billingData?.dueAmount * TAX_RATE)}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell
-                      sx={{ border: "none", py: 1, fontWeight: "bold" }}
-                    >
-                      Total Amount Due:
-                    </TableCell>
-                    <TableCell
-                      sx={{ border: "none", py: 1, fontWeight: "bold" }}
-                    >
-                      {formatCurrency(
-                        (billingData?.dueAmount || 0) * (1 + TAX_RATE)
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  */}
                   <TableRow>
                     <TableCell sx={{ border: "none", py: 1 }}>
                       Payment Status:

@@ -224,26 +224,6 @@ export default function TreasurerReceipt({ homeowner, billingData }) {
                       {formatCurrency(billingData?.dueAmount || 0)}
                     </TableCell>
                   </TableRow>
-                  <TableRow>
-                    <TableCell component="th">Tax Rate:</TableCell>
-                    <TableCell>{(TAX_RATE * 100).toFixed(1)}%</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell component="th">Tax Amount:</TableCell>
-                    <TableCell>
-                      {formatCurrency((billingData?.dueAmount || 0) * TAX_RATE)}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell component="th">Total Amount Due:</TableCell>
-                    <TableCell>
-                      <Typography fontWeight="bold">
-                        {formatCurrency(
-                          (billingData?.dueAmount || 0) * (1 + TAX_RATE)
-                        )}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
                 </TableBody>
               </Table>
             </TableContainer>

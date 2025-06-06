@@ -36,7 +36,9 @@ const emailService = {
     lotNo,
     dueAmount,
     paymentDate,
-    referenceNumber
+    referenceNumber,
+    pdfAttachment,
+    pdfFileName
   }) {
     try {
       const mailOptions = {
@@ -49,6 +51,15 @@ const emailService = {
         html: receiptHtml,
         attachments: []
       };
+
+      // Attach the generated PDF if provided
+      if (pdfAttachment && pdfFileName) {
+        mailOptions.attachments.push({
+          filename: pdfFileName,
+          content: pdfAttachment,
+          contentType: 'application/pdf'
+        });
+      }
 
       // Send to homeowner
       await transporter.sendMail(mailOptions);
@@ -74,7 +85,8 @@ const emailService = {
         from: mailOptions.from,
         to: mailOptions.to,
         subject: mailOptions.subject,
-        hasHtml: !!mailOptions.html
+        hasHtml: !!mailOptions.html,
+        hasAttachments: !!mailOptions.attachments.length
       });
       throw error;
     }

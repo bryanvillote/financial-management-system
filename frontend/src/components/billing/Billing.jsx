@@ -801,235 +801,100 @@ export default function Billing(props) {
               </Stack>
             </Stack>
           </DialogTitle>
-          <DialogContent sx={{ p: 3 }}>
-            <Box ref={pdfRef}>
-              <ReceiptPaper ref={receiptRef}>
-                <Stack spacing={4}>
-                  {/* Header Section */}
-                  <Box sx={{ textAlign: "center", mb: 4 }}>
-                    <Typography
-                      variant="h4"
-                      gutterBottom
-                      sx={{
-                        color: "#000000",
-                        fontWeight: 700,
-                        fontSize: "2rem",
-                        mb: 2,
-                      }}
-                    >
-                      HOA Payment Receipt
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "#000000",
-                        fontWeight: 500,
-                        opacity: 0.87,
-                      }}
-                    >
-                      {new Date().toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </Typography>
-                  </Box>
+          <DialogContent dividers>
+            <ReceiptPaper ref={pdfRef}>
+              <Box ref={receiptRef} sx={{ p: 3 }}>
+                <Typography variant="h4" align="center" gutterBottom>
+                  Centro de San Lorenzo
+                </Typography>
+                <Typography variant="h6" align="center" gutterBottom>
+                  HOA Payment Receipt
+                </Typography>
 
-                  {/* Organization Info */}
-                  <Box sx={{ mb: 4 }}>
-                    <Typography
-                      variant="h6"
-                      gutterBottom
-                      sx={{
-                        color: "#000000",
-                        fontWeight: 600,
-                        fontSize: "1.1rem",
-                      }}
-                    >
-                      Homeowners Association
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#000000", mb: 0.5 }}
-                    >
-                      123 Main Street
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#000000", mb: 0.5 }}
-                    >
-                      City, State 12345
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "#000000" }}>
-                      Phone: (123) 456-7890
-                    </Typography>
-                  </Box>
-
-                  {/* Homeowner Info */}
-                  <TableContainer
-                    component={Paper}
-                    elevation={0}
-                    sx={{
-                      mb: 4,
-                      border: "1px solid rgba(0, 0, 0, 0.12)",
-                      borderRadius: 2,
-                    }}
-                  >
-                    <Table>
-                      <TableBody>
+                <TableContainer component={Paper} elevation={0}>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <LabelCell>Homeowner Name:</LabelCell>
+                        <ValueCell>{currentReceipt?.name}</ValueCell>
+                      </TableRow>
+                      <TableRow>
+                        <LabelCell>Block Number:</LabelCell>
+                        <ValueCell>{currentReceipt?.blockNo}</ValueCell>
+                      </TableRow>
+                      <TableRow>
+                        <LabelCell>Lot Number:</LabelCell>
+                        <ValueCell>{currentReceipt?.lotNo}</ValueCell>
+                      </TableRow>
+                      <TableRow>
+                        <LabelCell>Email:</LabelCell>
+                        <ValueCell>{currentReceipt?.email}</ValueCell>
+                      </TableRow>
+                      <TableRow>
+                        <LabelCell>Payment Status:</LabelCell>
+                        <ValueCell>
+                          <Typography
+                            color={
+                              currentReceipt?.isPaid ? "success.main" : "error.main"
+                            }
+                            fontWeight="medium"
+                          >
+                            {currentReceipt?.isPaid ? "PAID" : "UNPAID"}
+                          </Typography>
+                        </ValueCell>
+                      </TableRow>
+                      {currentReceipt?.lastPaymentDate && (
                         <TableRow>
-                          <LabelCell>Homeowner Name:</LabelCell>
-                          <ValueCell>{currentReceipt?.name}</ValueCell>
-                        </TableRow>
-                        <TableRow>
-                          <LabelCell>Email:</LabelCell>
-                          <ValueCell>{currentReceipt?.email}</ValueCell>
-                        </TableRow>
-                        <TableRow>
-                          <LabelCell>Block & Lot:</LabelCell>
+                          <LabelCell>Last Payment Date:</LabelCell>
                           <ValueCell>
-                            Block {currentReceipt?.blockNo}, Lot{" "}
-                            {currentReceipt?.lotNo}
+                            {new Date(
+                              currentReceipt.lastPaymentDate
+                            ).toLocaleDateString()}
                           </ValueCell>
                         </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-
-                  {/* Payment Details */}
-                  <TableContainer
-                    component={Paper}
-                    elevation={0}
-                    sx={{
-                      mb: 4,
-                      border: "1px solid rgba(0, 0, 0, 0.12)",
-                      borderRadius: 2,
-                      backgroundColor: "#f8f8f8",
-                    }}
-                  >
-                    <Table>
-                      <TableBody>
+                      )}
+                      {currentReceipt?.lastPaymentAmount && (
                         <TableRow>
-                          <LabelCell>Due Amount:</LabelCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              color: "#000000",
-                              fontWeight: 500,
-                              fontSize: "1rem",
-                            }}
-                          >
-                            {formatCurrency(currentReceipt?.dueAmount || 0)}
-                          </TableCell>
+                          <LabelCell>Last Payment Amount:</LabelCell>
+                          <ValueCell>
+                            {formatCurrency(currentReceipt.lastPaymentAmount)}
+                          </ValueCell>
                         </TableRow>
-                        <TableRow>
-                          <LabelCell>Tax (7%):</LabelCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              color: "#000000",
-                              fontWeight: 500,
-                              fontSize: "1rem",
-                            }}
-                          >
-                            {formatCurrency(
-                              (currentReceipt?.dueAmount || 0) * TAX_RATE
-                            )}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <LabelCell
-                            sx={{
-                              fontSize: "1.1rem",
-                              fontWeight: 700,
-                            }}
-                          >
-                            Total Amount:
-                          </LabelCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              fontSize: "1.1rem",
-                              fontWeight: 700,
-                              color: "#3B1E54",
-                            }}
-                          >
-                            {formatCurrency(
-                              (currentReceipt?.dueAmount || 0) * (1 + TAX_RATE)
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                      )}
+                      <TableRow>
+                        <LabelCell>Due Amount:</LabelCell>
+                        <ValueCell>
+                          {formatCurrency(currentReceipt?.dueAmount || 0)}
+                        </ValueCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-                  {/* Payment Status */}
-                  <Box
-                    sx={{
-                      mb: 4,
-                      p: 2,
-                      border: "1px solid rgba(0, 0, 0, 0.12)",
-                      borderRadius: 2,
-                      backgroundColor: "#f8f8f8",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "#000000",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Payment Status:{" "}
-                      <Typography
-                        component="span"
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          color:
-                            currentReceipt?.dueAmount > 0
-                              ? "#d32f2f"
-                              : "#2e7d32",
-                        }}
-                      >
-                        {currentReceipt?.dueAmount > 0 ? "UNPAID" : "PAID"}
-                      </Typography>
-                    </Typography>
-                  </Box>
-
-                  {/* Footer */}
-                  <Box
-                    sx={{
-                      mt: "auto",
-                      textAlign: "center",
-                      pt: 4,
-                      borderTop: "1px solid rgba(0, 0, 0, 0.12)",
-                    }}
-                  >
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: "#000000",
-                        opacity: 0.87,
-                        mb: 1,
-                      }}
-                    >
-                      This is an official receipt of the Homeowners Association.
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "#000000",
-                        opacity: 0.67,
-                      }}
-                    >
-                      Generated on {new Date().toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </ReceiptPaper>
-            </Box>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mt: 4,
+                    textAlign: "center",
+                    color: "#000000",
+                    opacity: 0.87,
+                  }}
+                >
+                  This is an official receipt of the Homeowners Association.
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 1,
+                    textAlign: "center",
+                    color: "#000000",
+                    opacity: 0.67,
+                  }}
+                >
+                  Generated on {new Date().toLocaleString()}
+                </Typography>
+              </Box>
+            </ReceiptPaper>
           </DialogContent>
         </Dialog>
       </ThemeProvider>
