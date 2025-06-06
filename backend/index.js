@@ -20,6 +20,12 @@ mongoose
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 // Import routes
 const authRoutes = require("./routes/auth");
 const transactionRoutes = require("./routes/transactions");
@@ -50,6 +56,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.url}`);
   res.status(404).json({
     success: false,
     message: "Route not found"

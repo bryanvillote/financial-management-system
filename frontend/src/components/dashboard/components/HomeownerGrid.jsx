@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import HistoryIcon from '@mui/icons-material/History';
 import {
   Chip,
   Dialog,
@@ -16,6 +17,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import HomeownerAuditLogs from "./HomeownerAuditLogs";
 
 export default function HomeOwnerGrid() {
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ export default function HomeOwnerGrid() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [homeownerToDelete, setHomeownerToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [auditLogModalOpen, setAuditLogModalOpen] = useState(false);
 
   const columns = [
     {
@@ -223,26 +226,43 @@ export default function HomeOwnerGrid() {
         <Typography variant="h5" fontWeight="medium">
           Homeowners List
         </Typography>
-        {userRole !== "Treasurer" && (
+        <Stack direction="row" spacing={2}>
           <Button
             variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => navigate("/app/registration")}
+            startIcon={<HistoryIcon />}
+            onClick={() => setAuditLogModalOpen(true)}
             sx={{
-              borderRadius: "15px",
-              textTransform: "none",
-              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-              ml: 1,
               backgroundColor: "#3B1E54",
+              borderRadius: "15px",
+              padding: "8px 16px",
               "&:hover": {
-                backgroundColor: "#3B1E54",
-              }
+                backgroundColor: "#4B2E64",
+              },
             }}
           >
-            Add Homeowner
+            Activity Logs
           </Button>
-        )}
+          {userRole !== "Treasurer" && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => navigate("/app/registration")}
+              sx={{
+                borderRadius: "15px",
+                textTransform: "none",
+                boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
+                ml: 1,
+                backgroundColor: "#3B1E54",
+                "&:hover": {
+                  backgroundColor: "#3B1E54",
+                }
+              }}
+            >
+              Add Homeowner
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       <Grid container spacing={3} sx={{ width: "100%", justifyContent: "center" }}>
@@ -387,6 +407,11 @@ export default function HomeOwnerGrid() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <HomeownerAuditLogs
+        open={auditLogModalOpen}
+        onClose={() => setAuditLogModalOpen(false)}
+      />
     </Box>
   );
 }
