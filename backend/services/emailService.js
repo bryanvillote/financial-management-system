@@ -64,6 +64,18 @@ const emailService = {
       return { success: true };
     } catch (error) {
       console.error('Error sending email:', error);
+      console.error('Email configuration:', {
+        host: 'smtp.gmail.com',
+        port: 587,
+        user: process.env.EMAIL_USER,
+        hasPassword: !!process.env.EMAIL_PASS
+      });
+      console.error('Mail options:', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        hasHtml: !!mailOptions.html
+      });
       throw error;
     }
   },

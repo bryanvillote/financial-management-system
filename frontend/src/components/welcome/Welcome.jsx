@@ -11,7 +11,7 @@ export default function BasicButtons() {
         alignItems: "flex-end", // Align items to the bottom
         height: "100vh", // Full viewport height
         width: "100vw", // Full viewport width
-        backgroundImage: `url('/subd.jpg')`, // Path to the SVG background
+        backgroundImage: `url('/subd.png')`, // Path to the SVG background
         backgroundSize: "cover", // Make the image cover the entire area
         backgroundRepeat: "no-repeat", // Prevents the image from repeating
         backgroundPosition: "center", // Center the background image

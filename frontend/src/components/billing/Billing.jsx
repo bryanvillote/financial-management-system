@@ -438,7 +438,7 @@ export default function Billing(props) {
 
       // Prepare the email data
       const emailData = {
-        email: "Centro De San Lorenzo HOA",
+        email: currentReceipt.email,
         subject: "Your HOA Payment Receipt",
         receiptHtml: receiptHtml,
         homeownerName: currentReceipt.name,
