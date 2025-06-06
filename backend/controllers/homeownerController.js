@@ -1,4 +1,4 @@
-const { Homeowner, Billing } = require("../models");
+const { Homeowner, Billing, AuditLog } = require("../models");
 const User = require("../models/User");
 const { startAutomaticPenaltyCycle, clearHomeownerTimeouts } = require("../services/penaltyService");
 
@@ -59,6 +59,17 @@ const registerHomeowner = async (req, res) => {
 
     // Start automatic penalty cycle for new homeowner
     await startAutomaticPenaltyCycle(homeowner._id);
+
+    // Create audit log
+    const auditLog = new AuditLog({
+      action: "CREATE",
+      entityType: "Homeowner",
+      entityId: homeowner._id,
+      details: `Created new homeowner: ${homeowner.name}`,
+      homeownerName: homeowner.name,
+      timestamp: new Date(),
+    });
+    await auditLog.save();
 
     res.status(201).json({
       success: true,
@@ -151,6 +162,17 @@ const updateHomeowner = async (req, res) => {
       });
     }
 
+    // Create audit log
+    const auditLog = new AuditLog({
+      action: "UPDATE",
+      entityType: "Homeowner",
+      entityId: homeowner._id,
+      details: `Updated homeowner: ${homeowner.name}`,
+      homeownerName: homeowner.name,
+      timestamp: new Date(),
+    });
+    await auditLog.save();
+
     res.status(200).json({
       success: true,
       message: "Homeowner updated successfully",
@@ -186,6 +208,17 @@ const deleteHomeowner = async (req, res) => {
 
     // Delete the homeowner record
     await Homeowner.findByIdAndDelete(req.params.id);
+
+    // Create audit log before deleting
+    const auditLog = new AuditLog({
+      action: "DELETE",
+      entityType: "Homeowner",
+      entityId: homeowner._id,
+      details: `Deleted homeowner: ${homeowner.name}`,
+      homeownerName: homeowner.name,
+      timestamp: new Date(),
+    });
+    await auditLog.save();
 
     res.status(200).json({
       success: true,
@@ -277,6 +310,26 @@ const startPenaltyCycle = async (req, res) => {
   }
 };
 
+// Get audit logs
+const getAuditLogs = async (req, res) => {
+  try {
+    console.log('Fetching audit logs...');
+    const auditLogs = await AuditLog.find({ entityType: 'Homeowner' })
+      .sort({ timestamp: -1 })
+      .limit(100);
+    
+    console.log('Found audit logs:', auditLogs.length);
+    res.status(200).json(auditLogs);
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch audit logs',
+      error: error.message
+    });
+  }
+};
+
 // Export all controller functions
 module.exports = {
   registerHomeowner,
@@ -285,5 +338,6 @@ module.exports = {
   updateHomeowner,
   deleteHomeowner,
   getHomeownerByEmail,
-  startPenaltyCycle
+  startPenaltyCycle,
+  getAuditLogs
 };

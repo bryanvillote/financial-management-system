@@ -127,7 +127,7 @@ export default function HomeownerRegistration() {
       } else {
         // First create the homeowner
         const homeownerResponse = await fetch(
-          "http://localhost:8000/homeowners/register",
+          "http://localhost:8000/homeowners",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
