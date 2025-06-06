@@ -294,7 +294,42 @@ export default function HomeOwnerGrid() {
             autoHeight
             disableRowSelectionOnClick
             checkboxSelection
-            slots={{ toolbar: GridToolbar }}
+            slots={{ 
+              toolbar: GridToolbar,
+              filterPanel: () => (
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2 }}>Filter by Status</Typography>
+                  <select
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === 'all') {
+                        // Clear filter
+                        setHomeowners(homeowners);
+                      } else {
+                        // Apply filter
+                        const filtered = homeowners.filter(h => h.status === value);
+                        setHomeowners(filtered);
+                      }
+                    }}
+                    style={{
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e0e0e0',
+                      width: '200px',
+                      color: '#3B1E54'
+                    }}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Warning">Warning</option>
+                    <option value="Penalty 1">Penalty 1</option>
+                    <option value="Penalty 2">Penalty 2</option>
+                    <option value="Penalty 3">Penalty 3</option>
+                    <option value="No Participation">No Participation</option>
+                  </select>
+                </Box>
+              )
+            }}
             slotProps={{
               toolbar: {
                 showQuickFilter: true,
