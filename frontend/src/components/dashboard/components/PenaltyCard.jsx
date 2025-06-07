@@ -21,7 +21,7 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
         const startTime = new Date(
           selectedHomeowner.penaltyStartTime
         ).getTime();
-        const duration = 5000; // Fixed 5 seconds for each level
+        const duration = 2592000000; // Fixed 30 days for each level
         const endTime = startTime + duration;
         const now = new Date().getTime();
         const remaining = Math.max(0, endTime - now);

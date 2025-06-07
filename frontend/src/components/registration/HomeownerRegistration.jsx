@@ -10,6 +10,10 @@ import {
   ThemeProvider,
   Typography,
 } from "@mui/material";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -39,6 +43,7 @@ export default function HomeownerRegistration() {
     email: "",
     password: "",
     name: "",
+    registrationDate: dayjs(),
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -56,6 +61,7 @@ export default function HomeownerRegistration() {
         email: editingHomeowner.email,
         name: editingHomeowner.name || "",
         password: "", // Password field is empty when editing
+        registrationDate: editingHomeowner.registrationDate ? dayjs(editingHomeowner.registrationDate) : dayjs(),
       });
     }
   }, [isEditing, editingHomeowner]);
@@ -68,10 +74,18 @@ export default function HomeownerRegistration() {
     });
   };
 
+  // Handle date change
+  const handleDateChange = (newDate) => {
+    setFormData({
+      ...formData,
+      registrationDate: newDate,
+    });
+  };
+
   // Validate inputs
   const validateInputs = (data) => {
-    const { blockNo, lotNo, phoneNo, email, password, name } = data;
-    if (!blockNo || !lotNo || !phoneNo || !email || !name || (!isEditing && !password)) {
+    const { blockNo, lotNo, phoneNo, email, password, name, registrationDate } = data;
+    if (!blockNo || !lotNo || !phoneNo || !email || !name || !registrationDate || (!isEditing && !password)) {
       setSnackbarMessage("All fields are required");
       setSnackbarOpen(true);
       return false;
@@ -108,6 +122,7 @@ export default function HomeownerRegistration() {
               lotNo: formData.lotNo,
               phoneNo: formData.phoneNo,
               email: formData.email,
+              registrationDate: formData.registrationDate.toISOString(),
             }),
           }
         );
@@ -137,6 +152,7 @@ export default function HomeownerRegistration() {
               phoneNo: formData.phoneNo,
               email: formData.email,
               name: formData.name,
+              registrationDate: formData.registrationDate.toISOString(),
             }),
           }
         );
@@ -189,6 +205,7 @@ export default function HomeownerRegistration() {
           email: "",
           password: "",
           name: "",
+          registrationDate: dayjs(),
         });
 
         // Navigate to homeowners page after successful registration
@@ -282,6 +299,20 @@ export default function HomeownerRegistration() {
                 type="email"
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
               />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Registration Date"
+                  value={formData.registrationDate}
+                  onChange={handleDateChange}
+                  slotProps={{
+                    textField: {
+                      required: true,
+                      fullWidth: true,
+                      sx: { "& .MuiOutlinedInput-root": { borderRadius: "10px" } }
+                    }
+                  }}
+                />
+              </LocalizationProvider>
               {!isEditing && (
                 <TextField
                   required
