@@ -75,18 +75,67 @@ exports.getBillingByEmail = async (req, res) => {
       });
     }
 
-    const billing = await Billing.findOne({ homeownerId: homeowner._id });
+    let billing = await Billing.findOne({ homeownerId: homeowner._id });
 
-    res.json({
+    // If no billing record exists but there's a last payment, create one
+    if (!billing && homeowner.lastPaymentDate) {
+      billing = new Billing({
+        homeownerId: homeowner._id,
+        dueAmount: 0,
+        lastPaymentDate: homeowner.lastPaymentDate,
+        lastPaymentAmount: homeowner.lastPaymentAmount,
+        paymentHistory: [{
+          date: homeowner.lastPaymentDate,
+          amount: homeowner.lastPaymentAmount,
+          status: "Completed",
+          referenceNo: "LEGACY-" + Math.random().toString(36).substr(2, 9)
+        }]
+      });
+      await billing.save();
+    }
+
+    // If billing exists but no payment history, add the last payment to history
+    if (billing && (!billing.paymentHistory || billing.paymentHistory.length === 0) && billing.lastPaymentDate) {
+      billing.paymentHistory = [{
+        date: billing.lastPaymentDate,
+        amount: billing.lastPaymentAmount,
+        status: "Completed",
+        referenceNo: "LEGACY-" + Math.random().toString(36).substr(2, 9)
+      }];
+      await billing.save();
+    }
+
+    // Transform payment history to match the expected format
+    const paymentHistory = billing?.paymentHistory?.map(payment => ({
+      amount: payment.amount,
+      status: payment.status,
+      referenceNumber: payment.referenceNo,
+      createdAt: payment.date,
+      details: {
+        monthlyDue: payment.amount,
+        carSticker: 0,
+        expenses: 0
+      }
+    })) || [];
+
+    // Add debug logging
+    console.log("Billing record:", billing);
+    console.log("Payment History before transform:", billing?.paymentHistory);
+    console.log("Payment History after transform:", paymentHistory);
+
+    const response = {
       success: true,
       data: {
         dueAmount: billing?.dueAmount || 0,
         lastPaymentDate: billing?.lastPaymentDate || null,
         lastPaymentAmount: billing?.lastPaymentAmount || null,
         isPaid: billing ? billing.dueAmount === 0 : true,
-        paymentHistory: billing?.paymentHistory || []
-      },
-    });
+        paymentHistory: paymentHistory
+      }
+    };
+
+    console.log("Final response:", response);
+    res.json(response);
   } catch (error) {
     console.error("Error fetching billing info:", error);
     res.status(500).json({

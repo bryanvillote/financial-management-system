@@ -39,13 +39,14 @@ const registerHomeowner = async (req, res) => {
       });
     }
 
-    // Create new homeowner
+    // Create new homeowner with registration date
     const homeowner = new Homeowner({
       blockNo,
       lotNo,
       phoneNo,
       email,
       name,
+      registrationDate: req.body.registrationDate ? new Date(req.body.registrationDate) : new Date(),
       status: "Active",
     });
 
@@ -89,7 +90,9 @@ const registerHomeowner = async (req, res) => {
 // Read (all)
 const getAllHomeowners = async (req, res) => {
   try {
-    const homeowners = await Homeowner.find().sort({ createdAt: -1 });
+    const homeowners = await Homeowner.find()
+      .select('_id name email blockNo lotNo phoneNo status penaltyLevel penaltyStatus registrationDate createdAt updatedAt')
+      .sort({ createdAt: -1 });
     res.status(200).json(homeowners);
   } catch (error) {
     res.status(500).json({
@@ -248,25 +251,29 @@ const getHomeownerByEmail = async (req, res) => {
     }
 
     // Return all homeowner data
-    res.status(200).json({
+    res.json({
       success: true,
       data: {
         _id: homeowner._id,
+        name: homeowner.name,
+        email: homeowner.email,
         blockNo: homeowner.blockNo,
         lotNo: homeowner.lotNo,
         phoneNo: homeowner.phoneNo,
-        email: homeowner.email,
         status: homeowner.status || "Active",
-        penalty: homeowner.penalty || "None",
+        penaltyLevel: homeowner.penaltyLevel,
+        penaltyStatus: homeowner.penaltyStatus,
+        penaltyStartTime: homeowner.penaltyStartTime,
         createdAt: homeowner.createdAt,
-      },
+        updatedAt: homeowner.updatedAt
+      }
     });
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Error in getHomeownerByEmail:", error);
     res.status(500).json({
       success: false,
-      message: "Error fetching homeowner",
-      error: error.message,
+      message: "Failed to fetch homeowner",
+      error: error.message
     });
   }
 };

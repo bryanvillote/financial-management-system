@@ -1,5 +1,5 @@
 const { Homeowner, Payment, Billing } = require("../models");
-const { resetPenaltyCycle, clearHomeownerTimeouts, startPenaltyCycle } = require("../services/penaltyService");
+const { resetPenaltyCycle, clearHomeownerTimeouts } = require("../services/penaltyService");
 const { STATUS_ENUM } = require("../models/schemas/homeowner.schema");
 
 // Process a new payment
@@ -24,45 +24,35 @@ exports.processPayment = async (req, res) => {
 
     await payment.save();
 
-    // Update billing
+    // Update billing with new payment date
     const billing = await Billing.findOne({ homeownerId });   
     if (billing) {
       billing.dueAmount = Math.max(0, billing.dueAmount - amount);
       billing.lastPaymentDate = new Date();
+      billing.lastPaymentAmount = amount;
       await billing.save();
     }
 
     // Clear any existing penalty timeouts
     clearHomeownerTimeouts(homeownerId);
 
-    // Update homeowner status to Active
-    homeowner.status = STATUS_ENUM.ACTIVE;
-    homeowner.penaltyLevel = 0;
-    homeowner.penaltyStatus = "None";
-    homeowner.penaltyStartTime = null;
-    await homeowner.save();
-
-    // Start a new penalty cycle immediately
-    await startPenaltyCycle(homeownerId);
-    
-    // Update homeowner status to indicate penalty cycle has started
-    await Homeowner.findByIdAndUpdate(homeownerId, {
-      penaltyStatus: "Active",
-      penaltyStartTime: new Date(),
-      penaltyLevel: 1
-    });
+    // Reset penalty cycle with new payment date
+    await resetPenaltyCycle(homeownerId);
 
     res.status(201).json({
       message: "Payment processed successfully",
       payment,
       homeowner: {
         ...homeowner.toObject(),
-        status: homeowner.status,
+        status: STATUS_ENUM.ACTIVE,
       },
     });
   } catch (error) {
     console.error("Error processing payment:", error);
-    res.status(500).json({ message: "Error processing payment", error: error.message });
+    res.status(500).json({
+      message: "Failed to process payment",
+      error: error.message
+    });
   }
 };
 
