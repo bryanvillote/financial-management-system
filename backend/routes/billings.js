@@ -61,6 +61,19 @@ router.get("/by-email/:email", async (req, res) => {
     // Then get their billing information
     const billing = await Billing.findOne({ homeownerId: homeowner._id });
 
+    // Create payment history from last payment
+    const paymentHistory = billing?.lastPaymentDate ? [{
+      amount: billing.lastPaymentAmount,
+      status: "Completed",
+      referenceNumber: "LEGACY-" + Math.random().toString(36).substr(2, 9),
+      createdAt: billing.lastPaymentDate,
+      details: {
+        monthlyDue: billing.lastPaymentAmount,
+        carSticker: 0,
+        expenses: 0
+      }
+    }] : [];
+
     // Return billing data with proper defaults if no billing record exists
     res.json({
       success: true,
@@ -69,6 +82,7 @@ router.get("/by-email/:email", async (req, res) => {
         lastPaymentDate: billing?.lastPaymentDate || null,
         lastPaymentAmount: billing?.lastPaymentAmount || null,
         isPaid: billing ? billing.dueAmount === 0 : true,
+        paymentHistory: paymentHistory
       },
     });
   } catch (error) {
@@ -203,6 +217,46 @@ router.post("/initialize", async (req, res) => {
   } catch (error) {
     console.error("Error initializing billing:", error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Get payment history for a specific homeowner
+router.get("/payment-history/:homeownerId", async (req, res) => {
+  try {
+    const homeowner = await Homeowner.findById(req.params.homeownerId);
+    if (!homeowner) {
+      return res.status(404).json({
+        success: false,
+        message: "Homeowner not found"
+      });
+    }
+
+    const billing = await Billing.findOne({ homeownerId: homeowner._id });
+    if (!billing) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    // Transform the payment history data
+    const paymentHistory = billing.paymentHistory.map(payment => ({
+      amount: payment.amount,
+      status: payment.status,
+      referenceNo: payment.referenceNo,
+      date: payment.date
+    }));
+
+    res.json({
+      success: true,
+      data: paymentHistory || []
+    });
+  } catch (error) {
+    console.error("Error fetching payment history:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 

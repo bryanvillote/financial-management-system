@@ -6,28 +6,36 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
   const [isApplying, setIsApplying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
 
-  const calculateNextPenaltyDuration = (currentLevel) => {
-    const level = (currentLevel || 0) + 1;
-    return 2 + (level - 1) * 2; // in seconds
+  const calculateTimeUntilNextPenalty = (registrationDate, currentLevel) => {
+    const now = new Date();
+    const regDate = new Date(registrationDate);
+    const daysSinceRegistration = Math.floor((now - regDate) / (1000 * 60 * 60 * 24));
+    
+    const penaltyThresholds = {
+      0: 30,  // Warning at 30 days
+      1: 60,  // Penalty 1 at 60 days
+      2: 90,  // Penalty 2 at 90 days
+      3: 120, // Penalty 3 at 120 days
+      4: 150  // No Participation at 150 days
+    };
+
+    const nextThreshold = penaltyThresholds[currentLevel] || 150;
+    const daysUntilNext = nextThreshold - daysSinceRegistration;
+    
+    return Math.max(0, daysUntilNext);
   };
 
   useEffect(() => {
     let timer;
-    if (
-      selectedHomeowner?.penaltyStartTime &&
-      selectedHomeowner?.penaltyLevel
-    ) {
+    if (selectedHomeowner?.registrationDate && selectedHomeowner?.penaltyLevel !== undefined) {
       const updateTimer = () => {
-        const startTime = new Date(
-          selectedHomeowner.penaltyStartTime
-        ).getTime();
-        const duration = 2592000000; // Fixed 30 days for each level
-        const endTime = startTime + duration;
-        const now = new Date().getTime();
-        const remaining = Math.max(0, endTime - now);
+        const daysLeft = calculateTimeUntilNextPenalty(
+          selectedHomeowner.registrationDate,
+          selectedHomeowner.penaltyLevel
+        );
 
-        if (remaining > 0) {
-          setTimeLeft(Math.ceil(remaining / 1000));
+        if (daysLeft > 0) {
+          setTimeLeft(daysLeft);
         } else {
           setTimeLeft(null);
           // Fetch updated data when timer expires
@@ -36,13 +44,32 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
       };
 
       updateTimer();
-      timer = setInterval(updateTimer, 1000);
+      timer = setInterval(updateTimer, 24 * 60 * 60 * 1000); // Update every 24 hours
     }
 
     return () => {
       if (timer) clearInterval(timer);
     };
   }, [selectedHomeowner, onPenaltyApplied]);
+
+  const getPenaltyDescription = (level) => {
+    switch (level) {
+      case 0:
+        return "Active";
+      case 1:
+        return "Warning (30 days)";
+      case 2:
+        return "Penalty 1 (60 days)";
+      case 3:
+        return "Penalty 2 (90 days)";
+      case 4:
+        return "Penalty 3 (120 days)";
+      case 5:
+        return "No Participation (150 days)";
+      default:
+        return "Active";
+    }
+  };
 
   const handleApplyPenalty = async () => {
     if (!selectedHomeowner) return;
@@ -65,9 +92,6 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
 
       const data = await response.json();
 
-      const nextDuration = calculateNextPenaltyDuration(
-        selectedHomeowner.penaltyLevel
-      );
       toast.success(
         `Penalty process started. Status will update every 5 seconds.`,
         {
@@ -96,13 +120,11 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
             {selectedHomeowner.lotNo}
           </Typography>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Current Level: {selectedHomeowner.penaltyLevel || 0}
-            {timeLeft !== null && ` (${timeLeft}s remaining)`}
+            Registration Date: {new Date(selectedHomeowner.registrationDate).toLocaleDateString()}
           </Typography>
-          <Typography variant="body2" color="info.main" gutterBottom>
-            Next Penalty:{" "}
-            {calculateNextPenaltyDuration(selectedHomeowner.penaltyLevel)}{" "}
-            seconds
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Current Status: {getPenaltyDescription(selectedHomeowner.penaltyLevel)}
+            {timeLeft !== null && ` (${timeLeft} days until next level)`}
           </Typography>
           <Stack direction="row" spacing={1} mt={2}>
             <Button
@@ -113,14 +135,14 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
               fullWidth
             >
               {timeLeft !== null
-                ? `Penalty Active (${timeLeft}s)`
+                ? `Penalty Active (${timeLeft} days)`
                 : "Apply Penalty"}
             </Button>
           </Stack>
         </>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          Select a homeowner to apply penalty
+          Select a homeowner to view penalty status
         </Typography>
       )}
     </Card>

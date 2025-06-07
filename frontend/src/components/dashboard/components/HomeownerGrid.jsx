@@ -19,6 +19,51 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeownerAuditLogs from "./HomeownerAuditLogs";
 
+// Function to render status chip
+const renderStatus = (status) => {
+  const colors = {
+    Active: "success",
+    Warning: "warning",
+    "Penalty 1": "error",
+    "Penalty 2": "error",
+    "Penalty 3": "error",
+    "No Participation": "error",
+  };
+
+  return (
+    <Chip
+      label={status}
+      color={colors[status] || "default"}
+      size="small"
+      sx={{
+        backgroundColor: status === "No Participation" ? "#d32f2f" : undefined,
+        color: status === "No Participation" ? "#ffffff" : undefined,
+        fontWeight: status === "No Participation" ? "medium" : undefined,
+        '& .MuiChip-label': {
+          color: status === "No Participation" ? "#ffffff" : undefined
+        }
+      }}
+    />
+  );
+};
+
+// Function to render penalty chip
+const renderPenalty = (penalty) => {
+  const colors = {
+    None: "default",
+    Pending: "warning",
+    Active: "error"
+  };
+
+  return (
+    <Chip
+      label={penalty}
+      color={colors[penalty] || "default"}
+      size="small"
+    />
+  );
+};
+
 export default function HomeOwnerGrid() {
   const navigate = useNavigate();
   const [homeowners, setHomeowners] = useState([]);
@@ -38,21 +83,17 @@ export default function HomeOwnerGrid() {
     },
     {
       field: "blockNo",
-      headerName: "Block No",
-      flex: 0.5,
-      minWidth: 100,
+      headerName: "Block",
+      width: 100,
+      headerAlign: "center",
+      align: "center",
     },
     {
       field: "lotNo",
-      headerName: "Lot No",
-      flex: 0.5,
-      minWidth: 100,
-    },
-    {
-      field: "phoneNo",
-      headerName: "Phone No",
-      flex: 0.8,
-      minWidth: 150,
+      headerName: "Lot",
+      width: 100,
+      headerAlign: "center",
+      align: "center",
     },
     {
       field: "email",
@@ -61,30 +102,34 @@ export default function HomeOwnerGrid() {
       minWidth: 200,
     },
     {
+      field: "phoneNo",
+      headerName: "Phone",
+      width: 150,
+    },
+    {
+      field: "registrationDate",
+      headerName: "Registration Date",
+      width: 150,
+      valueGetter: (params) => {
+        try {
+          const date = params?.row?.registrationDate;
+          if (!date) return 'N/A';
+          return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        } catch (error) {
+          console.error('Error formatting registration date:', error);
+          return 'N/A';
+        }
+      },
+    },
+    {
       field: "status",
       headerName: "Status",
-      flex: 0.8,
-      minWidth: 150,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={
-            params.value === "Active"
-              ? "success"
-              : ["Warning", "Penalty 1", "Penalty 2", "Penalty 3", "No Participation"].includes(params.value)
-              ? "error"
-              : "default"
-          }
-          sx={{
-            backgroundColor: params.value === "No Participation" ? "#d32f2f" : undefined,
-            color: params.value === "No Participation" ? "#ffffff" : undefined,
-            fontWeight: params.value === "No Participation" ? "medium" : undefined,
-            '& .MuiChip-label': {
-              color: params.value === "No Participation" ? "#ffffff" : undefined
-            }
-          }}
-        />
-      ),
+      width: 120,
+      renderCell: (params) => renderStatus(params?.value || "Active"),
     },
     ...(userRole !== "Treasurer"
       ? [
@@ -179,6 +224,7 @@ export default function HomeOwnerGrid() {
           lotNo: homeowner.lotNo,
           phoneNo: homeowner.phoneNo,
           email: homeowner.email,
+          registrationDate: homeowner.registrationDate,
         },
       },
     });

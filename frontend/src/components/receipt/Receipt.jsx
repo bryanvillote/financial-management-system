@@ -164,9 +164,16 @@ export default function ReceiptUI() {
       const decodedToken = jwtDecode(token);
       const userEmail = decodedToken.email;
 
+      console.log("Fetching data for email:", userEmail);
+
       // Fetch homeowner data
       const homeownerResponse = await fetch(
-        `http://localhost:8000/homeowners/email/${userEmail}`
+        `http://localhost:8000/homeowners/email/${userEmail}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       const homeownerResult = await homeownerResponse.json();
 
@@ -176,11 +183,17 @@ export default function ReceiptUI() {
         );
       }
 
+      console.log("Homeowner data:", homeownerResult.data);
       setHomeownerData(homeownerResult.data);
 
       // Fetch billing data
       const billingResponse = await fetch(
-        `http://localhost:8000/billing/by-email/${userEmail}`
+        `http://localhost:8000/billing/by-email/${userEmail}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       const billingResult = await billingResponse.json();
 
@@ -190,6 +203,8 @@ export default function ReceiptUI() {
         );
       }
 
+      console.log("Billing data:", billingResult.data);
+      console.log("Payment History:", billingResult.data.paymentHistory);
       setBillingData(billingResult.data);
       setError(null);
     } catch (error) {
@@ -549,55 +564,37 @@ export default function ReceiptUI() {
             {/* Payment History Card */}
             <CustomCard sx={{ p: isMobile ? 1 : 3 }}>
               <Typography variant={isMobile ? "subtitle1" : "h6"} gutterBottom sx={{ color: "#3B1E54", mb: isMobile ? 1 : 2 }}>
-                Payment History (Last 12 Months)
+                Payment History
               </Typography>
               <TableContainer sx={{ maxHeight: isMobile ? 300 : 600, overflowX: 'auto' }}>
                 <Table stickyHeader size={isMobile ? "small" : "medium"}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Details</TableCell>
+                      <TableCell>Date & Time</TableCell>
+                      <TableCell>Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {billingData?.paymentHistory?.length > 0 ? (
-                      billingData.paymentHistory
-                        .filter(payment => {
-                          const paymentDate = new Date(payment.date);
-                          const oneYearAgo = new Date();
-                          oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-                          return paymentDate >= oneYearAgo;
-                        })
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
-                        .map((payment, index) => (
-                          <TableRow key={index} hover>
-                            <TableCell>
-                              {new Date(payment.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography>{formatCurrency(payment.amount)}</Typography>
-                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                  <Chip
-                                    label={payment.status}
-                                    color={
-                                      payment.status === "Completed" 
-                                        ? "success" 
-                                        : payment.status === "Pending" 
-                                        ? "warning" 
-                                        : "error"
-                                    }
-                                    size="small"
-                                    sx={{ fontWeight: "medium" }}
-                                  />
-                                  <Typography variant="caption" color="text.secondary">
-                                    Ref: {payment.referenceNo || "N/A"}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                    {billingData?.paymentHistory && billingData.paymentHistory.length > 0 ? (
+                      billingData.paymentHistory.map((payment, index) => (
+                        <TableRow key={index} hover>
+                          <TableCell>
+                            {new Date(payment.createdAt).toLocaleString('en-US', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                              {formatCurrency(payment.amount)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : (
                       <TableRow>
                         <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
@@ -914,12 +911,6 @@ export default function ReceiptUI() {
               </Typography>
               <Typography variant={isMobile ? "body2" : "body1"} align="center" color="text.secondary">
                 Please ensure timely payment of your dues to avoid penalties.
-                {billingData?.lastPaymentDate && (
-                  <>
-                    <br />
-                    Last Payment: {formatCurrency(billingData.lastPaymentAmount)} on {new Date(billingData.lastPaymentDate).toLocaleDateString()}
-                  </>
-                )}
               </Typography>
 
               {/* Add Reference Number Input and Upload Button - Only show for GCash and Maya */}
