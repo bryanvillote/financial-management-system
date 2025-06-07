@@ -44,6 +44,8 @@ export default function HomeownerRegistration() {
     password: "",
     name: "",
     registrationDate: null,
+    houseModel: "",
+    propertyTitleSerialNo: "",
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -62,6 +64,8 @@ export default function HomeownerRegistration() {
         name: editingHomeowner.name || "",
         password: "", // Password field is empty when editing
         registrationDate: editingHomeowner.registrationDate ? dayjs(editingHomeowner.registrationDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+        houseModel: editingHomeowner.houseModel || "",
+        propertyTitleSerialNo: editingHomeowner.propertyTitleSerialNo || "",
       });
     }
   }, [isEditing, editingHomeowner]);
@@ -84,8 +88,8 @@ export default function HomeownerRegistration() {
 
   // Validate inputs
   const validateInputs = (data) => {
-    const { blockNo, lotNo, phoneNo, email, password, name, registrationDate } = data;
-    if (!blockNo || !lotNo || !phoneNo || !email || !name || !registrationDate || (!isEditing && !password)) {
+    const { blockNo, lotNo, phoneNo, email, password, name, registrationDate, houseModel, propertyTitleSerialNo } = data;
+    if (!blockNo || !lotNo || !phoneNo || !email || !name || !registrationDate || !houseModel || !propertyTitleSerialNo || (!isEditing && !password)) {
       setSnackbarMessage("All fields are required");
       setSnackbarOpen(true);
       return false;
@@ -123,6 +127,8 @@ export default function HomeownerRegistration() {
               phoneNo: formData.phoneNo,
               email: formData.email,
               registrationDate: formData.registrationDate,
+              houseModel: formData.houseModel,
+              propertyTitleSerialNo: formData.propertyTitleSerialNo,
             }),
           }
         );
@@ -153,6 +159,8 @@ export default function HomeownerRegistration() {
               email: formData.email,
               name: formData.name,
               registrationDate: formData.registrationDate,
+              houseModel: formData.houseModel,
+              propertyTitleSerialNo: formData.propertyTitleSerialNo,
             }),
           }
         );
@@ -206,6 +214,8 @@ export default function HomeownerRegistration() {
           password: "",
           name: "",
           registrationDate: null,
+          houseModel: "",
+          propertyTitleSerialNo: "",
         });
 
         // Navigate to homeowners page after successful registration
@@ -262,6 +272,22 @@ export default function HomeownerRegistration() {
                 name="name"
                 label="Name"
                 value={formData.name}
+                onChange={handleChange}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+              />
+              <TextField
+                required
+                name="houseModel"
+                label="House Model"
+                value={formData.houseModel}
+                onChange={handleChange}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+              />
+              <TextField
+                required
+                name="propertyTitleSerialNo"
+                label="Property Title Serial Number"
+                value={formData.propertyTitleSerialNo}
                 onChange={handleChange}
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
               />

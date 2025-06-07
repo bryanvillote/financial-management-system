@@ -26,6 +26,14 @@ const homeownerSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    houseModel: {
+      type: String,
+      required: true,
+    },
+    propertyTitleSerialNo: {
+      type: String,
+      required: true,
+    },
     registrationDate: {
       type: Date,
       required: true
