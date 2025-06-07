@@ -26,6 +26,10 @@ const homeownerSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    registrationDate: {
+      type: Date,
+      required: true
+    },
     role: {
       type: String,
       default: "Home Owner",
@@ -42,10 +46,6 @@ const homeownerSchema = new mongoose.Schema(
     },
     pendingPenaltyLevel: {
       type: Number,
-      default: null,
-    },
-    penaltyStartTime: {
-      type: Date,
       default: null,
     },
     penaltyStatus: {

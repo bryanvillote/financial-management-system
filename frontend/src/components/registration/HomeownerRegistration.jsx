@@ -43,7 +43,7 @@ export default function HomeownerRegistration() {
     email: "",
     password: "",
     name: "",
-    registrationDate: dayjs(),
+    registrationDate: null,
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -61,7 +61,7 @@ export default function HomeownerRegistration() {
         email: editingHomeowner.email,
         name: editingHomeowner.name || "",
         password: "", // Password field is empty when editing
-        registrationDate: editingHomeowner.registrationDate ? dayjs(editingHomeowner.registrationDate) : dayjs(),
+        registrationDate: editingHomeowner.registrationDate ? dayjs(editingHomeowner.registrationDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
       });
     }
   }, [isEditing, editingHomeowner]);
@@ -75,10 +75,10 @@ export default function HomeownerRegistration() {
   };
 
   // Handle date change
-  const handleDateChange = (newDate) => {
+  const handleDateChange = (date) => {
     setFormData({
       ...formData,
-      registrationDate: newDate,
+      registrationDate: date ? date.format('YYYY-MM-DD') : null,
     });
   };
 
@@ -122,7 +122,7 @@ export default function HomeownerRegistration() {
               lotNo: formData.lotNo,
               phoneNo: formData.phoneNo,
               email: formData.email,
-              registrationDate: formData.registrationDate.toISOString(),
+              registrationDate: formData.registrationDate,
             }),
           }
         );
@@ -152,7 +152,7 @@ export default function HomeownerRegistration() {
               phoneNo: formData.phoneNo,
               email: formData.email,
               name: formData.name,
-              registrationDate: formData.registrationDate.toISOString(),
+              registrationDate: formData.registrationDate,
             }),
           }
         );
@@ -205,7 +205,7 @@ export default function HomeownerRegistration() {
           email: "",
           password: "",
           name: "",
-          registrationDate: dayjs(),
+          registrationDate: null,
         });
 
         // Navigate to homeowners page after successful registration
@@ -302,7 +302,7 @@ export default function HomeownerRegistration() {
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   label="Registration Date"
-                  value={formData.registrationDate}
+                  value={formData.registrationDate ? dayjs(formData.registrationDate) : null}
                   onChange={handleDateChange}
                   slotProps={{
                     textField: {
