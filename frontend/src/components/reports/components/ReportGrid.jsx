@@ -69,7 +69,7 @@ export default function ReportGrid() {
       
       // Fetch all required data with date range
       const [paymentsResponse, expensesResponse, homeownersResponse] = await Promise.all([
-        fetch(`http://localhost:8000/billing?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`),
+        fetch(`http://localhost:8000/billing`),
         fetch(`http://localhost:8000/expenses?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,14 +181,22 @@ export default function ReportGrid() {
           if (!payment.lastPaymentDate) return false;
           try {
             const paymentDate = new Date(payment.lastPaymentDate);
-            return paymentDate >= startDate && paymentDate <= endDate && Boolean(payment.homeownerName);
+            return paymentDate >= startDate && paymentDate <= endDate;
           } catch (error) {
             console.error("Error processing payment date:", payment.lastPaymentDate);
             return false;
           }
         })
-        .map(payment => payment.homeownerName)
-        .filter(Boolean);
+        .map(payment => {
+          const homeowner = homeownersData.find(h => h._id === payment.homeownerId);
+          return {
+            name: homeowner?.name || 'Unknown Homeowner',
+            amount: parseFloat(payment.lastPaymentAmount) || 0,
+            date: payment.lastPaymentDate,
+            blockLot: `${homeowner?.blockNo || 'N/A'}/${homeowner?.lotNo || 'N/A'}`
+          };
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
       // Get all homeowners and their statuses
       const allHomeowners = homeownersData.map(homeowner => ({
@@ -241,7 +249,8 @@ export default function ReportGrid() {
         month: format(selectedDate, "MMMM yyyy"),
         totalPayments,
         totalExpenses,
-        paidHomeowners,
+        paidHomeowners: paidHomeowners.map(h => h.name),
+        paidHomeownersWithDetails: paidHomeowners,
         pendingHomeowners: pendingHomeowners.map(h => h.name),
         pendingHomeownersWithStatus: pendingHomeowners,
         expenseBreakdown: expenseBreakdownArray,
@@ -530,7 +539,7 @@ export default function ReportGrid() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "3000px" } }}>
+    <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "3000px" } }}>
         <Stack 
           direction="row" 
           justifyContent="space-between" 
@@ -756,9 +765,9 @@ export default function ReportGrid() {
                       },
                     }}>
                       {reportData.paidHomeowners.length > 0 ? (
-                        reportData.paidHomeowners.map((name, index) => (
+                        reportData.paidHomeownersWithDetails.map((homeowner, index) => (
                           <Typography key={index} variant="body1" paragraph sx={{ pl: 2 }}>
-                            {index + 1}. {name}
+                            {index + 1}. {homeowner.name} ({homeowner.blockLot}) - {homeowner.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} ({format(new Date(homeowner.date), 'MMM dd, yyyy')})
                           </Typography>
                         ))
                       ) : (
