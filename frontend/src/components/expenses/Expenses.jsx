@@ -30,6 +30,7 @@ import {
   Select,
   MenuItem,
   Chip,
+  Typography,
 } from "@mui/material";
 import SideMenu from "../dashboard/components/SideMenu";
 import {
@@ -332,7 +333,7 @@ export default function Expenses(props) {
                 maxWidth: "1200px",
                 mx: "auto",
                 mt: 2,
-                ml: { xs: 0, md: 25},
+                ml: { xs: 0, md: 55},
               }}
             >
               <Paper 
@@ -503,6 +504,19 @@ export default function Expenses(props) {
                       </TableRow>
                     )}
                   />
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center',
+                    p: 2,
+                    borderTop: '2px solid',
+                    borderColor: 'divider',
+                    backgroundColor: '#ffffff'
+                  }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                      Total Expenses: ₱{expenses.reduce((sum, expense) => sum + (parseFloat(expense.expenseAmount) || 0), 0).toLocaleString()}
+                    </Typography>
+                  </Box>
                 </Paper>
               </Paper>
             </Box>
