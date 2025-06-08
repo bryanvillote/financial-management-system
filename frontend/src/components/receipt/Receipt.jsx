@@ -478,6 +478,14 @@ export default function ReceiptUI() {
                       </TableCell>
                     </TableRow>
                     <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>House Model</TableCell>
+                      <TableCell>{homeownerData?.houseModel || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: "bold" }}>Property Title Serial No.</TableCell>
+                      <TableCell>{homeownerData?.propertyTitleSerialNo || "N/A"}</TableCell>
+                    </TableRow>
+                    <TableRow>
                       <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
                       <TableCell>{homeownerData?.email || "N/A"}</TableCell>
                     </TableRow>
@@ -494,19 +502,6 @@ export default function ReceiptUI() {
                     </TableRow>
                     {(homeownerData?.penaltyLevel > 0 || homeownerData?.penaltyStatus === "Pending") && (
                       <>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>Penalty Level</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={getPenaltyDescription(
-                                homeownerData.penaltyLevel || homeownerData.pendingPenaltyLevel,
-                              homeownerData.penaltyStatus
-                            )}
-                              color="error"
-                              size="small"
-                            />
-                          </TableCell>
-                        </TableRow>
                         {homeownerData.penaltyStartTime && (
                           <TableRow>
                             <TableCell sx={{ fontWeight: "bold" }}>Penalty Started</TableCell>
@@ -1015,10 +1010,7 @@ export default function ReceiptUI() {
                     fontWeight: "medium",
                   }}
                 >
-                  ⚠️ Your account is currently under penalty level{" "}
-                  {homeownerData.penaltyLevel}. The penalty duration will
-                  increase by {PENALTY_INCREMENT} seconds for each unpaid
-                  period. Please settle your payment to avoid further penalties.
+                 Please settle your payment to avoid further penalties.
                 </Typography>
               )}
 
@@ -1079,6 +1071,18 @@ export default function ReceiptUI() {
                     <TableCell sx={{ border: "none", py: 1 }}>
                       Block {homeownerData?.blockNo || "N/A"}, Lot{" "}
                       {homeownerData?.lotNo || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>House Model:</TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      {homeownerData?.houseModel || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ border: "none", py: 1 }}>Property Title Serial No.:</TableCell>
+                    <TableCell sx={{ border: "none", py: 1 }}>
+                      {homeownerData?.propertyTitleSerialNo || "N/A"}
                     </TableCell>
                   </TableRow>
                   <TableRow>

@@ -5,10 +5,10 @@ const { startAutomaticPenaltyCycle, clearHomeownerTimeouts } = require("../servi
 // Create
 const registerHomeowner = async (req, res) => {
   try {
-    const { blockNo, lotNo, phoneNo, email, name } = req.body;
+    const { blockNo, lotNo, phoneNo, email, name, houseModel, propertyTitleSerialNo } = req.body;
 
     // Validate required fields
-    if (!blockNo || !lotNo || !phoneNo || !email || !name) {
+    if (!blockNo || !lotNo || !phoneNo || !email || !name || !houseModel || !propertyTitleSerialNo) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -46,6 +46,8 @@ const registerHomeowner = async (req, res) => {
       phoneNo,
       email,
       name,
+      houseModel,
+      propertyTitleSerialNo,
       registrationDate: req.body.registrationDate ? new Date(req.body.registrationDate) : new Date(),
       status: "Active",
     });
@@ -91,7 +93,7 @@ const registerHomeowner = async (req, res) => {
 const getAllHomeowners = async (req, res) => {
   try {
     const homeowners = await Homeowner.find()
-      .select('_id name email blockNo lotNo phoneNo status penaltyLevel penaltyStatus registrationDate createdAt updatedAt')
+      .select('_id name email blockNo lotNo phoneNo status penaltyLevel penaltyStatus registrationDate houseModel propertyTitleSerialNo createdAt updatedAt')
       .sort({ createdAt: -1 });
     res.status(200).json(homeowners);
   } catch (error) {
@@ -124,6 +126,8 @@ const getHomeownerById = async (req, res) => {
         blockNo: homeowner.blockNo,
         lotNo: homeowner.lotNo,
         phoneNo: homeowner.phoneNo,
+        houseModel: homeowner.houseModel,
+        propertyTitleSerialNo: homeowner.propertyTitleSerialNo,
         status: homeowner.status || "Active",
         penaltyLevel: homeowner.penaltyLevel,
         penaltyStatus: homeowner.penaltyStatus,
@@ -142,10 +146,10 @@ const getHomeownerById = async (req, res) => {
 // Update
 const updateHomeowner = async (req, res) => {
   try {
-    const { blockNo, lotNo, phoneNo, email } = req.body;
+    const { blockNo, lotNo, phoneNo, email, houseModel, propertyTitleSerialNo } = req.body;
 
     // Validate required fields
-    if (!blockNo || !lotNo || !phoneNo || !email) {
+    if (!blockNo || !lotNo || !phoneNo || !email || !houseModel || !propertyTitleSerialNo) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -154,7 +158,7 @@ const updateHomeowner = async (req, res) => {
 
     const homeowner = await Homeowner.findByIdAndUpdate(
       req.params.id,
-      { blockNo, lotNo, phoneNo, email },
+      { blockNo, lotNo, phoneNo, email, houseModel, propertyTitleSerialNo },
       { new: true, runValidators: true }
     );
 
@@ -250,8 +254,7 @@ const getHomeownerByEmail = async (req, res) => {
       });
     }
 
-    // Return all homeowner data
-    res.json({
+    res.status(200).json({
       success: true,
       data: {
         _id: homeowner._id,
@@ -260,20 +263,21 @@ const getHomeownerByEmail = async (req, res) => {
         blockNo: homeowner.blockNo,
         lotNo: homeowner.lotNo,
         phoneNo: homeowner.phoneNo,
+        houseModel: homeowner.houseModel,
+        propertyTitleSerialNo: homeowner.propertyTitleSerialNo,
         status: homeowner.status || "Active",
         penaltyLevel: homeowner.penaltyLevel,
         penaltyStatus: homeowner.penaltyStatus,
-        penaltyStartTime: homeowner.penaltyStartTime,
+        registrationDate: homeowner.registrationDate,
         createdAt: homeowner.createdAt,
         updatedAt: homeowner.updatedAt
       }
     });
   } catch (error) {
-    console.error("Error in getHomeownerByEmail:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch homeowner",
-      error: error.message
+      error: error.message,
     });
   }
 };
