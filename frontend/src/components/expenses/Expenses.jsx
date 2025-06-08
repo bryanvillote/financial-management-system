@@ -53,7 +53,7 @@ const xThemeComponents = {
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#3B1E54",
+      main: "#1687fc",
     },
     secondary: {
       main: "#020140",
@@ -484,16 +484,17 @@ export default function Expenses(props) {
                             ) : column.dataKey === "category" ? (
                               <Chip 
                                 label={row.category || "Others"} 
-                                color={
-                                  row.category === "Maintenance" ? "primary" :
-                                  row.category === "Utilities" ? "success" :
-                                  row.category === "Security" ? "warning" :
-                                  "default"
-                                }
                                 size="small"
                                 sx={{ 
                                   minWidth: "100px",
                                   fontWeight: "medium", 
+                                  backgroundColor:
+                                    row.category === "Maintenance" ? "#1687fc" :
+                                    row.category === "Utilities" ? "#6cc24a" :
+                                    row.category === "Security" ? "#c89c0b" :
+                                    row.category === "Others" ? "#c81e1e" :
+                                    "#c81e1e",
+                                  color: '#fff',
                                 }}
                               />
                             ) : (
