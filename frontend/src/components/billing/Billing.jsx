@@ -342,6 +342,17 @@ export default function Billing(props) {
         console.warn("Failed to start penalty cycle, but payment was processed");
       }
 
+      // Update the currentReceipt if it's open for the same homeowner
+      if (currentReceipt && currentReceipt._id === selectedHomeowner._id) {
+        setCurrentReceipt(prev => ({
+          ...prev,
+          isPaid: true,
+          lastPaymentDate: new Date().toISOString(),
+          lastPaymentAmount: parseFloat(paymentAmount),
+          dueAmount: 0
+        }));
+      }
+
       // Show success message
       toast.success("Payment processed successfully");
 
@@ -408,7 +419,16 @@ export default function Billing(props) {
   };
 
   const handleViewReceipt = (homeowner) => {
-    setCurrentReceipt(homeowner);
+    // Find the latest homeowner data from the homeowners state
+    const latestHomeownerData = homeowners.find(h => h._id === homeowner._id);
+    
+    setCurrentReceipt({
+      ...homeowner,
+      isPaid: latestHomeownerData?.dueAmount === 0,
+      lastPaymentDate: latestHomeownerData?.lastPaymentDate,
+      lastPaymentAmount: latestHomeownerData?.lastPaymentAmount,
+      dueAmount: latestHomeownerData?.dueAmount || 0
+    });
     setReceiptDialogOpen(true);
   };
 
