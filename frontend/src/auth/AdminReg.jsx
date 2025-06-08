@@ -510,6 +510,7 @@ export default function AdminReg(props) {
                   type="submit" 
                   fullWidth 
                   variant="contained" 
+                  color="secondary"
                   sx={{ 
                     borderRadius: "15px", 
                     py: 2.5, 

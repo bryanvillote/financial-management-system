@@ -298,13 +298,14 @@ export default function AdminLog(props) {
             <Button
               type="submit"
               fullWidth
+              color="primary"
               variant="contained"
               size="large"
               onClick={handleLogin}
               sx={{
                 backgroundColor: "#020140",
                 marginTop: 1,
-                borderRadius: "10px",
+                borderRadius: "15px",
                 padding: "12px 0",
                 fontSize: "1.1rem",
                 fontWeight: "500",

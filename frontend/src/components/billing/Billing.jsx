@@ -178,6 +178,12 @@ export default function Billing(props) {
             variant="contained"
             size="small"
             onClick={() => handleSelectHomeowner(params.row)}
+            sx={{ 
+              borderRadius: "15px",
+              "&:focus": {
+                outline: "none"
+              }
+            }}
           >
             Select
           </Button>
@@ -187,6 +193,12 @@ export default function Billing(props) {
             color="secondary"
             onClick={() => handleViewReceipt(params.row)}
             startIcon={<PrintIcon />}
+            sx={{ 
+              borderRadius: "15px",
+              "&:focus": {
+                outline: "none"
+              }
+            }}
           >
             Receipt
           </Button>
@@ -669,8 +681,11 @@ export default function Billing(props) {
                         onClick={handleUpdateDueAmount}
                         sx={{
                           mt: 1,
-                          borderRadius: "10px",
+                          borderRadius: "15px",
                           textTransform: "none",
+                          "&:focus": {
+                            outline: "none"
+                          }
                         }}
                       >
                         Update Due Amount
@@ -711,8 +726,11 @@ export default function Billing(props) {
                         disabled={!selectedHomeowner || !paymentAmount || parseFloat(paymentAmount) !== selectedHomeowner.dueAmount}
                         sx={{
                           mt: 2,
-                          borderRadius: "10px",
+                          borderRadius: "15px",
                           textTransform: "none",
+                          "&:focus": {
+                            outline: "none"
+                          }
                         }}
                       >
                         Process Payment
@@ -727,8 +745,11 @@ export default function Billing(props) {
                       onClick={handleSendNotification}
                       sx={{
                         mt: 1,
-                        borderRadius: "10px",
+                        borderRadius: "15px",
                         textTransform: "none",
+                        "&:focus": {
+                          outline: "none"
+                        }
                       }}
                     >
                       Send Notification
@@ -786,7 +807,13 @@ export default function Billing(props) {
                   variant="contained"
                   onClick={handleSaveAsPDF}
                   startIcon={<PrintIcon />}
-                  sx={{ bgcolor: "#3B1E54" }}
+                  sx={{ 
+                    bgcolor: "#3B1E54",
+                    borderRadius: "15px",
+                    "&:focus": {
+                      outline: "none"
+                    }
+                  }}
                 >
                   Save as PDF
                 </Button>
@@ -794,7 +821,13 @@ export default function Billing(props) {
                   variant="contained"
                   onClick={handleSendEmail}
                   startIcon={<EmailIcon />}
-                  sx={{ bgcolor: "#3B1E54" }}
+                  sx={{ 
+                    bgcolor: "#3B1E54",
+                    borderRadius: "15px",
+                    "&:focus": {
+                      outline: "none"
+                    }
+                  }}
                 >
                   Send via Email
                 </Button>
