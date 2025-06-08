@@ -543,7 +543,7 @@ export default function Billing(props) {
             width: "100%",
             maxWidth: "100%",
             overflow: "hidden",
-            pl: {md: "280px"}
+            pl: {md: "430px"}
           }}
         >
           <Header />

@@ -128,14 +128,10 @@ export default function SideMenu() {
           alignItems: "center",
           borderTop: "1px solid",
           borderColor: "divider",
+          overflow: "auto",
         }}
       >
-        <Avatar
-          sizes="small"
-          alt={userData.name || "User"}
-          src="/static/images/avatar/7.jpg"
-          sx={{ width: 36, height: 36 }}
-        />
+
         <Box sx={{ mr: "auto" }}>
           <Typography
             variant="body2"

@@ -426,7 +426,7 @@ export default function ReceiptUI() {
           </Box>
         )}
         {/* Receipt Content */}
-        <Box ref={receiptRef} sx={{ p: isMobile ? 1 : 4, maxWidth: isMobile ? '100%' : 1200, marginLeft: isMobile ? 0 : 50 }}>
+        <Box ref={receiptRef} sx={{ p: isMobile ? 1 : 4, maxWidth: isMobile ? '100%' : 1200, marginLeft: isMobile ? 0 : 85 }}>
           {/* Header */}
           <Typography variant={isMobile ? "h6" : "h4"} align="center" gutterBottom sx={{ mb: isMobile ? 2 : 4 }}>
             Homeowner Record

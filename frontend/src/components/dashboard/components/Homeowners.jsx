@@ -43,6 +43,7 @@ export default function Dashboard(props) {
               mx: 3,
               pb: 5,
               mt: { xs: 8, md: 3 },
+              pl: 30,
             }}
           >
             <HomeOwnerGrid />

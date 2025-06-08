@@ -387,7 +387,7 @@ export default function AdminReg(props) {
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SideMenu />
-      <Box sx={{ p: 3, pl: 35 }}>
+      <Box sx={{ p: 3, pl: 80 }}>
         <Typography
           component="h1"
           variant="h4"

@@ -44,6 +44,7 @@ export default function Reports(props) {
               mx: 3,
               pb: 5,
               mt: { xs: 8, md: 5 },
+              pl: 20,
             }}
           >
             <Header />
