@@ -599,7 +599,7 @@ export default function ReportGrid() {
           </Stack>
           <Button
             variant="contained"
-            color="primary"
+            color="secondary"
             startIcon={<PictureAsPdfIcon />}
             onClick={handlePreviewPDF}
             disabled={!hasData || loading}
@@ -1005,6 +1005,7 @@ export default function ReportGrid() {
             <Button
               onClick={handleExportPDF}
               variant="contained"
+              color="secondary"
               startIcon={<PictureAsPdfIcon />}
               sx={{ 
                 borderRadius: '10px',

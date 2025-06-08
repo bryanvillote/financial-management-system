@@ -55,7 +55,7 @@ const theme = createTheme({
       main: "#3B1E54",
     },
     secondary: {
-      main: "#F0A8D0",
+      main: "#020140",
       light: "#FFC6C6",
       contrastText: "#000000",
     },
@@ -356,16 +356,23 @@ export default function Expenses(props) {
                   <h2>Homeowners Association Expenses</h2>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       color="primary"
                       startIcon={<HistoryIcon />}
                       onClick={handleOpenAuditLogModal}
                       sx={{ 
                         borderRadius: "15px",
-                        boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.83)",
+                        boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
+                        "&:hover": {
+                          backgroundColor: "#000000",
+                          color: "#FFFFFF"
+                        },
+                        "&:focus": {
+                          outline: "none"
+                        }
                       }}
                     >
-                      View Audit Logs
+                      Activity Logs
                     </Button>
                     <Button
                       variant="contained"
@@ -374,10 +381,13 @@ export default function Expenses(props) {
                       onClick={handleOpenExpenseModal}
                       sx={{ 
                         borderRadius: "15px",
-                        boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.83)",
+                        boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
                         "&:hover": {
                           backgroundColor: "#000000",
                           color: "#FFFFFF"
+                        },
+                        "&:focus": {
+                          outline: "none"
                         }
                       }}
                     >

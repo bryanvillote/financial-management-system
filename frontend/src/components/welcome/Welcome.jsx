@@ -24,6 +24,7 @@ export default function BasicButtons() {
       >
         <Button
           variant="contained"
+          color="secondary"
           onClick={() => (window.location.href = "/login")} // Temporary redirect
           sx={{
             borderRadius: "16px",

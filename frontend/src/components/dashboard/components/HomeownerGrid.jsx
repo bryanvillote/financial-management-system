@@ -275,15 +275,19 @@ export default function HomeOwnerGrid() {
         <Stack direction="row" spacing={2}>
           <Button
             variant="contained"
+            color="secondary"
             startIcon={<HistoryIcon />}
             onClick={() => setAuditLogModalOpen(true)}
-            sx={{
-              backgroundColor: "#3B1E54",
+            sx={{ 
               borderRadius: "15px",
-              padding: "8px 16px",
+              boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
               "&:hover": {
-                backgroundColor: "#4B2E64",
+                backgroundColor: "#000000",
+                color: "#FFFFFF"
               },
+              "&:focus": {
+                outline: "none"
+              }
             }}
           >
             Activity Logs
@@ -291,17 +295,18 @@ export default function HomeOwnerGrid() {
           {userRole !== "Treasurer" && (
             <Button
               variant="contained"
-              color="primary"
+              color="secondary"
               startIcon={<AddIcon />}
               onClick={() => navigate("/app/registration")}
-              sx={{
+              sx={{ 
                 borderRadius: "15px",
-                textTransform: "none",
                 boxShadow: "0px 0px 10px 0px rgba(105, 105, 105, 0.64)",
-                ml: 1,
-                backgroundColor: "#3B1E54",
                 "&:hover": {
-                  backgroundColor: "#3B1E54",
+                  backgroundColor: "#000000",
+                  color: "#FFFFFF"
+                },
+                "&:focus": {
+                  outline: "none"
                 }
               }}
             >
