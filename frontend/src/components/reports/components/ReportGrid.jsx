@@ -530,12 +530,12 @@ export default function ReportGrid() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "2000px" } }}>
+      <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "3000px" } }}>
         <Stack 
           direction="row" 
           justifyContent="space-between" 
           alignItems="center" 
-          sx={{ mb: 3 }}
+          sx={{ mb: 3, px: 5 }}
         >
           <Stack direction="row" spacing={2} alignItems="center">
             <Typography component="h2" variant="h6">
@@ -618,14 +618,15 @@ export default function ReportGrid() {
 
         <Grid container spacing={3}>
           {/* Left Container */}
-          <Grid item xs={12} md={7}>
+          <Grid item xs={12} md={6}>
             <Paper 
               elevation={0} 
               sx={{ 
                 p: 3, 
                 backgroundColor: "rgba(59, 30, 84, 0.04)",
                 borderRadius: "15px",
-                height: "100%"
+                height: "100%",
+                minWidth: "600px"
               }}
             >
               {loading ? (
@@ -709,14 +710,15 @@ export default function ReportGrid() {
           </Grid>
 
           {/* Right Container */}
-          <Grid item xs={12} md={5}>
+          <Grid item xs={12} md={6}>
             <Paper 
               elevation={0} 
               sx={{ 
                 p: 3, 
                 backgroundColor: "rgba(59, 30, 84, 0.04)",
                 borderRadius: "15px",
-                height: "100%"
+                height: "100%",
+                minWidth: "600px"
               }}
             >
               {loading ? (

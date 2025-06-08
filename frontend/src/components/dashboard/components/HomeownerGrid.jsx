@@ -107,25 +107,6 @@ export default function HomeOwnerGrid() {
       width: 150,
     },
     {
-      field: "registrationDate",
-      headerName: "Registration Date",
-      width: 150,
-      valueGetter: (params) => {
-        try {
-          const date = params?.row?.registrationDate;
-          if (!date) return 'N/A';
-          return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          });
-        } catch (error) {
-          console.error('Error formatting registration date:', error);
-          return 'N/A';
-        }
-      },
-    },
-    {
       field: "status",
       headerName: "Status",
       width: 120,
