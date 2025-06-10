@@ -1,1 +1,1 @@
-export const API_BASE_URL = "https://financial-management-system-eta.vercel.app/api"; 
+export const API_BASE_URL = "https://financial-management-system-hcz7s7nbn-maxines-projects-caef2fc7.vercel.app/api"; 
