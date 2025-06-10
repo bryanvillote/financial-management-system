@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: financial-management-backend
+    env: node
+    buildCommand: |
+      npm install
+      npm cache clean --force
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 18.x
+      # Add your other environment variables here
+    healthCheckPath: /api/health
+    autoDeploy: true 
