@@ -1,6 +1,7 @@
 import { Button, Card, Stack, Typography } from "@mui/material";
 import { toast } from "mui-sonner";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../../config";
 
 export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
   const [isApplying, setIsApplying] = useState(false);
@@ -77,7 +78,7 @@ export default function PenaltyCard({ selectedHomeowner, onPenaltyApplied }) {
     setIsApplying(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:8000/penalty/start/${selectedHomeowner._id}`, {
+      const response = await fetch(`${API_BASE_URL}/penalty/start/${selectedHomeowner._id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

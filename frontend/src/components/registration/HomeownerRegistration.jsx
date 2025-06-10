@@ -16,6 +16,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config";
 
 const theme = createTheme({
   palette: {
@@ -50,8 +51,7 @@ export default function HomeownerRegistration() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
-  // Update the base URL to match your admin registration
-  const API_URL = "http://localhost:8000";
+  const API_URL = API_BASE_URL;
 
   useEffect(() => {
     if (isEditing && editingHomeowner) {
@@ -117,7 +117,7 @@ export default function HomeownerRegistration() {
       if (isEditing) {
         // Update existing homeowner
         const response = await fetch(
-          `http://localhost:8000/homeowners/${editingHomeowner.id}`,
+          `${API_URL}/homeowners/${editingHomeowner.id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -148,7 +148,7 @@ export default function HomeownerRegistration() {
       } else {
         // First create the homeowner
         const homeownerResponse = await fetch(
-          "http://localhost:8000/homeowners",
+          `${API_URL}/homeowners`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@ export default function HomeownerRegistration() {
 
         // Then create the user account
         const registerResponse = await fetch(
-          "http://localhost:8000/auth/register",
+          `${API_URL}/auth/register`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -192,7 +192,7 @@ export default function HomeownerRegistration() {
         if (!registerResponse.ok) {
           // If user creation fails, we should clean up the homeowner record
           await fetch(
-            `http://localhost:8000/homeowners/${homeownerResult.data._id}`,
+            `${API_URL}/homeowners/${homeownerResult.data._id}`,
             {
               method: "DELETE",
             }

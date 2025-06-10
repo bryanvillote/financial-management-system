@@ -17,6 +17,7 @@ import React, { useEffect, useState } from "react";
 import { TableVirtuoso } from "react-virtuoso";
 import AppTheme from "../../utils/share-theme/AppTheme";
 import Header from "../dashboard/components/Header";
+import { API_BASE_URL } from "../../config";
 
 import {
   Dialog,
@@ -138,7 +139,7 @@ export default function Expenses(props) {
     const fetchExpenses = async () => {
       const token = localStorage.getItem("authToken");
       try {
-        const response = await axios.get("http://localhost:8000/expenses", {
+        const response = await axios.get(`${API_BASE_URL}/expenses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -162,7 +163,7 @@ export default function Expenses(props) {
     const token = localStorage.getItem("authToken");
     try {
       const response = await axios.post(
-        "http://localhost:8000/expenses",
+        `${API_BASE_URL}/expenses`,
         newExpense,
         {
           headers: {
@@ -191,7 +192,7 @@ export default function Expenses(props) {
 
     try {
       const response = await axios.put(
-        `http://localhost:8000/expenses/${editingExpenseId}`,
+        `${API_BASE_URL}/expenses/${editingExpenseId}`,
         updatedExpense,
         {
           headers: {
@@ -225,7 +226,7 @@ export default function Expenses(props) {
 
     try {
       await axios.delete(
-        `http://localhost:8000/expenses/${expenseToDelete._id}`,
+        `${API_BASE_URL}/expenses/${expenseToDelete._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -283,7 +284,7 @@ export default function Expenses(props) {
   const fetchAuditLogs = async () => {
     const token = localStorage.getItem("authToken");
     try {
-      const response = await axios.get("http://localhost:8000/expenses/audit-logs", {
+      const response = await axios.get(`${API_BASE_URL}/expenses/audit-logs`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

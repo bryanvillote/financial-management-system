@@ -6,6 +6,7 @@ import SessionsChart from "./SessionsChart";
 import StatCard from "./StatCard";
 import HomeownerStats from "./HomeownerStats";
 import ExpensesPieChart from "./ExpensesPieChart";
+import { API_BASE_URL } from "../../../config";
 
 export default function MainGrid() {
   const [stats, setStats] = useState({
@@ -24,11 +25,11 @@ export default function MainGrid() {
         }
 
         // Fetch billing data
-        const billingsResponse = await fetch("http://localhost:8000/billing");
+        const billingsResponse = await fetch(`${API_BASE_URL}/billing`);
         const billingsData = await billingsResponse.json();
 
         // Fetch expenses data with authentication
-        const expensesResponse = await fetch("http://localhost:8000/expenses", {
+        const expensesResponse = await fetch(`${API_BASE_URL}/expenses`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -55,7 +56,7 @@ export default function MainGrid() {
 
         // Calculate car sticker owners (homeowners with active status)
         const activeHomeownersResponse = await fetch(
-          "http://localhost:8000/homeowners"
+          `${API_BASE_URL}/homeowners`
         );
         const homeownersData = await activeHomeownersResponse.json();
         const homeowners = Array.isArray(homeownersData) ? homeownersData : [];

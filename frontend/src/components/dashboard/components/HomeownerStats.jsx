@@ -3,6 +3,7 @@ import { styled } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { API_BASE_URL } from "../../../config";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -79,7 +80,7 @@ export default function HomeownerStats() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://localhost:8000/homeowners");
+      const response = await fetch(`${API_BASE_URL}/homeowners`);
       const data = await response.json();
 
       const total = data.length;

@@ -8,6 +8,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { toast } from 'mui-sonner';
+import { API_BASE_URL } from "../config";
 
 function ForgotPassword({ open, handleClose }) {
   const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ function ForgotPassword({ open, handleClose }) {
     const email = formData.get('email');
 
     try {
-      const response = await fetch('http://localhost:8000/auth/forgot-password', {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

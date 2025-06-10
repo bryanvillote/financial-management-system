@@ -13,6 +13,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import { toast } from 'mui-sonner';
+import { API_BASE_URL } from "../config";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -35,7 +36,7 @@ export default function ResetPassword() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/auth/reset-password', {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

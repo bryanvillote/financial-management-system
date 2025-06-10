@@ -30,6 +30,7 @@ import { useEffect, useState } from "react";
 import SideMenu from "../components/dashboard/components/SideMenu";
 import AppTheme from "../utils/share-theme/AppTheme";
 import SearchIcon from "@mui/icons-material/Search";
+import { API_BASE_URL } from "../config";
 
 export default function AdminReg(props) {
   const [email, setEmail] = useState("");
@@ -63,7 +64,7 @@ export default function AdminReg(props) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8000/auth/users");
+      const response = await fetch(`${API_BASE_URL}/auth/users`);
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -110,7 +111,7 @@ export default function AdminReg(props) {
     if (!validateInputs({ email, password, role })) return;
 
     try {
-      const response = await fetch("http://localhost:8000/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
@@ -167,7 +168,7 @@ export default function AdminReg(props) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/auth/users/${userToDelete._id}`,
+        `${API_BASE_URL}/auth/users/${userToDelete._id}`,
         {
           method: "DELETE",
         }
@@ -236,7 +237,7 @@ export default function AdminReg(props) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/auth/users/${editData.id}`,
+        `${API_BASE_URL}/auth/users/${editData.id}`,
         {
           method: "PUT",
           headers: {
@@ -296,7 +297,7 @@ export default function AdminReg(props) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/auth/users/${userId}`,
+        `${API_BASE_URL}/auth/users/${userId}`,
         {
           method: "DELETE",
         }
@@ -351,7 +352,7 @@ export default function AdminReg(props) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/auth/users/${editData.id}`,
+        `${API_BASE_URL}/auth/users/${editData.id}`,
         {
           method: "PUT",
           headers: {

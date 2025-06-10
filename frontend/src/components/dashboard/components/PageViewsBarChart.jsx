@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../../config";
 
 export default function PageViewsBarChart() {
   const theme = useTheme();
@@ -29,7 +30,7 @@ export default function PageViewsBarChart() {
           throw new Error("No authentication token found");
         }
 
-        const response = await fetch("http://localhost:8000/expenses", {
+        const response = await fetch(`${API_BASE_URL}/expenses`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

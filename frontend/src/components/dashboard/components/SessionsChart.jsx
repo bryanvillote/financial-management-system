@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../../config";
 
 export default function SessionsChart() {
   const theme = useTheme();
@@ -19,7 +20,7 @@ export default function SessionsChart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8000/billing");
+        const response = await fetch(`${API_BASE_URL}/billing`);
         const data = await response.json();
 
         // Process last 30 days of payments

@@ -18,6 +18,7 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeownerAuditLogs from "./HomeownerAuditLogs";
+import { API_BASE_URL } from "../../../config";
 
 // Function to render status chip
 const renderStatus = (status) => {
@@ -166,7 +167,7 @@ export default function HomeOwnerGrid() {
   const fetchHomeowners = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8000/homeowners");
+      const response = await fetch(`${API_BASE_URL}/homeowners`);
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {
@@ -219,7 +220,7 @@ export default function HomeOwnerGrid() {
   const handleDeleteConfirm = async () => {
     if (!homeownerToDelete) return;
     try {
-      const response = await fetch(`http://localhost:8000/homeowners/${homeownerToDelete._id}`, {
+      const response = await fetch(`${API_BASE_URL}/homeowners/${homeownerToDelete._id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete homeowner");

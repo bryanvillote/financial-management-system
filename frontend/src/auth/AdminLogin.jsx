@@ -20,6 +20,7 @@ import { useAuth } from "../utils/context/useAuth";
 import AppTheme from "../utils/share-theme/AppTheme";
 import ColorModeSelect from "../utils/share-theme/ColorModeSelect";
 import ForgotPassword from "./ForgotPassword";
+import { API_BASE_URL } from "../config";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -95,7 +96,7 @@ export default function AdminLog(props) {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch("http://localhost:8000/auth/verify", {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -166,7 +167,7 @@ export default function AdminLog(props) {
     const password = document.getElementById("password").value;
 
     try {
-      const response = await fetch("http://localhost:8000/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

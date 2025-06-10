@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from "../../../config";
 
 const HomeownerAuditLogs = ({ open, onClose }) => {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -30,8 +31,8 @@ const HomeownerAuditLogs = ({ open, onClose }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching audit logs from:', 'http://localhost:8000/homeowners/logs/audit');
-      const response = await fetch('http://localhost:8000/homeowners/logs/audit');
+      console.log('Fetching audit logs from:', `${API_BASE_URL}/homeowners/logs/audit`);
+      const response = await fetch(`${API_BASE_URL}/homeowners/logs/audit`);
       console.log('Response status:', response.status);
       if (!response.ok) {
         const errorData = await response.json();

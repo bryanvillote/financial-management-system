@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import MenuContent from "./MenuContent";
 import OptionsMenu from "./OptionsMenu";
 import logo from "../../../logo.png";
+import { API_BASE_URL } from "../../../config";
 
 const drawerWidth = 240;
 
@@ -57,7 +58,7 @@ export default function SideMenu() {
     const fetchHomeownerName = async (email, token) => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/homeowners/email/${email}`,
+          `${API_BASE_URL}/api/homeowners/email/${email}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

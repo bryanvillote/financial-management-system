@@ -36,6 +36,7 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from "../dashboard/theme/customizations";
+import { API_BASE_URL } from "../../config";
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -214,8 +215,8 @@ export default function Billing(props) {
 
       // Fetch both homeowners and billing data
       const [homeownersResponse, billingResponse] = await Promise.all([
-        fetch("http://localhost:8000/homeowners"),
-        fetch("http://localhost:8000/billing"),
+        fetch(`${API_BASE_URL}/homeowners`),
+        fetch(`${API_BASE_URL}/billing`),
       ]);
 
       if (!homeownersResponse.ok) {
@@ -266,7 +267,7 @@ export default function Billing(props) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/billing/${selectedHomeowner._id}/update-due`,
+        `${API_BASE_URL}/billing/${selectedHomeowner._id}/update-due`,
         {
           method: "PUT",
           headers: {
@@ -313,7 +314,7 @@ export default function Billing(props) {
 
     try {
       // Process the payment
-      const paymentResponse = await fetch("http://localhost:8000/billing/payment", {
+      const paymentResponse = await fetch(`${API_BASE_URL}/billing/payment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -331,7 +332,7 @@ export default function Billing(props) {
       }
 
       // Start the automatic penalty cycle
-      const penaltyResponse = await fetch(`http://localhost:8000/homeowners/${selectedHomeowner._id}/start-penalty-cycle`, {
+      const penaltyResponse = await fetch(`${API_BASE_URL}/homeowners/${selectedHomeowner._id}/start-penalty-cycle`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -374,7 +375,7 @@ export default function Billing(props) {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/email/send-payment-reminder",
+        `${API_BASE_URL}/email/send-payment-reminder`,
         {
           method: "POST",
           headers: {
@@ -485,7 +486,7 @@ export default function Billing(props) {
       toast.loading("Sending receipt to email...", { id: loadingToastId });
 
       // Send the email
-      const response = await fetch("http://localhost:8000/email/send-receipt", {
+      const response = await fetch(`${API_BASE_URL}/email/send-receipt`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -12,6 +12,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import PropTypes from "prop-types";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../../config";
 
 import { PaidIcon, UnpaidIcon } from "../internals/components/CustomIcons";
 
@@ -86,7 +87,7 @@ export default function ChartUserByCountry() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8000/billing");
+        const response = await fetch(`${API_BASE_URL}/billing`);
         const data = await response.json();
 
         let paid = 0;
