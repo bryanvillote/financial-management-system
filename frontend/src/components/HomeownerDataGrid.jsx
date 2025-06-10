@@ -1,6 +1,7 @@
 import { Button, Chip, Stack } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function HomeownerDataGrid() {
   const [homeowners, setHomeowners] = useState([]);
@@ -63,7 +64,7 @@ export default function HomeownerDataGrid() {
   const handleApplyPenalty = async (homeownerId, penaltyLevel) => {
     try {
       const response = await fetch(
-        "http://localhost:8000/penalty/start", // Updated to match `PenaltyRoutes.jsx`
+        `${API_BASE_URL}/penalty/start`,
         {
           method: "POST",
           headers: {
@@ -86,7 +87,7 @@ export default function HomeownerDataGrid() {
 
   const fetchHomeowners = async () => {
     try {
-      const response = await fetch("http://localhost:8000/homeowners"); // Adjusted to real API
+      const response = await fetch(`${API_BASE_URL}/homeowners`);
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {

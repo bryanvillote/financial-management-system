@@ -18,7 +18,7 @@ mongoose
 
 // Global middleware
 app.use(cors({
-  origin: ["https://financial-management-system-eta.vercel.app/"],
+  origin: ["https://financial-management-system-eta.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
@@ -71,3 +71,5 @@ app.use((req, res) => {
 // Start the server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

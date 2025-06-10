@@ -1,7 +1,9 @@
+import { API_BASE_URL } from "../../config";
+
 const fetchHomeownerName = async (email) => {
   try {
     const response = await axios.get(
-      `http://localhost:8000/homeowners/email/${email}`,
+      `${API_BASE_URL}/homeowners/email/${email}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

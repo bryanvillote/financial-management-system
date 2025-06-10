@@ -4,6 +4,7 @@ import { styled } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { API_BASE_URL } from "../../../config";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   height: "calc(100vh - 200px)",
@@ -106,7 +107,7 @@ export default function HomeownerDataGrid({ onHomeownerSelect }) {
   const fetchHomeowners = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:8000/homeowner", {
+      const response = await fetch(`${API_BASE_URL}/homeowner`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

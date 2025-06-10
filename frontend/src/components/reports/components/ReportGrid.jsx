@@ -24,6 +24,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
+import { API_BASE_URL } from "../../../config";
 
 export default function ReportGrid() {
   const [reportData, setReportData] = useState({
@@ -69,14 +70,14 @@ export default function ReportGrid() {
       
       // Fetch all required data with date range
       const [paymentsResponse, expensesResponse, homeownersResponse] = await Promise.all([
-        fetch(`http://localhost:8000/billing`),
-        fetch(`http://localhost:8000/expenses?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, {
+        fetch(`${API_BASE_URL}/billing`),
+        fetch(`${API_BASE_URL}/expenses?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }),
-        fetch(`http://localhost:8000/homeowners`)
+        fetch(`${API_BASE_URL}/homeowners`)
       ]);
 
       if (!expensesResponse.ok) {

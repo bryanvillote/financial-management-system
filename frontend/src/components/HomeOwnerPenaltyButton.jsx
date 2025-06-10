@@ -119,7 +119,7 @@ export default function HomeOwnerPenaltyButton() {
 
   const fetchHomeowners = async () => {
     try {
-      const response = await fetch("/api/homeowners");
+      const response = await fetch(`${API_BASE_URL}/homeowners`);
       const data = await response.json();
       setHomeowners(data);
     } catch (error) {

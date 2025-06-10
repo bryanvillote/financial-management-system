@@ -19,6 +19,7 @@ import jsPDF from "jspdf";
 import { toast } from "mui-sonner";
 import React, { useState } from "react";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { API_BASE_URL } from "../../config";
 
 // Theme setup
 const theme = createTheme({
@@ -113,7 +114,7 @@ export default function TreasurerReceipt({ homeowner, billingData }) {
     try {
       const receiptHtml = receiptRef.current.outerHTML;
 
-      const response = await fetch("http://localhost:8000/email/send-receipt", {
+      const response = await fetch(`${API_BASE_URL}/email/send-receipt`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
